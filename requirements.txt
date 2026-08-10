@@ -1,0 +1,11 @@
+# Local ML stack (torch is installed separately as a CPU-only wheel — see README)
+sentence-transformers>=3.0,<6
+chromadb>=0.5
+# LLM backend client (OpenAI-compatible; works with Ollama, LM Studio, OpenAI)
+openai>=1.40
+# Structured-output validation
+jsonschema>=4.20
+# Web UI
+streamlit>=1.36
+# Dev / test
+pytest>=8.0
