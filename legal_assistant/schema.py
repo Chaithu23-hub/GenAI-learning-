@@ -7,13 +7,11 @@ import jsonschema
 
 from . import config
 
-# [TOPIC: Structured output (JSON schema)] — the formal JSON schema every
 # assistant response must match, so the app can reliably parse answer+sources.
 RESPONSE_SCHEMA = {
     "type": "object",
     "properties": {
         "answer": {"type": "string", "minLength": 1},
-        # [TOPIC: Chain-of-Thought (CoT)] — the "reasoning" field forces the
         # model to show its step-by-step logic before writing the answer;
         # this reduces errors on multi-clause contract questions.
         "reasoning": {"type": "string", "minLength": 1},
@@ -44,7 +42,6 @@ def validate_response(payload):
         return [exc.message]
 
     errors = []
-    # [TOPIC: Hallucination] — consistency rule: an out-of-scope answer must be
     # the fixed refusal string with no sources (the model had no grounded text).
     if payload["out_of_scope"]:
         if payload["answer"] != config.OUT_OF_SCOPE_ANSWER:

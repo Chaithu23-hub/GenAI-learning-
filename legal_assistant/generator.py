@@ -8,10 +8,8 @@ from . import config
 from .retrieval import retrieve
 from .schema import parse_json_response, validate_response
 
-# [TOPIC: Prompt anatomy] — structured in 7 sections: Role, Task, Context
 # (the retrieved chunks arrive in the user message), Constraints, Examples,
 # Output Format, Tone.
-# [TOPIC: Zero-shot vs few-shot] — two worked Q&A pairs sit in the Examples
 # section (few-shot); without them the model's citation format drifted
 # between runs. The example chunk_ids are real chunks from the corpus.
 SYSTEM_PROMPT = """ROLE
@@ -51,7 +49,6 @@ Respond with a single JSON object and nothing else:
 TONE
 Formal, neutral, concise. Quote contract language verbatim where precision matters."""
 
-# [TOPIC: Tool calling] — the LLM requests searches by calling retrieve_chunks();
 # the Python function below performs the actual search — the model never does.
 RETRIEVE_TOOL = {
     "type": "function",
@@ -73,14 +70,12 @@ RETRIEVE_TOOL = {
     },
 }
 
-# [TOPIC: Context window] — everything sent to the model (system prompt +
 # retrieved chunks + question + tool results) must fit its context limit;
 # excerpts are truncated here and TOP_N_ANSWERS is tuned so we never overflow.
 _EXCERPT_CHARS = 400
 
 
 def _log_usage(response):
-    # [TOPIC: Cost per token] — prompt + completion tokens both count toward
     # the bill; logging them per call lets cost per request be tracked.
     usage = getattr(response, "usage", None)
     if usage is None:
@@ -162,7 +157,6 @@ class ExtractiveGenerator:
 
     def generate(self, query, where=None):
         chunks = retrieve(query, where=where)
-        # [TOPIC: Hallucination] — if nothing clears the relevance threshold we
         # refuse instead of stretching a weak match into an answer; the
         # out_of_scope flag tells the app there was no grounded answer.
         relevant = [c for c in chunks if c.score >= config.MIN_RELEVANT_SCORE]
@@ -171,7 +165,6 @@ class ExtractiveGenerator:
 
         confidence = "high" if relevant[0].score >= config.HIGH_CONFIDENCE_SCORE else "medium"
 
-        # [TOPIC: Grounded generation & citations] — the answer quotes each
         # retrieved chunk verbatim, so every sentence maps to a source below.
         parts, sources = [], []
         for c in relevant:
@@ -204,7 +197,6 @@ def _verify_sources(payload):
     collection, and its excerpt must be contained in the stored chunk text.
     Returns a list of error strings (empty = verified).
     """
-    # [TOPIC: Hallucination] — post-hoc citation grounding: LLM answers are
     # only accepted if their citations can be resolved to real stored chunks.
     from .vector_store import get_collection
 
@@ -234,14 +226,11 @@ class LLMGenerator:
     MAX_TOOL_ROUNDS = 4
 
     def __init__(self, model=None):
-        # [TOPIC: Language models] — generation is delegated to a next-token
         # prediction model; because it can only predict from what it sees, the
         # right retrieved context must be fed to it first.
-        # [TOPIC: Decoder vs encoder models] — the generation LLM is
         # decoder-only (predicts the next token); the embedding model is
         # encoder-only (one vector per input) — different architectures,
         # different jobs.
-        # [TOPIC: Tool calling] — any OpenAI-compatible server works (Ollama,
         # LM Studio, OpenAI itself) via the same client.
         from openai import OpenAI
 
@@ -262,10 +251,8 @@ class LLMGenerator:
             return ExtractiveGenerator().generate(query, where=where)
 
     def _generate_llm(self, query, where=None):
-        # [TOPIC: Why RAG] — without retrieval the LLM has no access to these
         # contracts and amendments; RAG feeds it the right document first so it
         # answers from facts, not from training data.
-        # [TOPIC: Grounded generation & citations] — pre-retrieve chunks and put
         # them directly in the prompt. Weak models hallucinate far less when the
         # evidence is in front of them; the retrieve_chunks tool stays available
         # for follow-up searches.
@@ -280,13 +267,10 @@ class LLMGenerator:
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_content},
         ]
-        # [TOPIC: Tool calling] — loop: the model asks for retrieve_chunks ->
         # we run the search in Python -> results go back -> final JSON answer.
         message = None
         for _ in range(self.MAX_TOOL_ROUNDS):
-            # [TOPIC: Temperature & sampling] — temperature 0 for deterministic,
             # traceable answers.
-            # [TOPIC: Greedy vs sampled decoding] — temperature 0 means greedy
             # decoding: always the single most likely next token; no randomness
             # is acceptable when answers must be grounded and repeatable.
             response = self.client.chat.completions.create(
@@ -301,7 +285,6 @@ class LLMGenerator:
                 break
             messages.append(message)
             for call in message.tool_calls:
-                # [TOPIC: Parallel tool calls] — the model may issue several
                 # retrieve_chunks() requests in one response (one per
                 # sub-question); every result is collected before the next
                 # round generates the answer.
@@ -312,7 +295,6 @@ class LLMGenerator:
                     else where
                 )
                 hits = retrieve(args.get("query", query), where=tool_where)
-                # [TOPIC: Metadata filtering] — the model itself can narrow the
                 # search to contracts or amendments via the tool argument.
                 messages.append({
                     "role": "tool",
@@ -323,7 +305,6 @@ class LLMGenerator:
             # Ran out of tool rounds without a final answer.
             return ExtractiveGenerator().generate(query, where=where)
 
-        # [TOPIC: Validation & retry] — check the reply against the JSON schema
         # AND verify its citations resolve to real stored chunks; if either
         # fails, retry exactly once with a correction prompt.
         for attempt in range(2):

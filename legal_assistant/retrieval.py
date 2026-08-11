@@ -20,7 +20,6 @@ class RetrievedChunk:
 
 @lru_cache(maxsize=1)
 def _get_reranker():
-    # [TOPIC: Bi-encoder vs cross-encoder] — the cross-encoder reads the
     # (question, chunk) pair jointly, which is far more precise than comparing
     # two independent embeddings — but too slow to run over the whole corpus,
     # so we only ever use it on the handful of bi-encoder candidates.
@@ -48,7 +47,6 @@ def retrieve(query, k=config.TOP_K_CANDIDATES, n=config.TOP_N_ANSWERS, where=Non
     if not candidates:
         return []
 
-    # [TOPIC: Bi-encoder vs cross-encoder] — re-rank the k candidates with the
     # cross-encoder and keep the n most relevant chunks for generation.
     reranker = _get_reranker()
     scores = reranker.predict([(query, c.text) for c in candidates])

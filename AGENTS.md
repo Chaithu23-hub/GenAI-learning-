@@ -27,7 +27,6 @@ pytest tests/                        # unit + end-to-end tests
 
 ## Conventions
 
-- Every code path implementing a curriculum concept carries a `# [TOPIC: <name>] — ...`
   comment. Preserve these when editing; add one for any new concept you implement.
 - The response JSON shape is fixed by `RESPONSE_SCHEMA` in `legal_assistant/schema.py`.
   Do not add/remove fields without updating `validate_response` and the README contract.

@@ -12,7 +12,6 @@ def detect_metadata_filter(query):
     the full corpus so original clauses and their amending language are
     retrieved together (needed for conflict detection).
     """
-    # [TOPIC: Metadata filtering] — narrowing to document_type="amendment"
     # before similarity search keeps the candidate set focused.
     if "amendment" in query.lower():
         return {"document_type": "amendment"}
@@ -25,7 +24,6 @@ def answer_question(query, document_type=None, backend=None):
     Returns the response dict (JSON-serializable) matching RESPONSE_SCHEMA:
     {"answer", "sources", "confidence", "out_of_scope"}.
     """
-    # [TOPIC: Guardrails] — screen for prompt injection and drafting requests
     # before anything else; rejections carry out_of_scope=true with a fixed
     # rejection message so the app can show them verbatim.
     allowed, reason = screen_query(query)

@@ -3,6 +3,9 @@
 Run with:  .venv\\Scripts\\streamlit.exe run ui.py
 """
 
+import io
+from pathlib import Path
+
 import streamlit as st
 
 from legal_assistant.pipeline import answer_question
@@ -31,6 +34,40 @@ with st.sidebar:
         format_func=lambda v: "All documents" if v is None else v.capitalize() + "s",
     )
     st.divider()
+    st.subheader("Upload PDFs")
+    uploaded_pdfs = st.file_uploader(
+        "Upload PDF files",
+        type=["pdf"],
+        accept_multiple_files=True,
+    )
+    ingest_after = st.checkbox("Ingest after upload", value=True)
+    if st.button("Convert & Save PDFs"):
+        if not uploaded_pdfs:
+            st.warning("Select at least one PDF file before converting.")
+        else:
+            out_dir = Path("data/legal")
+            out_dir.mkdir(parents=True, exist_ok=True)
+            written = 0
+            try:
+                from pypdf import PdfReader
+            except ImportError:
+                st.error("Required package 'pypdf' is not installed. Run: pip install pypdf")
+                written = 0
+            else:
+                for uploaded in uploaded_pdfs:
+                    data = uploaded.read()
+                    reader = PdfReader(io.BytesIO(data))
+                    pages = [page.extract_text() or "" for page in reader.pages]
+                    text = "\n\n".join(pages).strip()
+                    md = f"# {Path(uploaded.name).stem}\n\n{text}\n"
+                    target = out_dir / f"{Path(uploaded.name).stem}.md"
+                    target.write_text(md, encoding="utf-8")
+                    written += 1
+                st.success(f"Wrote {written} markdown file(s) to {out_dir}")
+                if ingest_after and written:
+                    with st.spinner("Ingesting…"):
+                        count = ingest_documents()
+                    st.success(f"Ingested {count} chunks.")
     if st.button("Re-ingest documents", help="Re-chunk and re-embed everything in data/legal/"):
         with st.spinner("Ingesting…"):
             count = ingest_documents()
@@ -40,12 +77,13 @@ if "history" not in st.session_state:
     st.session_state.history = []
 
 question = st.text_input(
-    "Question", placeholder="e.g. What is the late payment interest rate under the MSA?"
+    "Question",
+    placeholder="e.g. What is the late payment interest rate under the MSA?",
 )
 if st.button("Ask", type="primary", disabled=not question.strip()):
     with st.spinner("Searching the knowledge base…"):
         payload = answer_question(
-            question.strip(), document_type=doc_filter, backend=backend
+            question.strip(), document_type=doc_filter, backend=backend,
         )
     st.session_state.history.append((question.strip(), payload))
 
@@ -61,7 +99,7 @@ for asked, payload in reversed(st.session_state.history):
     if payload.get("reasoning"):
         with st.expander("Reasoning"):
             st.markdown(payload["reasoning"])
-    if payload["sources"]:
+    if payload.get("sources"):
         with st.expander(f"Sources ({len(payload['sources'])})"):
             for source in payload["sources"]:
                 st.markdown(f"**{source['document']}** — `{source['chunk_id']}`")

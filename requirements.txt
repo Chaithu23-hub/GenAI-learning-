@@ -7,5 +7,7 @@ openai>=1.40
 jsonschema>=4.20
 # Web UI
 streamlit>=1.36
+# PDF extraction
+pypdf>=3.10
 # Dev / test
 pytest>=8.0

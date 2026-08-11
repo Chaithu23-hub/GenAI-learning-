@@ -16,7 +16,6 @@ CHROMA_DIR = PROJECT_ROOT / "data" / "chroma"  # persisted vector store
 # ---------------------------------------------------------------------------
 # Chunking
 # ---------------------------------------------------------------------------
-# [TOPIC: Chunk size & overlap] — split documents into 512-token chunks with a
 # 50-token overlap so a clause straddling a chunk boundary stays retrievable
 # from at least one of the overlapping windows.
 CHUNK_SIZE_TOKENS = 512
@@ -25,7 +24,6 @@ CHUNK_OVERLAP_TOKENS = 50
 # ---------------------------------------------------------------------------
 # Retrieval
 # ---------------------------------------------------------------------------
-# [TOPIC: Similarity search & top-K] — pull the K nearest chunks from the
 # vector store first (cheap, high recall), then keep only the N best after
 # cross-encoder re-ranking (expensive, high precision).
 TOP_K_CANDIDATES = 5
@@ -39,7 +37,6 @@ HIGH_CONFIDENCE_SCORE = 3.0
 # ---------------------------------------------------------------------------
 # Models (downloaded automatically on first use, cached in ~/.cache)
 # ---------------------------------------------------------------------------
-# [TOPIC: Embedding models (MTEB / BGE / E5)] — all-MiniLM-L6-v2 is small and
 # fast on CPU; swap this string for bge-large-en-v1.5 or e5-large to benchmark
 # higher-MTEB models on legal retrieval accuracy without other changes.
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
@@ -51,12 +48,10 @@ RERANK_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 # ---------------------------------------------------------------------------
 LLM_BASE_URL = os.environ.get("LEGAL_RAG_LLM_BASE_URL", "http://localhost:11434/v1")
 LLM_API_KEY = os.environ.get("LEGAL_RAG_LLM_API_KEY", "ollama")
-# [TOPIC: Model families (GPT, Claude, LLaMA)] — the generation model is chosen
 # here; point LEGAL_RAG_LLM_BASE_URL / LEGAL_RAG_LLM_MODEL at a GPT, Claude, or
 # LLaMA endpoint to compare families without changing any other code.
 LLM_MODEL = os.environ.get("LEGAL_RAG_LLM_MODEL", "llama3.2")
 
-# [TOPIC: Temperature & sampling] — temperature 0 keeps retrieval answers
 # deterministic and traceable (same question + same chunks -> same answer).
 LLM_TEMPERATURE = 0.0
 

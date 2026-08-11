@@ -7,13 +7,10 @@ from . import config
 
 @lru_cache(maxsize=1)
 def get_embedding_model():
-    # [TOPIC: Embeddings & dense retrieval] — load the bi-encoder once and
     # reuse it; it maps any text to a dense vector so we can compare meaning,
     # not keywords.
-    # [TOPIC: Word embeddings (Word2Vec / GloVe)] — foundation concept: static
     # models map each word to one fixed vector; our sentence model extends that
     # idea to whole passages.
-    # [TOPIC: Static vs contextual embeddings] — a contextual model (not static
     # Word2Vec/GloVe) is used so "amendment" in a termination clause embeds
     # differently from "amendment" in a payment clause.
     from sentence_transformers import SentenceTransformer

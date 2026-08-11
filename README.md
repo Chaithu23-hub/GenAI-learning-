@@ -3,7 +3,6 @@
 A grounded, citation-first **Retrieval-Augmented Generation** pipeline that answers questions
 about legal contracts and amendments using **only** passages retrieved from a local document
 library. Built as a hands-on map of the AI learning curriculum — every implemented concept is
-tagged in the code with a `# [TOPIC: <name>] — ...` comment.
 
 ## What it does
 

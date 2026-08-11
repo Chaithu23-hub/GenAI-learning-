@@ -6,7 +6,6 @@ model is never asked to comply with a hostile instruction.
 
 import re
 
-# [TOPIC: Prompt injection] — the injection detector checks for override
 # phrases like "ignore instructions", "you are now", "disregard the above" in
 # user input and blocks the request before any retrieval or model call is
 # made. An optional filler word (e.g. "forget your *earlier* instructions")
@@ -25,7 +24,6 @@ INJECTION_PATTERNS = [
     r"\bjailbreak",
 ]
 
-# [TOPIC: Guardrails] — the assistant retrieves and explains; it never drafts
 # or rewrites contract language, so such requests are rejected up front.
 DRAFTING_PATTERNS = [
     r"\b(draft|write|compose|create)\b.*\b(contract|clause|amendment|agreement|nda)\b",
@@ -44,7 +42,6 @@ def screen_query(query):
     Returns (allowed, reason): allowed=False means respond with the canned
     rejection message for `reason` ("injection" or "drafting").
     """
-    # [TOPIC: Guardrails] — user input is screened before it hits the retrieval
     # pipeline; flagged inputs are rejected with a fixed safe response and never
     # passed to the model.
     for pattern in _INJECTION_RES:
