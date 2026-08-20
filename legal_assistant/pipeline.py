@@ -1,31 +1,16 @@
-"""End-to-end pipeline: guardrails -> metadata filtering -> retrieval -> generation."""
-
 from . import config
 from .generator import get_generator
 from .guardrails import screen_query
+from .retrieval import retrieve
 
 
 def detect_metadata_filter(query):
-    """Infer an optional document_type filter from the question text.
-
-    Only explicit amendment questions get filtered; everything else searches
-    the full corpus so original clauses and their amending language are
-    retrieved together (needed for conflict detection).
-    """
-    # before similarity search keeps the candidate set focused.
     if "amendment" in query.lower():
         return {"document_type": "amendment"}
     return None
 
 
 def answer_question(query, document_type=None, backend=None):
-    """Answer a question about the legal document library.
-
-    Returns the response dict (JSON-serializable) matching RESPONSE_SCHEMA:
-    {"answer", "sources", "confidence", "out_of_scope"}.
-    """
-    # before anything else; rejections carry out_of_scope=true with a fixed
-    # rejection message so the app can show them verbatim.
     allowed, reason = screen_query(query)
     if not allowed:
         answer = config.GUARDRAIL_ANSWER if reason == "injection" else config.NO_DRAFTING_ANSWER
@@ -45,3 +30,12 @@ def answer_question(query, document_type=None, backend=None):
 
     generator = get_generator(backend)
     return generator.generate(query, where=where)
+
+
+def inspect_question(query, document_type=None, backend=None):
+    where = {"document_type": document_type} if document_type else detect_metadata_filter(query)
+    return {
+        "question": query,
+        "retrieved": retrieve(query, where=where),
+        "answer": answer_question(query, document_type=document_type, backend=backend),
+    }

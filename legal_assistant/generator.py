@@ -1,6 +1,3 @@
-"""Answer generation: an LLM-backed generator with tool calling, plus an
-offline extractive fallback that needs no LLM at all."""
-
 import json
 import urllib.request
 
@@ -8,10 +5,6 @@ from . import config
 from .retrieval import retrieve
 from .schema import parse_json_response, validate_response
 
-# (the retrieved chunks arrive in the user message), Constraints, Examples,
-# Output Format, Tone.
-# section (few-shot); without them the model's citation format drifted
-# between runs. The example chunk_ids are real chunks from the corpus.
 SYSTEM_PROMPT = """ROLE
 You are a precise, citation-first legal assistant for a law firm's internal knowledge base.
 
@@ -70,8 +63,6 @@ RETRIEVE_TOOL = {
     },
 }
 
-# retrieved chunks + question + tool results) must fit its context limit;
-# excerpts are truncated here and TOP_N_ANSWERS is tuned so we never overflow.
 _EXCERPT_CHARS = 400
 
 
@@ -91,14 +82,7 @@ def _log_usage(response):
 
 
 def detect_llm_model():
-    """Probe the endpoint and decide which LLM (if any) is actually usable.
 
-    Returns the model name to use, or None when no LLM backend is available:
-    - the configured model, if the server lists it;
-    - otherwise the first model the server has, so a running Ollama with a
-      differently-named pulled model still works out of the box;
-    - otherwise None (the caller falls back to extractive generation).
-    """
     url = config.LLM_BASE_URL.rstrip("/") + "/models"
     try:
         with urllib.request.urlopen(url, timeout=1.5) as resp:
@@ -123,7 +107,6 @@ def detect_llm_model():
 
 
 def _chunks_payload(chunks):
-    """Serialize retrieved chunks as tool results for the LLM."""
     return [
         {
             "chunk_id": c.chunk_id,
@@ -149,16 +132,9 @@ def _out_of_scope():
 
 
 class ExtractiveGenerator:
-    """Offline fallback generator: builds an answer verbatim from retrieved chunks.
-
-    No LLM involved — the answer quotes the chunks directly, which makes it
-    grounded by construction.
-    """
 
     def generate(self, query, where=None):
         chunks = retrieve(query, where=where)
-        # refuse instead of stretching a weak match into an answer; the
-        # out_of_scope flag tells the app there was no grounded answer.
         relevant = [c for c in chunks if c.score >= config.MIN_RELEVANT_SCORE]
         if not relevant:
             return _out_of_scope()
@@ -190,13 +166,6 @@ class ExtractiveGenerator:
 
 
 def _verify_sources(payload):
-    """Check that every cited source is actually grounded in the store.
-
-    A schema-valid answer can still hallucinate: a weak model may invent
-    document names and chunk ids. Every cited chunk_id must exist in the
-    collection, and its excerpt must be contained in the stored chunk text.
-    Returns a list of error strings (empty = verified).
-    """
     # only accepted if their citations can be resolved to real stored chunks.
     from .vector_store import get_collection
 
@@ -220,27 +189,16 @@ def _verify_sources(payload):
 
 
 class LLMGenerator:
-    """LLM-backed generator: tool-calling retrieval loop, temperature 0,
-    and schema validation with one corrective retry."""
 
     MAX_TOOL_ROUNDS = 4
 
     def __init__(self, model=None):
-        # prediction model; because it can only predict from what it sees, the
-        # right retrieved context must be fed to it first.
-        # decoder-only (predicts the next token); the embedding model is
-        # encoder-only (one vector per input) — different architectures,
-        # different jobs.
-        # LM Studio, OpenAI itself) via the same client.
         from openai import OpenAI
 
         self.client = OpenAI(base_url=config.LLM_BASE_URL, api_key=config.LLM_API_KEY)
         self.model = model or config.LLM_MODEL
 
     def generate(self, query, where=None):
-        # Graceful degradation: if the LLM call fails for any reason (server
-        # gone mid-request, model unload, malformed tool args), fall back to
-        # the grounded extractive generator instead of crashing.
         try:
             return self._generate_llm(query, where=where)
         except Exception as exc:
@@ -251,11 +209,6 @@ class LLMGenerator:
             return ExtractiveGenerator().generate(query, where=where)
 
     def _generate_llm(self, query, where=None):
-        # contracts and amendments; RAG feeds it the right document first so it
-        # answers from facts, not from training data.
-        # them directly in the prompt. Weak models hallucinate far less when the
-        # evidence is in front of them; the retrieve_chunks tool stays available
-        # for follow-up searches.
         initial_hits = retrieve(query, where=where)
         context = json.dumps(_chunks_payload(initial_hits), indent=2)
         user_content = (
@@ -267,12 +220,8 @@ class LLMGenerator:
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_content},
         ]
-        # we run the search in Python -> results go back -> final JSON answer.
         message = None
         for _ in range(self.MAX_TOOL_ROUNDS):
-            # traceable answers.
-            # decoding: always the single most likely next token; no randomness
-            # is acceptable when answers must be grounded and repeatable.
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
@@ -285,9 +234,6 @@ class LLMGenerator:
                 break
             messages.append(message)
             for call in message.tool_calls:
-                # retrieve_chunks() requests in one response (one per
-                # sub-question); every result is collected before the next
-                # round generates the answer.
                 args = json.loads(call.function.arguments or "{}")
                 tool_where = (
                     {"document_type": args["document_type"]}
@@ -333,9 +279,6 @@ class LLMGenerator:
                 )
                 _log_usage(retry)
                 message = retry.choices[0].message
-        # The LLM could not produce a verified grounded answer even after the
-        # corrective retry — fall back to the extractive generator, which is
-        # grounded by construction, rather than emitting an ungrounded answer.
         import sys
 
         print("Warning: LLM answer failed validation twice; using extractive fallback.",
@@ -344,12 +287,6 @@ class LLMGenerator:
 
 
 def get_generator(backend=None):
-    """Pick a generator backend.
-
-    backend="llm" forces the LLM path; "extractive" forces the offline path;
-    None/"auto" uses the LLM only if its endpoint is actually reachable AND
-    has at least one usable model.
-    """
     if backend == "auto":
         backend = None
     if backend == "extractive":

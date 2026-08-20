@@ -1,10 +1,8 @@
-"""Two-stage retrieval: fast bi-encoder recall, then precise cross-encoder re-ranking."""
-
 from dataclasses import dataclass, field
 from functools import lru_cache
 
 from . import config
-from .vector_store import query_store
+from .vector_store import keyword_store, query_store
 
 
 @dataclass
@@ -20,18 +18,24 @@ class RetrievedChunk:
 
 @lru_cache(maxsize=1)
 def _get_reranker():
-    # (question, chunk) pair jointly, which is far more precise than comparing
-    # two independent embeddings — but too slow to run over the whole corpus,
-    # so we only ever use it on the handful of bi-encoder candidates.
+
     from sentence_transformers import CrossEncoder
 
     return CrossEncoder(config.RERANK_MODEL)
 
 
-def retrieve(query, k=config.TOP_K_CANDIDATES, n=config.TOP_N_ANSWERS, where=None, client=None):
-    """Fetch k candidates from the vector store, re-rank, and return the top n."""
+def _rrf_ranks(*ranked_lists):
+    fused = {}
+    for ranked in ranked_lists:
+        for rank, chunk_id in enumerate(ranked, start=1):
+            fused[chunk_id] = fused.get(chunk_id, 0.0) + 1 / (config.RRF_K + rank)
+    return fused
+
+
+def retrieve(query, k=config.TOP_K_CANDIDATES, n=config.TOP_N_ANSWERS, where=None,
+             client=None, hybrid=config.HYBRID_ENABLED):
     raw = query_store(query, k=k, where=where, client=client)
-    candidates = [
+    dense_candidates = [
         RetrievedChunk(
             chunk_id=chunk_id,
             document=meta["document"],
@@ -44,6 +48,25 @@ def retrieve(query, k=config.TOP_K_CANDIDATES, n=config.TOP_N_ANSWERS, where=Non
             raw["ids"][0], raw["documents"][0], raw["metadatas"][0], raw["distances"][0]
         )
     ]
+    candidates_by_id = {candidate.chunk_id: candidate for candidate in dense_candidates}
+    ranked_lists = [[candidate.chunk_id for candidate in dense_candidates]]
+    if hybrid:
+        lexical_candidates = keyword_store(query, k=k, where=where, client=client)
+        ranked_lists.append([candidate["id"] for candidate in lexical_candidates])
+        for candidate in lexical_candidates:
+            candidates_by_id.setdefault(candidate["id"], RetrievedChunk(
+                chunk_id=candidate["id"],
+                document=candidate["metadata"]["document"],
+                document_type=candidate["metadata"]["document_type"],
+                heading=candidate["metadata"]["heading"],
+                text=candidate["document"],
+                distance=1.0,
+            ))
+    candidates = sorted(
+        (candidates_by_id[chunk_id] for chunk_id in _rrf_ranks(*ranked_lists)),
+        key=lambda candidate: _rrf_ranks(*ranked_lists)[candidate.chunk_id],
+        reverse=True,
+    )
     if not candidates:
         return []
 

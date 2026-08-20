@@ -1,9 +1,3 @@
-"""Input guardrails: block prompt-injection attempts and drafting requests.
-
-Screening happens *before* the query reaches retrieval or generation, so the
-model is never asked to comply with a hostile instruction.
-"""
-
 import re
 
 # phrases like "ignore instructions", "you are now", "disregard the above" in
@@ -37,13 +31,6 @@ _DRAFTING_RES = [re.compile(p, re.IGNORECASE) for p in DRAFTING_PATTERNS]
 
 
 def screen_query(query):
-    """Screen a user question before it enters the pipeline.
-
-    Returns (allowed, reason): allowed=False means respond with the canned
-    rejection message for `reason` ("injection" or "drafting").
-    """
-    # pipeline; flagged inputs are rejected with a fixed safe response and never
-    # passed to the model.
     for pattern in _INJECTION_RES:
         if pattern.search(query):
             return False, "injection"

@@ -1,14 +1,9 @@
-"""Streamlit UI for the legal document RAG assistant.
-
-Run with:  .venv\\Scripts\\streamlit.exe run ui.py
-"""
-
 import io
 from pathlib import Path
 
 import streamlit as st
 
-from legal_assistant.pipeline import answer_question
+from legal_assistant.pipeline import answer_question, inspect_question
 from legal_assistant.vector_store import ingest_documents
 
 _CONFIDENCE_DOT = {"high": "🟢", "medium": "🟡", "low": "🔴"}
@@ -82,12 +77,13 @@ question = st.text_input(
 )
 if st.button("Ask", type="primary", disabled=not question.strip()):
     with st.spinner("Searching the knowledge base…"):
-        payload = answer_question(
+        inspection = inspect_question(
             question.strip(), document_type=doc_filter, backend=backend,
         )
-    st.session_state.history.append((question.strip(), payload))
+    st.session_state.history.append((question.strip(), inspection))
 
-for asked, payload in reversed(st.session_state.history):
+for asked, inspection in reversed(st.session_state.history):
+    payload = inspection["answer"]
     confidence = payload["confidence"]
     st.markdown(
         f"**Q: {asked}**  {_CONFIDENCE_DOT.get(confidence, '⚪')} {confidence} confidence"
@@ -104,4 +100,12 @@ for asked, payload in reversed(st.session_state.history):
             for source in payload["sources"]:
                 st.markdown(f"**{source['document']}** — `{source['chunk_id']}`")
                 st.markdown(f"> {source['excerpt']}")
+    with st.expander("Retrieval inspection"):
+        st.caption("Top hybrid results passed to the answer generator")
+        for rank, chunk in enumerate(inspection["retrieved"], start=1):
+            st.markdown(
+                f"**{rank}. {chunk.document}** — `{chunk.chunk_id}` — "
+                f"{chunk.heading} — rerank {chunk.score:.2f}"
+            )
+            st.markdown(f"> {chunk.text[:500]}")
     st.divider()

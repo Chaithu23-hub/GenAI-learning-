@@ -7,7 +7,8 @@ library. Built as a hands-on map of the AI learning curriculum — every impleme
 ## What it does
 
 - Ingests markdown legal documents from `data/legal/` (chunking → embedding → Chroma).
-- Answers questions with a two-stage retriever (bi-encoder recall + cross-encoder re-ranking).
+- Answers questions with hybrid retrieval (dense meaning search + exact-term search fused with
+  reciprocal rank fusion) followed by cross-encoder re-ranking.
 - Responds in a strict JSON shape: `answer`, `reasoning` (step-by-step chain of thought),
   `sources` (document + chunk_id + excerpt), `confidence`, `out_of_scope`.
 - Refuses out-of-library questions, prompt-injection attempts, and requests to draft or modify
@@ -25,9 +26,14 @@ library. Built as a hands-on map of the AI learning curriculum — every impleme
                  └───────────────┬──────────────────────────────────────────────┘
                                  ▼
                  ┌─────────────────────────────┐      ┌──────────────────────────┐
-                 │ STAGE 1 — bi-encoder        │      │ Chroma (HNSW, cosine)    │
+                 │ STAGE 1 — hybrid recall     │      │ Chroma (HNSW, cosine)    │
                  │ all-MiniLM-L6-v2 embedding  │◄────►│ data/chroma/             │
                  │ similarity search, top-K=5  │      └──────────────────────────┘
+                 └───────────────┬─────────────┘
+                                 ▲
+                 ┌───────────────┴─────────────┐
+                 │ exact-term BM25-style scan  │
+                 │ + reciprocal rank fusion    │
                  └───────────────┬─────────────┘
                                  ▼
                  ┌─────────────────────────────┐
@@ -96,10 +102,8 @@ First `ingest`/`ask` run downloads the two models (~200 MB total, cached afterwa
 
 ```powershell
 python main.py ingest
-python main.py ask "What is the late payment fee under the Master Services Agreement?"
-python main.py ask "What changes did Amendment No. 1 make?" --json
-python main.py ask "How long is the contract term?" --filter contract
-python main.py chat            # interactive loop
+.venv\Scripts\streamlit.exe run ui.py  # ask questions through the UI
+python main.py evaluate        # before/after hit-rate@3 on labeled questions
 ```
 
 Try these questions against the bundled corpus:
@@ -158,6 +162,14 @@ pytest tests/
 
 `tests/test_pipeline.py` runs the full pipeline against a throwaway Chroma store
 (downloads the models on first run; unit tests in the other files need no models).
+
+## Week 4 retrieval proof
+
+`python main.py evaluate` compares the old dense-only path with the current hybrid path on five
+labeled questions from the bundled amendment brief. A hit counts when a chunk with the labeled
+section heading appears in the top three. The Streamlit **Retrieval inspection** panel shows the
+question's retrieved chunks, rerank scores, and final grounded answer together, which separates
+retrieval failures from generation failures.
 
 ## Curriculum coverage
 

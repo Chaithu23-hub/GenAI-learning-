@@ -1,30 +1,22 @@
-"""Chroma vector store: persistence, ingestion, and similarity queries."""
-
+import math
+import re
 from pathlib import Path
+import chromadb
 
 from . import config
 from .chunking import chunk_document
 from .embeddings import embed, embed_query
 
 COLLECTION_NAME = "legal_docs"
+TOKEN_RE = re.compile(r"[a-z0-9]+(?:[-'][a-z0-9]+)*")
 
 
 def document_type_for(filename):
-    """Derive the document_type metadata value from the filename convention.
-
-    Files named `amendment_*` are amendments; everything else is a contract.
-    """
     return "amendment" if Path(filename).stem.lower().startswith("amendment") else "contract"
 
 
 def get_collection(client=None):
-    """Return (creating if needed) the persisted Chroma collection."""
-    import chromadb
-
-    # client for Qdrant in production, or pgvector if the stack already runs
-    # on Postgres.
-    # and indexes them with HNSW, so nearest-neighbour search stays fast as
-    # the corpus grows. Cosine space matches our normalized embeddings.
+ 
     client = client or chromadb.PersistentClient(path=str(config.CHROMA_DIR))
     return client.get_or_create_collection(
         name=COLLECTION_NAME,
@@ -33,10 +25,7 @@ def get_collection(client=None):
 
 
 def ingest_documents(docs_dir=None, client=None):
-    """Chunk, embed, and upsert every markdown document in `docs_dir`.
 
-    Returns the total number of chunks stored.
-    """
     docs_dir = docs_dir or config.DOCS_DIR
     collection = get_collection(client)
     docs = sorted(Path(docs_dir).glob("*.md"))
@@ -56,19 +45,65 @@ def ingest_documents(docs_dir=None, client=None):
                 "chunk_index": chunk.index,
             })
 
-    # and store the vectors alongside metadata for later filtering.
     collection.upsert(ids=ids, documents=texts, embeddings=embed(texts), metadatas=metadatas)
     return len(ids)
 
 
 def query_store(query, k=config.TOP_K_CANDIDATES, where=None, client=None):
-    """Run similarity search for `query` and return raw Chroma results."""
     collection = get_collection(client)
-    # nearest-neighbour chunks of the question embedding.
-    # "amendment"}) narrows the candidate set before/alongside the ANN search.
     return collection.query(
         query_embeddings=[embed_query(query)],
         n_results=k,
         where=where,
         include=["documents", "metadatas", "distances"],
     )
+
+
+def keyword_store(query, k=config.TOP_K_CANDIDATES, where=None, client=None):
+    collection = get_collection(client)
+    stored = collection.get(include=["documents", "metadatas"], where=where)
+    documents = stored.get("documents", [])
+    if not documents:
+        return []
+
+    query_terms = TOKEN_RE.findall(query.lower())
+    if not query_terms:
+        return []
+    term_frequency = []
+    document_frequency = {}
+    lengths = []
+    for document in documents:
+        terms = TOKEN_RE.findall(document.lower())
+        lengths.append(len(terms))
+        frequencies = {}
+        for term in terms:
+            frequencies[term] = frequencies.get(term, 0) + 1
+        term_frequency.append(frequencies)
+        for term in set(terms):
+            document_frequency[term] = document_frequency.get(term, 0) + 1
+
+    average_length = sum(lengths) / len(lengths) or 1
+    scored = []
+    for index, frequencies in enumerate(term_frequency):
+        score = 0.0
+        for term in query_terms:
+            frequency = frequencies.get(term, 0)
+            if not frequency:
+                continue
+            idf = math.log(1 + (len(documents) - document_frequency[term] + 0.5)
+                           / (document_frequency[term] + 0.5))
+            normalization = frequency + 1.5 * (0.25 + 0.75 * lengths[index] / average_length)
+            score += idf * frequency * 2.5 / normalization
+        if score:
+            scored.append((score, index))
+
+    scored.sort(reverse=True)
+    return [
+        {
+            "id": stored["ids"][index],
+            "document": documents[index],
+            "metadata": stored["metadatas"][index],
+        }
+        for _, index in scored[:k]
+    ]
+    
