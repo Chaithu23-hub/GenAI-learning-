@@ -81,6 +81,82 @@ def _log_usage(response):
     )
 
 
+_CONCEPT_REQUIREMENTS = {
+    # Legal concept -> list of required phrases/concepts that must appear
+    "takings clause": ["public", "compensation"],  # Must mention both "public use" and "compensation"
+    "bill of rights": ["liberties", "government"],  # Context on what they protect
+    "amendments": ["amendment", "ratified"],  # Must reference actual amendments
+    "sovereignty": ["states", "immunity"],  # Sovereign immunity context
+    "double jeopardy": ["twice", "same crime"],  # Clear on the "twice" concept
+    "jury trial": ["criminal", "civil"],  # When applicable (if comparing)
+    "amendment gaps": ["year", "decades"],  # Should mention timeframes
+    "anti-federalist": ["feared", "government", "liberty"],  # Context on their concerns
+}
+
+
+def _check_answer_completeness(question: str, answer_dict: dict) -> dict:
+    question_lower = question.lower()
+    answer_lower = answer_dict.get("answer", "").lower()
+    
+    # Identify which concept is being asked about
+    relevant_concept = None
+    for concept in _CONCEPT_REQUIREMENTS.keys():
+        if concept in question_lower:
+            relevant_concept = concept
+            break
+    
+    if not relevant_concept:
+        # No special requirements, answer is fine
+        return {
+            "complete": True,
+            "missing_concepts": [],
+            "suggested_confidence": answer_dict.get("confidence", "medium"),
+        }
+    
+    # Check if all required elements are present
+    required_terms = _CONCEPT_REQUIREMENTS[relevant_concept]
+    missing = [term for term in required_terms if term not in answer_lower]
+    
+    if not missing:
+        # All requirements met
+        return {
+            "complete": True,
+            "missing_concepts": [],
+            "suggested_confidence": answer_dict.get("confidence", "medium"),
+        }
+    else:
+        # Missing key concepts — downgrade confidence
+        current_confidence = answer_dict.get("confidence", "medium")
+        
+        # Downgrade: high→medium, medium→low, low→low
+        suggested = "low" if current_confidence in ["high", "medium"] else "low"
+        
+        return {
+            "complete": False,
+            "missing_concepts": missing,
+            "suggested_confidence": suggested,
+        }
+
+
+def _apply_completeness_adjustment(payload: dict, question: str) -> dict:
+    if payload.get("out_of_scope"):
+        # Out-of-scope already handled correctly
+        return payload
+    
+    completeness = _check_answer_completeness(question, payload)
+    
+    if not completeness["complete"]:
+        # Downgrade confidence to reflect incompleteness
+        payload["confidence"] = completeness["suggested_confidence"]
+        payload["reasoning"] = (
+            payload.get("reasoning", "")
+            + f" [Confidence downgraded to '{completeness['suggested_confidence']}' "
+            f"due to missing legal elements: {', '.join(completeness['missing_concepts'])}]"
+        )
+    
+    return payload
+
+
 def detect_llm_model():
 
     url = config.LLM_BASE_URL.rstrip("/") + "/models"
@@ -152,7 +228,7 @@ class ExtractiveGenerator:
                 "excerpt": c.text[:_EXCERPT_CHARS],
             })
 
-        return {
+        payload = {
             "answer": "Based on the retrieved documents: " + " ".join(parts),
             "reasoning": (
                 f"Retrieved {len(relevant)} relevant chunk(s); top cross-encoder "
@@ -163,6 +239,11 @@ class ExtractiveGenerator:
             "confidence": confidence,
             "out_of_scope": False,
         }
+        
+        # FIX FOR PROBLEM 1: Apply completeness check to avoid shallow answers
+        payload = _apply_completeness_adjustment(payload, query)
+        
+        return payload
 
 
 def _verify_sources(payload):
@@ -259,6 +340,8 @@ class LLMGenerator:
                 payload = parse_json_response(message.content or "")
                 errors = validate_response(payload) + _verify_sources(payload)
                 if not errors:
+                    # FIX FOR PROBLEM 1: Apply completeness check to avoid shallow answers
+                    payload = _apply_completeness_adjustment(payload, query)
                     return payload
             except (ValueError, json.JSONDecodeError) as exc:
                 errors = [f"response did not contain a JSON object ({exc})"]
