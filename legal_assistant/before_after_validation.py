@@ -65,7 +65,7 @@ def test_case(question, problem_type="shallow_answer"):
 def run_before_after_test():
     """Run all test cases and show before/after comparison."""
     print("\n" + "=" * 80)
-    print("WEEK 6: BEFORE/AFTER VALIDATION")
+    print("BEFORE/AFTER VALIDATION")
     print("Fix Target: Problem 1 — Shallow/Thin Answers")
     print("=" * 80)
     
@@ -121,10 +121,10 @@ def run_before_after_test():
     print("✓ Users → less likely to trust incomplete answers")
     
     print("\n" + "=" * 80)
-    print("DELIVERABLE: Week 6")
+    print("DELIVERABLE: Evaluation improvements")
     print("=" * 80)
-    print("\n✓ Test set runs with one command: pytest tests/test_evals_week6.py")
-    print("✓ Regression tests from Week 5 included: 20 traces")
+    print("\n✓ Test set runs with one command: pytest tests/evaluation_tests.py")
+    print("✓ Regression tests included: 20 traces")
     print("✓ Judge validated: tests/test_judge_validation.py")
     print("✓ Fix implemented: Problem 1 completeness check in generator.py")
     print("✓ Before/after scores: shown above (shallow answers now marked low-confidence)")
