@@ -5,8 +5,8 @@
 Learning project: a grounded RAG pipeline over sample legal documents (2 contracts +
 2 amendments in `data/legal/`). Retrieval is fully local (sentence-transformers bi-encoder +
 Chroma/HNSW + cross-encoder re-ranking). Generation defaults to an offline extractive fallback;
-an LLM backend activates automatically when an OpenAI-compatible endpoint (e.g. Ollama) is
-reachable, or via `--backend llm`.
+the optional LLM backend uses Google Gemini when `GOOGLE_API_KEY` is configured, or via
+`--backend llm`.
 
 ## Environment
 

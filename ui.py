@@ -20,7 +20,7 @@ with st.sidebar:
     backend = st.selectbox(
         "Generation backend",
         ["auto", "extractive", "llm"],
-        help="auto = use the LLM if an OpenAI-compatible endpoint is reachable, "
+        help="auto = use Google Gemini when GOOGLE_API_KEY is configured, "
              "otherwise the offline extractive generator.",
     )
     doc_filter = st.selectbox(
