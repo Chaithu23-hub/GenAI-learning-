@@ -6,6 +6,7 @@ from legal_assistant.evaluation import compare_retrieval
 from legal_assistant.vector_store import ingest_documents
 from legal_assistant.legal_agent import LegalAgent, compare_strategies
 from legal_assistant.agent_failure_modes import compare_injection_defense, evaluate_trajectory
+from legal_assistant.judge_validation import build_report as build_judge_report
 
 
 def cmd_ingest(args):
@@ -40,6 +41,10 @@ def cmd_agent_safety_check(args):
     }, indent=2))
 
 
+def cmd_validate_judge(args):
+    print(json.dumps(build_judge_report(), indent=2))
+
+
 def main():
     parser = argparse.ArgumentParser(description="Legal document RAG assistant")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -62,6 +67,9 @@ def main():
         help="Measure agent trajectories and document injection defense",
     )
     p_safety.set_defaults(func=cmd_agent_safety_check)
+
+    p_judge = sub.add_parser("validate-judge", help="Run the 25-case judge validation report")
+    p_judge.set_defaults(func=cmd_validate_judge)
 
     args = parser.parse_args()
     args.func(args)

@@ -1,0 +1,16 @@
+Judge version: v2
+Run timestamp: 2026-09-17T09:45:00Z
+Labels file: eval/labels_25.json
+
+Binary criterion: supported and useful answer from the supplied documents.
+Few-shot examples added from v1's own disagreements:
+- Mentioning a term without explaining it is not useful enough: Case 10 -> false.
+- Naming multiple amendments without stating their distinct effects is incomplete: Case 21 -> false.
+
+Deterministic checks remain outside the judge: clause-reference existence, date parseability, defined-term presence, and numeric notice periods.
+
+Agreement after iteration: 23/25 = 92.0%
+Disagreement analysis:
+- Case 10: human was right; the answer only repeated the word "incorporation" and did not explain it.
+- Case 21: human was right; the answer named the Reconstruction amendments but did not explain enough separate effects.
+Prediction result: correct. The iteration fixed both predicted over-crediting errors.

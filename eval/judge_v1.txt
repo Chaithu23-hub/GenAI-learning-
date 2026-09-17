@@ -1,0 +1,12 @@
+Judge version: v1
+Run timestamp: 2026-09-17T09:30:00Z
+Labels file: eval/labels_25.json
+
+Binary criterion: supported and useful answer from the supplied documents.
+Deterministic checks are intentionally excluded from this prompt: clause-reference existence, date parseability, defined-term presence, and numeric notice periods.
+
+v1 disagreements selected for iteration:
+- Case 10, "What does incorporation mean?": judge=true; human=false. The answer repeated a parenthetical mention without defining the process.
+- Case 21, "What did the Reconstruction era amendments accomplish?": judge=true; human=false. The answer named the amendments but omitted enough of their separate effects.
+
+Agreement before iteration: 21/25 = 84.0%
