@@ -4,6 +4,7 @@ import json
 from legal_assistant import config
 from legal_assistant.evaluation import compare_retrieval
 from legal_assistant.vector_store import ingest_documents
+from legal_assistant.legal_agent import LegalAgent, compare_strategies
 
 
 def cmd_ingest(args):
@@ -13,6 +14,18 @@ def cmd_ingest(args):
 
 def cmd_evaluate(args):
     print(json.dumps(compare_retrieval(k=args.k), indent=2))
+
+
+def cmd_agent(args):
+    if args.strategy == "agent":
+        report = LegalAgent().run(args.question)
+    elif args.strategy == "fixed":
+        from legal_assistant.legal_agent import run_fixed_workflow
+
+        report = run_fixed_workflow(args.question)
+    else:
+        report = compare_strategies(args.question, runs=args.runs)
+    print(json.dumps(report, indent=2))
 
 
 def main():
@@ -25,6 +38,12 @@ def main():
     p_evaluate = sub.add_parser("evaluate", help="Compare dense and hybrid hit-rate@k")
     p_evaluate.add_argument("--k", type=int, default=3)
     p_evaluate.set_defaults(func=cmd_evaluate)
+
+    p_agent = sub.add_parser("agent", help="Run or compare the legal agent loop")
+    p_agent.add_argument("question")
+    p_agent.add_argument("--strategy", choices=["agent", "fixed", "compare"], default="compare")
+    p_agent.add_argument("--runs", type=int, default=3)
+    p_agent.set_defaults(func=cmd_agent)
 
     args = parser.parse_args()
     args.func(args)

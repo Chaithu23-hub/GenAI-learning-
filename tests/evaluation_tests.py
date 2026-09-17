@@ -418,8 +418,8 @@ def eval_summary():
 def pytest_sessionfinish(session, exitstatus):
     """Print summary at end of test run."""
     print("\n" + "=" * 70)
-    print("EVAL SUMMARY — Week 6 Regression Tests")
+    print("EVAL SUMMARY — Regression Tests")
     print("=" * 70)
-    print("20 traces from Week 5 converted to permanent tests")
+    print("20 traces converted to permanent tests")
     print("Use this to measure before/after improvement")
     print("=" * 70)
