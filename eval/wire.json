@@ -1,0 +1,40 @@
+{
+  "annotations": {
+    "jsonrpc": "Protocol version marker for every MCP JSON-RPC message.",
+    "id": "Correlates each request with its response.",
+    "method": "The MCP operation: initialize, tools/list, or tools/call.",
+    "params": "Arguments for the operation; tools/call contains the discovered tool name and arguments.",
+    "result": "Successful server response.",
+    "serverInfo": "Identity of the MCP server, not the model host.",
+    "capabilities": "Features the server advertises during handshake.",
+    "tools": "The discovered tool definitions returned by tools/list.",
+    "content": "The tool result returned to the host.",
+    "model_location": "The model runs in the host application; neither MCP server makes a model call."
+  },
+  "exchange": [
+    {
+      "direction": "host -> contract-repository",
+      "message": {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "legal-assistant-host", "version": "1.0"}}}
+    },
+    {
+      "direction": "contract-repository -> host",
+      "message": {"jsonrpc": "2.0", "id": 1, "result": {"protocolVersion": "2025-06-18", "capabilities": {"tools": {}}, "serverInfo": {"name": "contract-repository", "version": "1.0"}}}
+    },
+    {
+      "direction": "host -> contract-repository",
+      "message": {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}
+    },
+    {
+      "direction": "contract-repository -> host",
+      "message": {"jsonrpc": "2.0", "id": 2, "result": {"tools": [{"name": "lookup_contract"}, {"name": "get_effective_date"}, {"name": "get_amendment_chain"}]}}
+    },
+    {
+      "direction": "host -> contract-repository",
+      "message": {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "lookup_contract", "arguments": {"contract_id": "MSA-2021-0142"}}}
+    },
+    {
+      "direction": "contract-repository -> host",
+      "message": {"jsonrpc": "2.0", "id": 3, "result": {"content": [{"type": "text", "text": "MSA-2021-0142 effective 2021-01-14; amendment AM-2023-02 effective 2023-06-01"}]}}
+    }
+  ]
+}

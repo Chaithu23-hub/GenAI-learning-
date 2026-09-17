@@ -1,0 +1,3 @@
+Agent module: legal_assistant/legal_agent.py
+Server one -> server one plus server two changed lines: 0
+Proof: the MCP server list is extended only in mcp_servers.json; legal_agent.py is unchanged.

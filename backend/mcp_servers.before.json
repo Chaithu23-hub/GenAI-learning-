@@ -1,0 +1,9 @@
+{
+  "servers": [
+    {
+      "name": "clause-search",
+      "command": "python",
+      "args": ["-m", "mcp_servers.clause_search_server"]
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+Live tools/list discovery:
+Before: 2 tools from clause-search -> search_clauses, get_contract_clause
+After: 5 tools from tools/list -> clause-search.search_clauses, clause-search.get_contract_clause, contract-repository.lookup_contract, contract-repository.get_effective_date, contract-repository.get_amendment_chain
+Query trace: contract-repository.lookup_contract(MSA-2021-0142)
