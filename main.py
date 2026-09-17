@@ -5,6 +5,7 @@ from legal_assistant import config
 from legal_assistant.evaluation import compare_retrieval
 from legal_assistant.vector_store import ingest_documents
 from legal_assistant.legal_agent import LegalAgent, compare_strategies
+from legal_assistant.agent_failure_modes import compare_injection_defense, evaluate_trajectory
 
 
 def cmd_ingest(args):
@@ -28,6 +29,17 @@ def cmd_agent(args):
     print(json.dumps(report, indent=2))
 
 
+def cmd_agent_safety_check(args):
+    trajectory = LegalAgent().run("What is the late payment fee?")
+    before, after = compare_injection_defense()
+    print(json.dumps({
+        "trajectory": evaluate_trajectory(trajectory),
+        "trajectory_report": trajectory,
+        "injection_before": before,
+        "injection_after": after,
+    }, indent=2))
+
+
 def main():
     parser = argparse.ArgumentParser(description="Legal document RAG assistant")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -44,6 +56,12 @@ def main():
     p_agent.add_argument("--strategy", choices=["agent", "fixed", "compare"], default="compare")
     p_agent.add_argument("--runs", type=int, default=3)
     p_agent.set_defaults(func=cmd_agent)
+
+    p_safety = sub.add_parser(
+        "agent-safety-check",
+        help="Measure agent trajectories and document injection defense",
+    )
+    p_safety.set_defaults(func=cmd_agent_safety_check)
 
     args = parser.parse_args()
     args.func(args)
