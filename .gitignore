@@ -1,14 +1,38 @@
+# Global
+.DS_Store
+.idea/
+.vscode/
+*.log
 .venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
-data/chroma/
-.idea/
-.vscode/
-.DS_Store
-*.log
 *.sqlite3
 *.db
 .env
+.env.*
 env/
 venv/
+
+# Backend
+backend/.venv/
+backend/venv/
+backend/env/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/*.py[cod]
+backend/*.sqlite3
+backend/*.db
+backend/.env
+backend/data/chroma/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.angular/
+frontend/coverage/
+frontend/*.local
+frontend/.env
+frontend/.env.*
+frontend/.eslintcache

@@ -1,0 +1,77 @@
+<div class="chat-container">
+  @for (item of history; track $index) {
+    <div class="message user-message">
+      <div class="message-content">
+        <p>{{ item.question }}</p>
+      </div>
+    </div>
+
+    @if (item.isLoading) {
+      <div class="message system-message">
+        <div class="message-content loading-content">
+          <div class="typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (item.error) {
+      <div class="message system-message error">
+        <div class="message-content">
+          <p>{{ item.error }}</p>
+        </div>
+      </div>
+    }
+
+    @if (!item.isLoading && !item.error && item.answer) {
+      <div class="message system-message">
+        <div class="message-content">
+          <!-- Confidence Badge -->
+          <div class="message-header">
+            <app-badge [confidence]="item.confidence || 'medium'"></app-badge>
+            @if (item.out_of_scope) {
+              <span class="badge" style="background: rgba(255,100,100,0.2); color: #ff8888; border: 1px solid rgba(255,100,100,0.3)">
+                Out of Scope
+              </span>
+            }
+          </div>
+
+          <!-- Answer -->
+          <div class="answer-text">
+            <p>{{ item.answer }}</p>
+          </div>
+
+          <!-- Reasoning -->
+          @if (item.reasoning) {
+            <div class="reasoning-box">
+              <h4>Chain of Thought</h4>
+              <p>{{ item.reasoning }}</p>
+            </div>
+          }
+
+          <!-- Sources -->
+          @if (item.sources && item.sources.length > 0) {
+            <div class="sources-section">
+              <h4>Retrieved Sources</h4>
+              <div class="sources-grid">
+                @for (source of item.sources; track source.chunk_id) {
+                  <app-source-card [source]="source"></app-source-card>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  }
+
+  @if (history.length === 0) {
+    <div class="empty-state">
+      <h3>Legal Document Assistant</h3>
+      <p>Ask a question about the contracts and amendments in the knowledge base.</p>
+    </div>
+  }
+</div>

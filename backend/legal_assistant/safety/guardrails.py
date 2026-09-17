@@ -1,0 +1,41 @@
+import re
+
+# [Guardrails] [Prompt injection]
+# screen_query() checks for injection and drafting patterns before any retrieval
+# or model call is made. An optional filler word between determiner and noun is
+# tolerated (e.g. "forget your *earlier* instructions").
+
+INJECTION_PATTERNS = [
+    r"ignore\s+(all\s+|any\s+)?(previous|prior|above|earlier|preceding|your|the)\s+(?:\w+\s+)?(instructions|rules|prompts)",
+    r"disregard\s+(all\s+)?(previous|prior|your|the|earlier)\s+(?:\w+\s+)?(instructions|rules|prompts)",
+    r"forget\s+(all\s+)?(previous|prior|your|the|earlier)\s+(?:\w+\s+)?(instructions|rules|training|prompts)",
+    r"override\s+(your|the|all)\s+(instructions|rules|guardrails|safety)",
+    r"pretend\s+(you\s+are|you're|to\s+be)",
+    r"you\s+are\s+now\s+",
+    r"act\s+as\s+(if|a|an)\b",
+    r"new\s+instructions?\s*:",
+    r"\breveal\b.*\bsystem\s+prompt\b",
+    r"\bDAN\s+mode\b",
+    r"\bjailbreak",
+]
+
+DRAFTING_PATTERNS = [
+    r"\b(draft|write|compose|create)\b.*\b(contract|clause|amendment|agreement|nda)\b",
+    r"\b(draft|write|compose|create)\b\s+(me\s+)?(a|an|the)\b.*\b(terms?|language|provision)\b",
+    r"\b(rewrite|modify|revise|redline)\b.*\b(clause|contract|section|agreement|terms?)\b",
+    r"\badd\s+a\s+(new\s+)?(clause|section|provision)\b",
+]
+
+_INJECTION_RES = [re.compile(p, re.IGNORECASE) for p in INJECTION_PATTERNS]
+_DRAFTING_RES = [re.compile(p, re.IGNORECASE) for p in DRAFTING_PATTERNS]
+
+
+def screen_query(query):
+    """Return (allowed: bool, reason: str | None). reason is 'injection' or 'drafting'."""
+    for pattern in _INJECTION_RES:
+        if pattern.search(query):
+            return False, "injection"
+    for pattern in _DRAFTING_RES:
+        if pattern.search(query):
+            return False, "drafting"
+    return True, None
