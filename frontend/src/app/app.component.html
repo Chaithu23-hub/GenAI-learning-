@@ -1,0 +1,65 @@
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand-lockup">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M12 3v18M5 7h14M7 7l-3 7a3 3 0 0 0 6 0L7 7Zm10 0-3 7a3 3 0 0 0 6 0l-3-7ZM8 21h8" />
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">Legal<span>RAG</span></div>
+        <div class="brand-subtitle">Contract intelligence workspace</div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <span class="status-pill"><span class="status-dot"></span> Local knowledge base</span>
+      <a href="/api/docs" target="_blank" rel="noopener noreferrer" class="docs-link">API docs <span aria-hidden="true">↗</span></a>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <section class="workspace-heading" [class.has-history]="history.length > 0">
+      <div class="eyebrow">LEGAL RESEARCH ASSISTANT</div>
+      <h1>Ask the documents.<br /><em>Keep the answer grounded.</em></h1>
+      @if (history.length === 0) {
+        <p class="intro-copy">Search your contracts and amendments with answers tied back to the exact passages that support them.</p>
+      }
+    </section>
+
+    <section class="conversation" aria-live="polite">
+      <app-chat-panel [history]="history"></app-chat-panel>
+    </section>
+
+    @if (history.length === 0) {
+      <div class="suggestions" aria-label="Suggested questions">
+        <span class="suggestions-label">Try a question</span>
+        @for (suggestion of suggestions; track suggestion) {
+          <button type="button" class="suggestion" (click)="useSuggestion(suggestion)">{{ suggestion }}</button>
+        }
+      </div>
+    }
+
+    <section class="composer-wrap">
+      <div class="composer-meta">
+        <label for="backend-select">Answer mode</label>
+        <select id="backend-select" [(ngModel)]="backend" [disabled]="isLoading">
+          <option value="auto">Auto</option>
+          <option value="llm">Gemini</option>
+          <option value="extractive">Extractive</option>
+        </select>
+        <span class="composer-hint">Answers cite the local contract library</span>
+      </div>
+      <form (submit)="handleSubmit($event)" class="search-form">
+        <div class="input-shell">
+          <input id="question-input" type="text" class="search-input" placeholder="Ask about a clause, term, or amendment..." [(ngModel)]="query" name="query" [disabled]="isLoading" autocomplete="off" autofocus />
+        </div>
+        <button type="submit" class="search-submit" [disabled]="isLoading || !query.trim()" aria-label="Send question">
+          @if (isLoading) { <span class="spinner" aria-hidden="true"></span> } @else {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 14-8-4 16-3-6-7-2Z"/><path d="m12 14 3-3"/></svg>
+          }
+        </button>
+      </form>
+      <p class="privacy-note"><span aria-hidden="true">⌁</span> Retrieval is grounded in your indexed documents</p>
+    </section>
+  </main>
+</div>
