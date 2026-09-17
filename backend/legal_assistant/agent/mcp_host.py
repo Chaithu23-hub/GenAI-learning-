@@ -16,7 +16,8 @@ class MCPHost:
     """Async context manager that connects to all MCP servers defined in mcp_servers.json."""
 
     def __init__(self, config_path: Path = CONFIG_PATH):
-        self.config = json.loads(config_path.read_text(encoding="utf-8"))
+        self.config_path = config_path.resolve()
+        self.config = json.loads(self.config_path.read_text(encoding="utf-8"))
         self._stack = contextlib.AsyncExitStack()
         self.sessions: dict[str, ClientSession] = {}
         self.discovered: dict[str, list[str]] = {}
@@ -27,7 +28,7 @@ class MCPHost:
             params = StdioServerParameters(
                 command=sys.executable,
                 args=server["args"],
-                cwd=str(CONFIG_PATH.parent),
+                cwd=str(self.config_path.parent),
             )
             read_stream, write_stream = await self._stack.enter_async_context(stdio_client(params))
             session = await self._stack.enter_async_context(ClientSession(read_stream, write_stream))

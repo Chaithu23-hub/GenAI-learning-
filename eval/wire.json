@@ -1,24 +1,30 @@
 {
   "annotations": {
     "jsonrpc": "Protocol version marker for every MCP JSON-RPC message.",
-    "id": "Correlates each request with its response.",
-    "method": "The MCP operation: initialize, tools/list, or tools/call.",
+    "id": "Correlates each request with its response; notifications have no id.",
+    "method": "The MCP operation: initialize, notifications/initialized, tools/list, or tools/call.",
     "params": "Arguments for the operation; tools/call contains the discovered tool name and arguments.",
     "result": "Successful server response.",
     "serverInfo": "Identity of the MCP server, not the model host.",
     "capabilities": "Features the server advertises during handshake.",
-    "tools": "The discovered tool definitions returned by tools/list.",
-    "content": "The tool result returned to the host.",
+    "tools": "The complete tool definitions and input schemas returned by tools/list.",
+    "content": "The tool result content returned to the host.",
+    "structuredContent": "The structured tool result returned by the server.",
+    "isError": "Whether the tool call failed; false means the call succeeded.",
     "model_location": "The model runs in the host application; neither MCP server makes a model call."
   },
   "exchange": [
     {
       "direction": "host -> contract-repository",
-      "message": {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "legal-assistant-host", "version": "1.0"}}}
+      "message": {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-11-25", "capabilities": {}, "clientInfo": {"name": "legal-assistant-host", "version": "1.0"}}}
     },
     {
       "direction": "contract-repository -> host",
-      "message": {"jsonrpc": "2.0", "id": 1, "result": {"protocolVersion": "2025-06-18", "capabilities": {"tools": {}}, "serverInfo": {"name": "contract-repository", "version": "1.0"}}}
+      "message": {"jsonrpc": "2.0", "id": 1, "result": {"protocolVersion": "2025-11-25", "capabilities": {"tools": {"listChanged": false}, "resources": {"subscribe": false, "listChanged": false}, "prompts": {"listChanged": false}}, "serverInfo": {"name": "contract-repository", "version": "1.30.0"}, "instructions": null}}
+    },
+    {
+      "direction": "host -> contract-repository",
+      "message": {"jsonrpc": "2.0", "method": "notifications/initialized", "params": {}}
     },
     {
       "direction": "host -> contract-repository",
@@ -26,7 +32,7 @@
     },
     {
       "direction": "contract-repository -> host",
-      "message": {"jsonrpc": "2.0", "id": 2, "result": {"tools": [{"name": "lookup_contract"}, {"name": "get_effective_date"}, {"name": "get_amendment_chain"}]}}
+      "message": {"jsonrpc": "2.0", "id": 2, "result": {"nextCursor": null, "tools": [{"name": "lookup_contract", "description": "Look up one contract by its repository identifier and return its effective date and amendments.", "inputSchema": {"type": "object", "required": ["contract_id"], "properties": {"contract_id": {"type": "string"}}}}, {"name": "get_effective_date", "description": "Return the executed effective date for one contract identifier.", "inputSchema": {"type": "object", "required": ["contract_id"], "properties": {"contract_id": {"type": "string"}}}}, {"name": "get_amendment_chain", "description": "Return the executed amendment chain for one contract identifier.", "inputSchema": {"type": "object", "required": ["contract_id"], "properties": {"contract_id": {"type": "string"}}}}]}}
     },
     {
       "direction": "host -> contract-repository",
@@ -34,7 +40,7 @@
     },
     {
       "direction": "contract-repository -> host",
-      "message": {"jsonrpc": "2.0", "id": 3, "result": {"content": [{"type": "text", "text": "MSA-2021-0142 effective 2021-01-14; amendment AM-2023-02 effective 2023-06-01"}]}}
+      "message": {"jsonrpc": "2.0", "id": 3, "result": {"content": [{"type": "text", "text": "{\n  \"contract_id\": \"MSA-2021-0142\",\n  \"effective_date\": \"2021-01-14\",\n  \"amendments\": [{\"id\": \"AM-2023-02\", \"effective_date\": \"2023-06-01\", \"status\": \"executed\"}]\n}"}], "structuredContent": {"contract_id": "MSA-2021-0142", "effective_date": "2021-01-14", "amendments": [{"id": "AM-2023-02", "effective_date": "2023-06-01", "status": "executed"}]}, "isError": false}}
     }
   ]
 }
