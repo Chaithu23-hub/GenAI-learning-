@@ -5,6 +5,7 @@ from typing import Any, Callable
 from . import config
 from .pipeline import answer_question, detect_metadata_filter
 from .retrieval import retrieve
+from .agent_failure_modes import detect_prompt_injection, sanitize_document_text
 
 
 @dataclass
@@ -51,6 +52,7 @@ class LegalAgent:
                 self._step(state, "check_amendments", "Compare contract and amendment passages.")
             else:
                 self._step(state, "answer", "Produce a grounded answer from the observations.")
+                state.status = "completed"
 
         elapsed = time.perf_counter() - started
         result = state.observations.get("answer", {}).get("payload", self._budget_result(state))
@@ -66,11 +68,18 @@ class LegalAgent:
 
     def _retrieve(self, state):
         chunks = retrieve(state.query, where=detect_metadata_filter(state.query))
+        injection_detected = any(detect_prompt_injection(chunk.text) for chunk in chunks)
         return {
             "documents": [
-                {"document": chunk.document, "chunk_id": chunk.chunk_id, "score": chunk.score}
+                {
+                    "document": chunk.document,
+                    "chunk_id": chunk.chunk_id,
+                    "score": chunk.score,
+                    "text": sanitize_document_text(chunk.text),
+                }
                 for chunk in chunks
-            ]
+            ],
+            "injection_detected": injection_detected,
         }
 
     def _check_amendments(self, state):
@@ -87,6 +96,16 @@ class LegalAgent:
         }
 
     def _answer(self, state):
+        if state.observations["retrieve"].get("injection_detected"):
+            return {
+                "payload": {
+                    "answer": config.GUARDRAIL_ANSWER,
+                    "reasoning": "A retrieved document contained an instruction-like passage and was excluded from answer generation.",
+                    "sources": [],
+                    "confidence": "high",
+                    "out_of_scope": True,
+                }
+            }
         return {"payload": answer_question(state.query, backend="extractive")}
 
     def _budget_result(self, state):
@@ -107,7 +126,7 @@ class LegalAgent:
             "tool_calls": state.tool_calls,
             "estimated_cost_usd": 0.0,
             "elapsed_seconds": round(elapsed, 4),
-            "completed": state.status == "running" and "answer" in state.observations,
+            "completed": state.status == "completed" and "answer" in state.observations,
             "stop_reason": state.status if state.status != "running" else "answer_ready",
         }
 

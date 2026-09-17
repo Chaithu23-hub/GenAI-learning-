@@ -105,6 +105,7 @@ python main.py ingest
 .venv\Scripts\streamlit.exe run ui.py  # ask questions through the UI
 python main.py evaluate        # before/after hit-rate@3 on labeled questions
 python main.py agent "What is the late payment fee?" --strategy compare
+python main.py agent-safety-check
 ```
 
 Try these questions against the bundled corpus:
@@ -133,6 +134,9 @@ python main.py agent "What is the late payment fee?" --strategy compare --runs 3
 The output includes visible steps, elapsed time, tool-call cost proxy, estimated cost, and
 reliability. For this grounded extractive task, the fixed workflow is the recommended production
 choice because its sequence is known in advance and it is easier to test and budget.
+
+The `agent-safety-check` command measures whether the agent follows the required retrieval-first
+trajectory and reports before/after blocking results for instruction-like text embedded in documents.
 
 ## Generation backends
 

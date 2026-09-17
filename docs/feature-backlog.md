@@ -8,4 +8,5 @@ or changes a feature.
 | CLI: ingest / ask / chat (`main.py`) | Shipped | One-shot questions, interactive loop, JSON output |
 | Grounded RAG pipeline (retrieve → re-rank → generate) | Shipped | Local bi-encoder + Chroma + cross-encoder; extractive fallback when no LLM endpoint |
 | Input guardrails (injection / drafting refusal) | Shipped | Fixed safe responses, `out_of_scope=true` |
+| Agent safety evaluation | Shipped | `python main.py agent-safety-check` reports trajectory validity and document-injection blocking |
 | Streamlit web UI (`ui.py`) | Shipped 2026-08-10 | Question box, backend + document-type selectors, sources/reasoning display, re-ingest button |
