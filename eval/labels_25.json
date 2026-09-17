@@ -1,0 +1,32 @@
+{
+  "created_at_utc": "2026-09-17T09:00:00Z",
+  "protocol": "Human binary labels written before judge_v1 and judge_v2 were run.",
+  "criterion": "Does the answer make a supported, useful claim from the supplied legal documents?",
+  "labels": [
+    {"id": 1, "question": "What does the First Amendment protect?", "mode": "baseline_good", "human_label": true},
+    {"id": 2, "question": "Can the government take my property?", "mode": "shallow_answer", "human_label": false},
+    {"id": 3, "question": "Is there a right to privacy in the Constitution?", "mode": "hallucination", "human_label": true},
+    {"id": 4, "question": "What is the difference between First and Fourth Amendments?", "mode": "incomplete_retrieval", "human_label": false},
+    {"id": 5, "question": "Can I be tried twice for the same crime?", "mode": "poor_synthesis", "human_label": true},
+    {"id": 6, "question": "What rights does the Sixth Amendment grant criminal defendants?", "mode": "baseline_good", "human_label": true},
+    {"id": 7, "question": "What is sovereign immunity under the amendments?", "mode": "retrieval_ranking", "human_label": true},
+    {"id": 8, "question": "What does the 12th Amendment change about presidential elections?", "mode": "baseline_good", "human_label": true},
+    {"id": 9, "question": "Why did the founders create the Second Amendment?", "mode": "retrieval_ranking", "human_label": true},
+    {"id": 10, "question": "What does incorporation mean?", "mode": "shallow_answer", "human_label": false},
+    {"id": 11, "question": "What powers do states keep under the Constitution?", "mode": "shallow_answer", "human_label": false},
+    {"id": 12, "question": "What happened in Chisholm v. Georgia?", "mode": "baseline_good", "human_label": true},
+    {"id": 13, "question": "How many amendments have been ratified?", "mode": "baseline_good", "human_label": true},
+    {"id": 14, "question": "Amendment about soldiers quartering", "mode": "baseline_good", "human_label": true},
+    {"id": 15, "question": "What's a just compensation in the Takings Clause?", "mode": "shallow_answer", "human_label": false},
+    {"id": 16, "question": "Can the government search my phone?", "mode": "hallucination", "human_label": true},
+    {"id": 17, "question": "What was the gap between amendments?", "mode": "incomplete_retrieval", "human_label": false},
+    {"id": 18, "question": "Compare jury trial rights in the 6th and 7th Amendments.", "mode": "poor_synthesis", "human_label": false},
+    {"id": 19, "question": "What states can sue in national courts?", "mode": "poor_synthesis", "human_label": true},
+    {"id": 20, "question": "What does the Fourth Amendment protect?", "mode": "baseline_good", "human_label": true},
+    {"id": 21, "question": "What did the Reconstruction era amendments accomplish?", "mode": "incomplete_retrieval", "human_label": false},
+    {"id": 22, "question": "Why did Anti-Federalists demand the Bill of Rights?", "mode": "poor_synthesis", "human_label": true},
+    {"id": 23, "question": "What is the right to remain silent?", "mode": "shallow_answer", "human_label": false},
+    {"id": 24, "question": "What did the Thirteenth Amendment do?", "mode": "regression_trace_11", "human_label": true},
+    {"id": 25, "question": "What does the Fifth Amendment say about compensation?", "mode": "regression_trace_17", "human_label": false}
+  ]
+}

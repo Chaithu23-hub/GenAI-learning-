@@ -46,8 +46,8 @@ library. Built as a hands-on map of the AI learning curriculum — every impleme
        │                                                     │
 ┌──────▼───────────────────────┐            ┌────────────────▼────────────────────┐
 │ ExtractiveGenerator          │            │ LLMGenerator                        │
-│ (offline default — quotes    │            │ (OpenAI-compatible endpoint, e.g.   │
-│ chunks verbatim)             │            │ Ollama) — tool calling, temp=0,     │
+│ (offline default — quotes    │            │ (Google Gemini) — grounded output,   │
+│ chunks verbatim)             │            │ temp=0, JSON validation + retry      │
 │                              │            │ JSON validation + 1 retry           │
 └──────┬───────────────────────┘            └────────────────┬────────────────────┘
        └─────────────────────────┬───────────────────────────┘
@@ -143,14 +143,14 @@ trajectory and reports before/after blocking results for instruction-like text e
 | backend | how to enable | notes |
 |---|---|---|
 | `extractive` (default) | automatic | No LLM needed. Answer quotes retrieved chunks verbatim — grounded by construction. |
-| `llm` | `--backend llm`, or auto-detected | Any OpenAI-compatible endpoint. Defaults to local Ollama (`http://localhost:11434/v1`, model `llama3.2`). Supports tool calling: the model invokes `retrieve_chunks()` itself. |
+| `llm` | `--backend llm`, or auto-detected | Google Gemini using `GOOGLE_API_KEY` and the configured Gemini model. |
 
 Override the LLM endpoint via environment variables:
 
 ```powershell
-$env:LEGAL_RAG_LLM_BASE_URL = "http://localhost:11434/v1"
-$env:LEGAL_RAG_LLM_API_KEY  = "ollama"
-$env:LEGAL_RAG_LLM_MODEL    = "llama3.2"
+$env:LEGAL_RAG_LLM_PROVIDER = "google"
+$env:GOOGLE_API_KEY         = "your-key"
+$env:LEGAL_RAG_GOOGLE_MODEL = "gemini-1.5-flash"
 ```
 
 Every LLM call logs its token counts to stderr (`[token usage] prompt=… completion=… total=…`)

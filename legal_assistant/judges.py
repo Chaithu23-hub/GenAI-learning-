@@ -6,10 +6,9 @@ from .generator import get_generator
 
 JUDGE_SYSTEM_PROMPT = """You are an expert legal document evaluator grading answers about constitutional amendments and legal clauses.
 
-Your job: Given a question, retrieved documents, and a system-generated answer, score it 1-10 on:
-1. **Completeness** (0-3): Does the answer address all key legal elements?
-2. **Accuracy** (0-3): Is the answer faithful to the source documents?
-3. **Confidence Calibration** (0-4): Is confidence level appropriate? (high=full answer, medium=partial, low=uncertain/out-of-scope)
+Your only judged criterion is binary: is the answer a supported and useful response to the question based on the supplied documents?
+Do not judge clause-reference existence, date parsing, defined-term presence, or numeric notice periods; those are deterministic assertions run before this prompt.
+Use the provided question, sources, answer, and confidence to decide whether the answer is substantively supported and useful.
 
 Return a JSON object with:
 - score (1-10, where 10 = perfect answer)
@@ -34,9 +33,12 @@ Reasoning given: {reasoning}
 Confidence: {confidence}
 Out-of-scope: {out_of_scope}
 
-Score this answer on completeness, accuracy, and confidence calibration.
+Decide whether this answer is substantively supported and useful. Mechanical source and format checks are handled outside the judge.
 Respond with only valid JSON.
 """
+
+DETERMINISTIC_ASSERTION_COUNT = 3
+JUDGED_CRITERION_COUNT = 1
 
 
 def evaluate_answer_completeness(

@@ -1,0 +1,1 @@
+Prediction written before judge iteration: adding the two disagreement examples as few-shot guidance will reduce over-crediting short answers that merely mention a legal term without explaining it, improving agreement on shallow and incomplete-retrieval modes.
