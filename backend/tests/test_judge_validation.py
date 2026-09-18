@@ -265,9 +265,9 @@ class TestJudgeEvaluation:
                   f"calibration={score_dict['calibration']} → total={score_dict['score']}")
 
         except Exception as e:
-            # Fallback rule-based scoring should work
+            # Keep the test focused on the deterministic category scorer when no LLM is configured.
             score_dict = score_answer_on_problem_type(payload, "shallow_answer")
-            print(f"\n⚠ LLM judge unavailable, using rule-based fallback: {score_dict['score']}")
+            print(f"\n⚠ LLM judge unavailable; category score: {score_dict['score']}")
 
     def test_score_answer_on_problem_type_all_categories(self):
         """Test: score_answer_on_problem_type works for all problem categories."""

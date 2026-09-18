@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ChatPanelComponent } from './components/chat-panel/chat-panel.component';
 import { ApiService } from './services/api.service';
-import { HistoryItem, Backend } from './models/types';
+import { HistoryItem } from './models/types';
 import { finalize } from 'rxjs';
 
 @Component({
@@ -20,7 +20,6 @@ export class AppComponent {
   ];
 
   query: string = '';
-  backend: Backend = 'auto';
   isLoading: boolean = false;
   history: HistoryItem[] = [];
 
@@ -47,7 +46,7 @@ export class AppComponent {
 
     const index = this.history.length - 1;
 
-    this.apiService.askQuestion(currentQuery, this.backend)
+    this.apiService.askQuestion(currentQuery)
       .pipe(
         finalize(() => {
           this.isLoading = false;

@@ -9,16 +9,10 @@ router = APIRouter(prefix="/api", tags=["qa"])
 
 @router.post("/ask", response_model=AnswerResponse, summary="Answer a legal question")
 async def ask(request: AskRequest, _: str = Depends(verify_api_key)) -> AnswerResponse:
-    """
-    Run the full guardrail → hybrid retrieval → generation pipeline.
-
-    Returns a validated JSON answer with sources and confidence score.
-    """
     try:
         result = answer_question(
             request.question,
             document_type=request.document_type,
-            backend=request.backend,
         )
         return AnswerResponse(**result)
     except Exception as exc:
@@ -30,15 +24,10 @@ async def ask(request: AskRequest, _: str = Depends(verify_api_key)) -> AnswerRe
 
 @router.post("/inspect", response_model=InspectResponse, summary="Inspect retrieval and answer")
 async def inspect(request: AskRequest, _: str = Depends(verify_api_key)) -> InspectResponse:
-    """
-    Return both the retrieved chunks (for UI inspection) and the final grounded answer.
-    Useful for debugging retrieval quality.
-    """
     try:
         result = inspect_question(
             request.question,
             document_type=request.document_type,
-            backend=request.backend,
         )
         retrieved = [
             RetrievedChunkResponse(

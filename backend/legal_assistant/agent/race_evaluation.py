@@ -43,6 +43,25 @@ def _summary(reports):
     }
 
 
+def _select_winner(agent_summary, workflow_summary):
+    """Select the stronger workflow from measured reliability and efficiency."""
+    agent_key = (
+        agent_summary["pass_rate"],
+        -agent_summary["p50_latency_seconds"],
+        -agent_summary["total_tokens"],
+        -agent_summary["cost_per_question_usd"],
+    )
+    workflow_key = (
+        workflow_summary["pass_rate"],
+        -workflow_summary["p50_latency_seconds"],
+        -workflow_summary["total_tokens"],
+        -workflow_summary["cost_per_question_usd"],
+    )
+    if agent_key == workflow_key:
+        return "tie"
+    return "agent" if agent_key > workflow_key else "fixed_workflow"
+
+
 def run_race():
     """Race the LegalAgent against the fixed workflow on 10 standard questions."""
     agent_reports = []
@@ -52,6 +71,12 @@ def run_race():
         workflow_reports.append(run_fixed_workflow(case.question))
     agent_summary = _summary(agent_reports)
     workflow_summary = _summary(workflow_reports)
+    winner = _select_winner(agent_summary, workflow_summary)
+    verdict = (
+        "The measured results are tied across reliability and efficiency."
+        if winner == "tie"
+        else f"The {winner} performed best based on pass rate, then latency, token usage, and cost."
+    )
     return {
         "questions": len(RACE_CASES),
         "branching_questions": sum(case.branches_on_prior_result for case in RACE_CASES),
@@ -61,10 +86,8 @@ def run_race():
         ],
         "agent": agent_summary,
         "fixed_workflow": workflow_summary,
-        "verdict": (
-            "The fixed workflow wins for this corpus because the 10 questions follow a known retrieval-and-answer path. "
-            "An agent is justified for termination, renewal, and amendment-version questions where the next retrieval depends on the prior result."
-        ),
+        "winner": winner,
+        "verdict": verdict,
         "budget_termination_log": LegalAgent(max_steps=1).run("What is the termination notice period?")["budget_log"],
         "third_tool": {
             "name": "get_definitions",

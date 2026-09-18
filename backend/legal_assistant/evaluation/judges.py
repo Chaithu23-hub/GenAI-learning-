@@ -2,7 +2,6 @@ import json
 from typing import Optional
 
 from .. import config
-from ..generation.generator import get_generator
 
 JUDGE_SYSTEM_PROMPT = """You are an expert legal document evaluator grading answers about constitutional amendments and legal clauses.
 
@@ -47,9 +46,7 @@ def evaluate_answer_completeness(
     retrieved_sources: list,
     backend: Optional[str] = None,
 ) -> dict:
-    """Evaluate answer quality using an LLM judge, with rule-based fallback."""
-    if not backend:
-        backend = "llm"
+    """Evaluate answer quality using the configured LLM judge."""
 
     sources_text = "\n".join([
         f"- Doc: {c.document}, Chunk: {c.chunk_id}\n  Text: {c.text[:300]}..."
@@ -65,75 +62,21 @@ def evaluate_answer_completeness(
         out_of_scope=answer_dict.get("out_of_scope", False),
     )
 
-    try:
-        from openai import OpenAI
-        client = OpenAI(
-            base_url=config.LLM_BASE_URL,
-            api_key=config.LLM_API_KEY,
-        )
-        response = client.chat.completions.create(
-            model=config.LLM_MODEL,
-            temperature=config.LLM_TEMPERATURE,
-            messages=[
-                {"role": "system", "content": JUDGE_SYSTEM_PROMPT},
-                {"role": "user", "content": user_message},
-            ],
-        )
-        response_text = response.choices[0].message.content.strip()
-        return json.loads(response_text)
-    except Exception:
-        return _rule_based_score(question, answer_dict, retrieved_sources)
-
-
-def _rule_based_score(question: str, answer_dict: dict, retrieved_sources: list) -> dict:
-    """Fallback rule-based scoring when the LLM judge is unavailable."""
-    completeness = 0
-    accuracy = 0
-    calibration = 0
-
-    answer_len = len(answer_dict.get("answer", ""))
-    source_count = len(answer_dict.get("sources", []))
-
-    if answer_len > 200:
-        completeness = 3
-    elif answer_len > 100:
-        completeness = 2
-    elif answer_len > 0:
-        completeness = 1
-
-    if source_count > 0:
-        cited_chunk_ids = {s.get("chunk_id") for s in answer_dict.get("sources", [])}
-        retrieved_ids = {c.chunk_id for c in retrieved_sources}
-        accuracy = 3 if cited_chunk_ids.issubset(retrieved_ids) else 1
-    else:
-        accuracy = 3 if answer_dict.get("out_of_scope") else 0
-
-    confidence = answer_dict.get("confidence", "medium")
-    out_of_scope = answer_dict.get("out_of_scope", False)
-
-    if out_of_scope:
-        calibration = 4 if confidence == "low" else 2
-    elif confidence == "high" and completeness == 3 and accuracy == 3:
-        calibration = 4
-    elif confidence == "medium" and completeness >= 2:
-        calibration = 3
-    elif confidence == "low" and (completeness < 2 or accuracy < 2):
-        calibration = 3
-    else:
-        calibration = 1
-
-    return {
-        "score": min(10, (completeness + accuracy + calibration) * 10 // 10),
-        "completeness": completeness,
-        "accuracy": accuracy,
-        "calibration": calibration,
-        "reason": (
-            f"Based on answer length ({answer_len} chars), "
-            f"source count ({source_count}), and confidence '{confidence}'"
-        ),
-        "major_gaps": [],
-        "hallucinations": [],
-    }
+    from openai import OpenAI
+    client = OpenAI(
+        base_url=config.LLM_BASE_URL,
+        api_key=config.LLM_API_KEY,
+    )
+    response = client.chat.completions.create(
+        model=config.LLM_MODEL,
+        temperature=config.LLM_TEMPERATURE,
+        messages=[
+            {"role": "system", "content": JUDGE_SYSTEM_PROMPT},
+            {"role": "user", "content": user_message},
+        ],
+    )
+    response_text = response.choices[0].message.content.strip()
+    return json.loads(response_text)
 
 
 def score_answer_on_problem_type(answer_dict: dict, problem_category: str) -> dict:
