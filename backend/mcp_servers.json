@@ -1,0 +1,14 @@
+{
+  "servers": [
+    {
+      "name": "clause-search",
+      "command": "python",
+      "args": ["-m", "mcp_servers.clause_search_server"]
+    },
+    {
+      "name": "contract-repository",
+      "command": "python",
+      "args": ["-m", "mcp_servers.contract_repository_server"]
+    }
+  ]
+}
