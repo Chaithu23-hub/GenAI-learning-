@@ -41,12 +41,6 @@
 
     <section class="composer-wrap">
       <div class="composer-meta">
-        <label for="backend-select">Answer mode</label>
-        <select id="backend-select" [(ngModel)]="backend" [disabled]="isLoading">
-          <option value="auto">Auto</option>
-          <option value="llm">Gemini</option>
-          <option value="extractive">Extractive</option>
-        </select>
         <span class="composer-hint">Answers cite the local contract library</span>
       </div>
       <form (submit)="handleSubmit($event)" class="search-form">

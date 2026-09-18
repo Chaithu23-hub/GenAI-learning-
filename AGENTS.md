@@ -18,16 +18,20 @@ the optional LLM backend uses Google Gemini when `GOOGLE_API_KEY` is configured,
 ## Commands
 
 ```powershell
-python main.py ingest                # chunk + embed + store data/legal/*.md
-python main.py ask "question"        # one question (--filter, --backend, --json)
-python main.py chat                  # interactive loop
-.venv\Scripts\streamlit.exe run ui.py  # web UI (question box, sources, re-ingest button)
-pytest tests/                        # unit + end-to-end tests
+Push-Location backend
+..\.venv\Scripts\python.exe cli.py ingest       # chunk + embed + store data/legal/*.md
+..\.venv\Scripts\python.exe -m pytest tests/    # unit + end-to-end tests
+..\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
+Pop-Location
 ```
 
 ## Conventions
 
-  comment. Preserve these when editing; add one for any new concept you implement.
+- Keep domain behavior in `legal_assistant/`; keep FastAPI wiring in `app/`.
+- `legal_assistant/stores/` owns persistence adapters. `ingestion/` owns indexing orchestration.
+- `legal_assistant/retrieval/retrievers/` owns dense, sparse, and fusion strategies.
+- Preserve existing compatibility imports from `legal_assistant.ingestion.vector_store` until
+  downstream callers have migrated.
 - The response JSON shape is fixed by `RESPONSE_SCHEMA` in `legal_assistant/schema.py`.
   Do not add/remove fields without updating `validate_response` and the README contract.
 - Document corpus lives in `data/legal/`; filenames starting with `amendment` get

@@ -13,10 +13,6 @@ router = APIRouter(prefix="/api", tags=["ingest"])
 
 @router.post("/ingest", response_model=IngestResponse, summary="Re-ingest all documents")
 async def ingest(_: str = Depends(verify_api_key)) -> IngestResponse:
-    """
-    Chunk, embed, and upsert all markdown files in data/legal/ into the Chroma vector store.
-    Existing chunks are replaced (upsert). Triggers a full re-index.
-    """
     try:
         count = ingest_documents()
         return IngestResponse(

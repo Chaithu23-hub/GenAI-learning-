@@ -1,5 +1,3 @@
-export type Backend = 'auto' | 'llm' | 'extractive';
-
 export interface SourceCitation {
   document: string;
   chunk_id: string;

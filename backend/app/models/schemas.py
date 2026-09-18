@@ -29,9 +29,6 @@ class AskRequest(BaseModel):
     document_type: Optional[Literal["contract", "amendment"]] = Field(
         None, description="Restrict retrieval to a specific document type."
     )
-    backend: Optional[Literal["auto", "extractive", "llm"]] = Field(
-        None, description="Generation backend. Defaults to auto-detection."
-    )
 
 
 class RetrievedChunkResponse(BaseModel):
@@ -74,14 +71,22 @@ class AgentRequest(BaseModel):
 class AgentResponse(BaseModel):
     strategy: str
     result: dict[str, Any]
-    steps: list[dict[str, Any]] = []
+    steps: list[dict[str, Any]] = Field(default_factory=list)
     tool_calls: int = 0
     elapsed_seconds: float = 0.0
     completed: bool = False
     stop_reason: str = ""
     estimated_cost_usd: float = 0.0
     token_count: int = 0
-    budget_log: list[str] = []
+    budget_log: list[str] = Field(default_factory=list)
+
+
+class AgentComparisonResponse(BaseModel):
+    query: str
+    agent: dict[str, Any]
+    fixed_workflow: dict[str, Any]
+    ship_recommendation: str
+    recommendation_reason: str
 
 
 # ---------------------------------------------------------------------------

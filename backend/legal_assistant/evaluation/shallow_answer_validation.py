@@ -1,10 +1,7 @@
-import sys
 import json
-from pathlib import Path
 
 from legal_assistant.generation.pipeline import answer_question
 from legal_assistant.evaluation.judges import score_answer_on_problem_type
-from legal_assistant import config
 
 PROBLEM1_TEST_CASES = [
     {
@@ -59,10 +56,10 @@ def test_case(question, problem_type="shallow_answer"):
     }
 
 
-def run_before_after_test():
+def run_validation():
     print("\n" + "=" * 80)
-    print("BEFORE/AFTER VALIDATION")
-    print("Fix Target: Problem 1 — Shallow/Thin Answers")
+    print("SHALLOW ANSWER VALIDATION")
+    print("Fix target: Problem 1 - Shallow/Thin Answers")
     print("=" * 80)
 
     print("\nTesting 6 Problem 1 cases...")
@@ -74,15 +71,18 @@ def run_before_after_test():
         results.append({"name": test_case_info["name"], **result})
         print(f"\n{test_case_info['name']}")
         print(f"  Question: {test_case_info['question'][:60]}...")
-        print(f"  Score: {result['score']}/10  Confidence: {result['confidence']}  Answer length: {result['answer_length']} chars")
+        print(
+            f"  Score: {result['score']}/10  Confidence: {result['confidence']}  "
+            f"Answer length: {result['answer_length']} chars"
+        )
 
-    avg_score = sum(r["score"] for r in results) / len(results)
-    print(f"\nAverage score: {avg_score:.1f}/10")
+    average_score = sum(result["score"] for result in results) / len(results)
+    print(f"\nAverage score: {average_score:.1f}/10")
     return results
 
 
 if __name__ == "__main__":
-    results = run_before_after_test()
+    results = run_validation()
     print("\n" + json.dumps({
         "problem": "Problem 1: Shallow/Thin Answers",
         "test_cases": results,
