@@ -1,0 +1,1 @@
+Context re-send multiplier: 0.5x (16055 / 34280 tokens); dominant hand-off: orchestrator -> clause_worker (brief + retrieved chunks), 83% of all orchestrator tokens.

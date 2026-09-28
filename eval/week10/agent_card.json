@@ -1,0 +1,38 @@
+{
+  "protocolVersion": "0.3.0",
+  "name": "legal-contract-orchestrator",
+  "description": "Answers questions about the executed Master Services Agreement and its amendments by delegating to a clause-retrieval worker and a defined-terms worker. Answers are extractive and cite chunk ids; it never drafts contract language.",
+  "url": "http://localhost:8000/a2a/legal-orchestrator",
+  "version": "0.10.0",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "stateTransitionHistory": true
+  },
+  "defaultInputModes": ["text/plain"],
+  "defaultOutputModes": ["application/json"],
+  "skills": [
+    {
+      "id": "contract-clause-answer",
+      "name": "Contract clause answer",
+      "description": "Retrieve and quote the governing clause for a question, applying the latest amendment and the governing effective date. Output follows RESPONSE_SCHEMA (answer, reasoning, sources, confidence, out_of_scope).",
+      "tags": ["legal", "contracts", "rag", "citations"],
+      "examples": ["What is the late payment fee?", "How long is the contract term?"],
+      "inputModes": ["text/plain"],
+      "outputModes": ["application/json"]
+    },
+    {
+      "id": "defined-term-lookup",
+      "name": "Defined-term lookup",
+      "description": "Return the verbatim Definitions-clause text for a term in one contract version (original or amended). It never paraphrases, and an undefined term is reported as not_found.",
+      "tags": ["legal", "definitions"],
+      "examples": ["What does \"Agreement\" mean?"],
+      "inputModes": ["text/plain", "application/json"],
+      "outputModes": ["application/json"]
+    }
+  ],
+  "securitySchemes": {
+    "apiKey": {"type": "apiKey", "in": "header", "name": "X-API-Key"}
+  },
+  "security": [{"apiKey": []}]
+}

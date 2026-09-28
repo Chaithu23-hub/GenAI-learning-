@@ -38,7 +38,7 @@ RERANK_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 # ---------------------------------------------------------------------------
 LLM_PROVIDER = os.environ.get("LEGAL_RAG_LLM_PROVIDER", "google").lower()
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "")
-GOOGLE_MODEL = os.environ.get("LEGAL_RAG_GOOGLE_MODEL", "gemini-1.5-flash")
+GOOGLE_MODEL = os.environ.get("LEGAL_RAG_GOOGLE_MODEL", "gemini-3.6-flash")
 LLM_TEMPERATURE = float(os.environ.get("LEGAL_RAG_LLM_TEMPERATURE", "0.0"))
 LLM_TIMEOUT_SECONDS = int(os.environ.get("LEGAL_RAG_LLM_TIMEOUT", "30"))
 LLM_MAX_RETRIES = int(os.environ.get("LEGAL_RAG_LLM_MAX_RETRIES", "3"))
@@ -50,8 +50,12 @@ AGENT_MAX_TOKENS = int(os.environ.get("LEGAL_RAG_AGENT_MAX_TOKENS", "2000"))
 AGENT_MAX_COST_USD = float(os.environ.get("LEGAL_RAG_AGENT_MAX_COST_USD", "0.02"))
 AGENT_COST_PER_TOKEN_USD = float(os.environ.get("LEGAL_RAG_AGENT_COST_PER_TOKEN_USD", "0.000001"))
 
+# Multi-agent race
+CHARS_PER_TOKEN = 4
+ORCHESTRATOR_WORKER_RETRIES = int(os.environ.get("LEGAL_RAG_ORCHESTRATOR_WORKER_RETRIES", "1"))
+
 # Derived LLM aliases (for backwards compatibility across modules)
-LLM_BASE_URL = ""
+LLM_BASE_URL = os.environ.get("LEGAL_RAG_LLM_BASE_URL", "https://generativelanguage.googleapis.com/v1beta/openai/")
 LLM_API_KEY = GOOGLE_API_KEY
 LLM_MODEL = GOOGLE_MODEL
 
