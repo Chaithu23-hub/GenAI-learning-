@@ -205,8 +205,8 @@ def _out_of_scope():
 class ExtractiveGenerator:
     """Offline generator that quotes retrieved chunks verbatim — grounded by construction."""
 
-    def generate(self, query, where=None):
-        chunks = retrieve(query, where=where)
+    def generate(self, query, where=None, chunks=None):
+        chunks = retrieve(query, where=where) if chunks is None else chunks
         relevant = [c for c in chunks if c.score >= config.MIN_RELEVANT_SCORE]
         if not relevant:
             return _out_of_scope()

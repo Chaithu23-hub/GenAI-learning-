@@ -6,7 +6,7 @@ from typing import Any
 from .judges import DETERMINISTIC_ASSERTION_COUNT, JUDGED_CRITERION_COUNT
 
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 LABELS_PATH = PROJECT_ROOT / "eval" / "labels_25.json"
 V1_DISAGREEMENTS = {10, 21}
 

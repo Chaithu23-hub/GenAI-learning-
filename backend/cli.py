@@ -54,6 +54,20 @@ def cmd_race_agent(args):
     print(json.dumps(run_race(), indent=2))
 
 
+def cmd_race_orchestrator(args):
+    from legal_assistant.agent.multi_agent_race import write_race_artifacts
+
+    race = write_race_artifacts()
+    print(json.dumps({
+        "cases": race["case_ids"],
+        "single_agent": race["single_agent"],
+        "orchestrator": race["orchestrator"],
+        "multiplier": round(race["multiplier"], 1),
+        "dominant_handoff": race["hop_shares"][0],
+        "failure_behaviour": race["failure"]["classification"],
+    }, indent=2))
+
+
 def cmd_mcp_lookup(args):
     print(json.dumps(run_lookup(args.contract_id), indent=2))
 
@@ -86,6 +100,12 @@ def main():
 
     p_race = sub.add_parser("race-agent", help="Race the agent against the fixed legal workflow")
     p_race.set_defaults(func=cmd_race_agent)
+
+    p_race_orch = sub.add_parser(
+        "race-orchestrator",
+        help="Race the single agent against the orchestrator on the labelled eval cases",
+    )
+    p_race_orch.set_defaults(func=cmd_race_orchestrator)
 
     p_mcp = sub.add_parser("mcp-lookup", help="Discover and call the contract repository over MCP")
     p_mcp.add_argument("contract_id")
