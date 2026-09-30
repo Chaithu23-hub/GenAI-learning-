@@ -13,6 +13,12 @@
     </div>
     <div class="topbar-actions">
       <span class="status-pill"><span class="status-dot"></span> Local knowledge base</span>
+      @if (qa.hasHistory()) {
+        <button type="button" class="docs-link" (click)="newChat()"
+                title="Clear the current conversation">
+          New chat
+        </button>
+      }
       <a href="/api/docs" target="_blank" rel="noopener noreferrer" class="docs-link">API docs <span aria-hidden="true">↗</span></a>
     </div>
   </header>
@@ -38,6 +44,45 @@
         }
       </div>
     }
+
+    <section class="mcp-demo" aria-labelledby="mcp-demo-title" aria-live="polite">
+      <div class="mcp-demo-heading">
+        <div>
+          <div class="eyebrow">MCP HOST TRACE</div>
+          <h2 id="mcp-demo-title">Contract repository</h2>
+        </div>
+        <button type="button" class="mcp-run" (click)="runMcpLookup()" [disabled]="mcpLoading()">
+          @if (mcpLoading()) { <span class="mcp-spinner" aria-hidden="true"></span> }
+          @else {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8.5 6h7M7.5 8l3.2 7.7M16.5 8l-3.2 7.7"/>
+            </svg>
+          }
+          Run MCP lookup
+        </button>
+      </div>
+
+      @if (mcpResult(); as result) {
+        <div class="mcp-output">
+          <div class="mcp-discovery">
+            @for (server of (result.discovered | keyvalue); track server.key) {
+              <div class="mcp-server-row">
+                <strong>{{ server.key }}</strong>
+                <span>{{ server.value.join(', ') }}</span>
+              </div>
+            }
+          </div>
+          <div class="mcp-trace">
+            <div class="mcp-trace-label">Called tool</div>
+            <code>{{ result.trace.server }}.{{ result.trace.tool }}</code>
+            <pre>{{ result.trace.content[0].text }}</pre>
+          </div>
+        </div>
+      }
+      @if (mcpError()) {
+        <p class="mcp-error" role="alert">{{ mcpError() }}</p>
+      }
+    </section>
 
     <section class="composer-wrap">
       <div class="composer-meta">

@@ -1,32 +1,77 @@
-# Global
+# ─── OS ───────────────────────────────────────────────────────────────
 .DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ─── Editors / IDEs ───────────────────────────────────────────────────
 .idea/
 .vscode/
-*.log
-.venv/
-__pycache__/
-*.py[cod]
-.pytest_cache/
-*.sqlite3
-*.db
+*.swp
+*.swo
+*.swn
+*~
+.claude/
+.claude-code/
+
+# ─── Environments & secrets ───────────────────────────────────────────
 .env
 .env.*
-env/
+!.env.example
+!*.env.example
+
+# ─── Python ───────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
 venv/
+env/
+.python-version
+.direnv/
 
-# Backend
-backend/.venv/
-backend/venv/
-backend/env/
-backend/__pycache__/
-backend/**/__pycache__/
-backend/**/*.py[cod]
-backend/*.sqlite3
-backend/*.db
-backend/.env
+# Build / packaging
+build/
+dist/
+*.egg
+*.egg-info/
+*.eggs/
+.eggs/
+wheels/
+pip-wheel-metadata/
+
+# Testing / linting caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyre/
+.pytype/
+.tox/
+.nox/
+.hypothesis/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+nosetests.xml
+*.cover
+.cache
+
+# Databases / data
+*.sqlite3
+*.db
+*.log
+
+# ─── Backend-specific ─────────────────────────────────────────────────
 backend/data/chroma/
+backend/.env
+backend/models/                       # HuggingFace / SentenceTransformer local caches if pinned here
+backend/eval/week*/generated/         # regenerated artifacts under eval/week*/
 
-# Frontend
+# ─── Node / Angular ───────────────────────────────────────────────────
 frontend/node_modules/
 frontend/dist/
 frontend/dist-ssr/
@@ -35,4 +80,18 @@ frontend/coverage/
 frontend/*.local
 frontend/.env
 frontend/.env.*
+!frontend/.env.example
 frontend/.eslintcache
+frontend/.nyc_output/
+frontend/out-tsc/
+frontend/tmp/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# ─── Docker / infra ───────────────────────────────────────────────────
+*.pid
+*.seed
+*.pid.lock
+docker-compose.override.yml

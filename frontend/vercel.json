@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "angular",
+  "buildCommand": "npm run build -- --configuration production",
+  "outputDirectory": "dist/frontend/browser",
+  "installCommand": "npm ci",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

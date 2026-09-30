@@ -9,14 +9,15 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      # Persist the Chroma vector store and source documents across restarts
       - ./backend/data:/app/data
     env_file:
       - ./backend/.env
     environment:
       - LEGAL_RAG_LLM_PROVIDER=${LEGAL_RAG_LLM_PROVIDER:-google}
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - LEGAL_RAG_API_KEY=${LEGAL_RAG_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      - LEGAL_RAG_API_KEY=${LEGAL_RAG_API_KEY:-}
+      - LEGAL_RAG_LOG_LEVEL=${LEGAL_RAG_LOG_LEVEL:-INFO}
+      - LEGAL_RAG_LOG_FORMAT=${LEGAL_RAG_LOG_FORMAT:-json}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
       interval: 30s
@@ -38,6 +39,3 @@ services:
       backend:
         condition: service_healthy
     restart: unless-stopped
-
-volumes:
-  chroma_data:
