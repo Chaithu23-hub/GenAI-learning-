@@ -1,29 +1,39 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { KeyValuePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
+
 import { ChatPanelComponent } from './components/chat-panel/chat-panel.component';
 import { ApiService } from './services/api.service';
-import { HistoryItem } from './models/types';
-import { finalize } from 'rxjs';
+import { QaStateService } from './services/qa-state.service';
+import { McpLookupResponse } from './models/types';
+import { ApiError } from './core/error.interceptor';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [FormsModule, ChatPanelComponent],
+  imports: [FormsModule, KeyValuePipe, ChatPanelComponent],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  styleUrl: './app.component.css',
 })
 export class AppComponent {
-  suggestions = [
+  readonly suggestions = [
     'What is the late payment fee?',
     'When does the agreement expire?',
-    'What does the amendment change?'
+    'What does the amendment change?',
   ];
 
-  query: string = '';
-  isLoading: boolean = false;
-  history: HistoryItem[] = [];
+  query = '';
+  readonly qa = inject(QaStateService);
+  private readonly api = inject(ApiService);
 
-  private apiService = inject(ApiService);
+  // Keep template access simple.
+  get history() { return this.qa.history(); }
+  get isLoading() { return this.qa.isLoading(); }
+
+  readonly mcpLoading = signal(false);
+  readonly mcpResult = signal<McpLookupResponse | null>(null);
+  readonly mcpError = signal('');
 
   useSuggestion(question: string) {
     this.query = question;
@@ -32,42 +42,33 @@ export class AppComponent {
 
   handleSubmit(event: Event) {
     event.preventDefault();
-    if (!this.query.trim()) return;
-
-    const currentQuery = this.query;
+    const q = this.query.trim();
+    if (!q) return;
     this.query = '';
-    this.isLoading = true;
+    this.qa.ask(q);
+  }
 
-    // Add user question to history
-    this.history.push({
-      question: currentQuery,
-      isLoading: true
-    });
+  newChat() {
+    this.qa.reset();
+    this.query = '';
+  }
 
-    const index = this.history.length - 1;
-
-    this.apiService.askQuestion(currentQuery)
-      .pipe(
-        finalize(() => {
-          this.isLoading = false;
-        })
-      )
+  runMcpLookup() {
+    this.mcpLoading.set(true);
+    this.mcpError.set('');
+    this.mcpResult.set(null);
+    this.api
+      .mcpLookup('MSA-2021-0142')
+      .pipe(finalize(() => this.mcpLoading.set(false)))
       .subscribe({
-        next: (response) => {
-          this.history[index] = {
-            ...this.history[index],
-            ...response,
-            isLoading: false
-          };
+        next: (response) => this.mcpResult.set(response),
+        error: (err: ApiError | Error) => {
+          const message =
+            err instanceof ApiError
+              ? `${err.message}${err.requestId ? ` (request ${err.requestId})` : ''}`
+              : 'MCP lookup failed. Check that the API and configured servers are running.';
+          this.mcpError.set(message);
         },
-        error: (err) => {
-          this.history[index] = {
-            ...this.history[index],
-            isLoading: false,
-            error: 'Failed to connect to the legal assistant backend.'
-          };
-          console.error(err);
-        }
       });
   }
 }

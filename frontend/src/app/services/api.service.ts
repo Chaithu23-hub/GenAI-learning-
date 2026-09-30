@@ -1,25 +1,56 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { AskResponse } from '../models/types';
+
 import { environment } from '../../environments/environment';
+import {
+  AgentComparisonResponse,
+  AgentRequest,
+  AgentResponse,
+  AnswerResponse,
+  HealthResponse,
+  IngestResponse,
+  InspectResponse,
+  McpLookupResponse,
+} from '../models/types';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class ApiService {
-  private http = inject(HttpClient);
-  // Use the Angular dev-server proxy locally and the configured API URL in deployments.
-  private apiUrl = environment.apiUrl || '/api';
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = environment.apiUrl || '/api';
 
-  askQuestion(query: string): Observable<AskResponse> {
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      'X-API-Key': 'dev-key-123'
+  health(): Observable<HealthResponse> {
+    return this.http.get<HealthResponse>(`${this.baseUrl}/health`);
+  }
+
+  ask(question: string, documentType?: 'contract' | 'amendment'): Observable<AnswerResponse> {
+    return this.http.post<AnswerResponse>(`${this.baseUrl}/ask`, {
+      question,
+      document_type: documentType,
     });
+  }
 
-    const body = { question: query };
+  inspect(question: string, documentType?: 'contract' | 'amendment'): Observable<InspectResponse> {
+    return this.http.post<InspectResponse>(`${this.baseUrl}/inspect`, {
+      question,
+      document_type: documentType,
+    });
+  }
 
-    return this.http.post<AskResponse>(`${this.apiUrl}/ask`, body, { headers });
+  ingest(): Observable<IngestResponse> {
+    return this.http.post<IngestResponse>(`${this.baseUrl}/ingest`, {});
+  }
+
+  runAgent(request: AgentRequest): Observable<AgentResponse | AgentComparisonResponse> {
+    return this.http.post<AgentResponse | AgentComparisonResponse>(
+      `${this.baseUrl}/agent`,
+      request,
+    );
+  }
+
+  mcpLookup(contractId: string): Observable<McpLookupResponse> {
+    return this.http.post<McpLookupResponse>(`${this.baseUrl}/mcp/lookup`, {
+      contract_id: contractId,
+    });
   }
 }

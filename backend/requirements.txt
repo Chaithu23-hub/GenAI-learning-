@@ -1,25 +1,29 @@
-# Local ML stack (torch installed separately as a CPU-only wheel — see README)
+# ── Core web framework ────────────────────────────────────────────────
+fastapi>=0.111
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+
+# ── Config & CLI ──────────────────────────────────────────────────────
+pydantic>=2.7
+pydantic-settings>=2.4
+typer>=0.12
+
+# ── LLM & structured validation ───────────────────────────────────────
+openai>=1.40
+jsonschema>=4.20
+
+# ── Retrieval & embedding stack ──────────────────────────────────────
 sentence-transformers>=3.0,<6
 chromadb>=0.5
 
-# FastAPI web framework + ASGI server
-fastapi>=0.111
-uvicorn[standard]>=0.30
-python-multipart>=0.0.9        # for file upload support
-
-# LLM backend client
-openai>=1.40
-
-# Structured-output validation
-jsonschema>=4.20
-
-# PDF extraction (optional for UI upload)
+# ── Optional document sources ─────────────────────────────────────────
 pypdf>=3.10
 
-# MCP (Model Context Protocol) client/server
+# ── MCP (Model Context Protocol) ──────────────────────────────────────
 mcp>=1.0,<2
 
-# Dev / test
+# ── Dev / test ────────────────────────────────────────────────────────
 pytest>=8.0
 pytest-asyncio>=0.23
-httpx>=0.27                    # for FastAPI TestClient
+httpx>=0.27
+ruff>=0.8

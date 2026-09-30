@@ -3,12 +3,12 @@
     {
       "name": "clause-search",
       "command": "python",
-      "args": ["-m", "mcp_servers.clause_search_server"]
+      "args": ["-m", "legal_rag.interfaces.mcp_servers.clause_search"]
     },
     {
       "name": "contract-repository",
       "command": "python",
-      "args": ["-m", "mcp_servers.contract_repository_server"]
+      "args": ["-m", "legal_rag.interfaces.mcp_servers.contract_repository"]
     }
   ]
 }

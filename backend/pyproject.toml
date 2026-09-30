@@ -1,22 +1,36 @@
 [build-system]
 requires = ["setuptools>=68"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 [project]
-name = "legal-document-assistant-backend"
-version = "1.0.0"
-description = "Production-grade RAG pipeline backend for legal document Q&A"
+name = "legal-rag"
+version = "2.0.0"
+description = "Production-grade Clean Architecture RAG pipeline for legal contracts."
 requires-python = ">=3.13"
-readme = "README.md"
+readme = "../README.md"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["app*", "legal_assistant*", "mcp_servers*"]
+include = ["legal_rag*"]
+
+[project.scripts]
+legal-rag = "legal_rag.interfaces.cli.app:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+markers = [
+    "slow: real infrastructure (chroma / sentence-transformers) — off by default",
+]
+addopts = "-ra --strict-markers"
+filterwarnings = [
+    "ignore::DeprecationWarning:pydantic.*",
+]
 
 [tool.ruff]
 line-length = 100
 target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "C4"]
+ignore = ["E501"]
