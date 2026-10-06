@@ -27,6 +27,7 @@
     {"id": 22, "question": "Why did Anti-Federalists demand the Bill of Rights?", "mode": "poor_synthesis", "human_label": true},
     {"id": 23, "question": "What is the right to remain silent?", "mode": "shallow_answer", "human_label": false},
     {"id": 24, "question": "What did the Thirteenth Amendment do?", "mode": "regression_trace_11", "human_label": true},
-    {"id": 25, "question": "What does the Fifth Amendment say about compensation?", "mode": "regression_trace_17", "human_label": false}
+    {"id": 25, "question": "What does the Fifth Amendment say about compensation?", "mode": "regression_trace_17", "human_label": false},
+    {"id": 26, "question": "termination notice", "mode": "wrong_termination_clause_citation", "human_label": false}
   ]
 }

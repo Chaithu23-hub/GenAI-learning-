@@ -1,6 +1,6 @@
 # Week 10 race — single agent vs orchestrator
 
-Cases: Week 6 `eval/labels_25.json` ids 1–10 (sha256 `7c77f9facd56`), unchanged.
+Cases: Week 6 `eval/labels_25.json` ids 1–10 (pre-extension sha256 `7c77f9facd56`). Week 11 later appended ID 26; IDs 1–10 and their labels remain unchanged. Current labels file sha256: `7d373d6d7432c498f777bbc4e4a4a0c272a7014ddc9ee342f83ad1d67b34ae01`.
 Judge: `legal_assistant/evaluation/race_judge.py`, the same function for both arms.
 Tokens: serialised payload per model call / 4 chars, same estimator both arms. Cost: tokens x $0.000001 (`config.AGENT_COST_PER_TOKEN_USD`).
 Latency: warm models, arms interleaved per case, CPU. p99 is nearest-rank over 10 runs, so it is the slowest case.

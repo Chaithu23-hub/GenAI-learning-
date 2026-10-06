@@ -18,20 +18,17 @@ class EvaluationCase:
 # the default section-aware chunker. Chunk ids follow "{stem}::{index:03d}".
 EVALUATION_CASES: tuple[EvaluationCase, ...] = (
     EvaluationCase(
-        "What is the late payment interest rate?",
+        "What rate does the original Master Services Agreement state for late payments?",
         frozenset({
-            "master_services_agreement::002",       # original: 1.0%/month
-            "master_services_agreement::005",       # summary of payment terms
-            "amendment_01_payment_terms::001",      # amendment: 1.5%/month
-            "amendment_01_payment_terms::002",      # amendment change summary
+            "master_services_agreement::002",
+            "master_services_agreement::005",
         }),
     ),
     EvaluationCase(
-        "What did the payment amendment change?",
+        "What rate did Amendment No. 1 set for late payment interest?",
         frozenset({
             "amendment_01_payment_terms::001",
             "amendment_01_payment_terms::002",
-            "master_services_agreement::005",
         }),
     ),
     EvaluationCase(
@@ -42,18 +39,36 @@ EVALUATION_CASES: tuple[EvaluationCase, ...] = (
         }),
     ),
     EvaluationCase(
-        "When does the Enterprise SaaS subscription auto-renew?",
+        "When does the Enterprise SaaS subscription auto-renew, and what notice prevents renewal?",
         frozenset({
-            f"enterprise_saas_subscription_agreement::{i:03d}"
-            for i in range(0, 20)  # accept any chunk from ESSA — auto-renewal is in the Term section
+            "enterprise_saas_subscription_agreement::003",
         }),
     ),
     EvaluationCase(
         "What is the effective date of the Data Processing Consulting Agreement?",
         frozenset({
-            f"data_processing_consulting_agreement::{i:03d}"
-            for i in range(0, 20)
+            "data_processing_consulting_agreement::000",
         }),
+    ),
+    EvaluationCase(
+        "How many days does the Data Processing and Consulting Agreement amendment allow for invoice payment?",
+        frozenset({"data_processing_consulting_agreement::013"}),
+    ),
+    EvaluationCase(
+        "What payment term applies to the Software Services Agreement after Amendment No. 2?",
+        frozenset({"software_services_agreement_with_amendments::013"}),
+    ),
+    EvaluationCase(
+        "What security incident notification window applies under Amendment No. 3 to the Software Services Agreement?",
+        frozenset({"software_services_agreement_with_amendments::014"}),
+    ),
+    EvaluationCase(
+        "What audit rights does Amendment No. 2 add to the Software Services Agreement?",
+        frozenset({"software_services_agreement_with_amendments::013"}),
+    ),
+    EvaluationCase(
+        "What monthly uptime does the Enterprise SaaS Subscription Agreement target?",
+        frozenset({"enterprise_saas_subscription_agreement::005"}),
     ),
 )
 

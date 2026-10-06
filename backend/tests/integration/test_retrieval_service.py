@@ -34,9 +34,18 @@ class TestRetrievalService:
     def test_detect_metadata_filter(self, container):
         assert container.retrieval_service.detect_metadata_filter(
             "What did the amendment change?"
-        ) == {"document_type": "amendment"}
+        ) is None
         assert container.retrieval_service.detect_metadata_filter(
             "What is the original contract's effective date?"
+        ) is None
+        assert container.retrieval_service.detect_metadata_filter(
+            "What changed in the agreement and its amendment?"
+        ) is None
+        assert container.retrieval_service.detect_metadata_filter(
+            "Search amendment documents only"
+        ) == {"document_type": "amendment"}
+        assert container.retrieval_service.detect_metadata_filter(
+            "Search contract documents only"
         ) == {"document_type": "contract"}
         assert container.retrieval_service.detect_metadata_filter(
             "What is the late payment fee?"

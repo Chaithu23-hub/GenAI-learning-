@@ -1,0 +1,15 @@
+{
+  "id": 26,
+  "question": "termination notice",
+  "failure": {
+    "answer": "Section 3 permits either party to terminate with 30 days' notice.",
+    "cited_chunk_id": "master_services_agreement::002",
+    "cited_heading": "Section 5: Termination",
+    "human_label": false
+  },
+  "expected": {
+    "unsupported_section_reference": "3",
+    "supported_section_reference": "5",
+    "action": "reject answer, retry once, then use the grounded fallback"
+  }
+}

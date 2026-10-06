@@ -1,6 +1,7 @@
 """Retrieval service — dense + lexical → RRF → cross-encoder rerank."""
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -105,10 +106,18 @@ class RetrievalService:
         return top
 
     def detect_metadata_filter(self, query: str) -> dict[str, str] | None:
-        """Auto-detect a document_type filter from query keywords."""
+        """Filter only when the user explicitly requests one document type."""
         q = query.lower()
-        if "amendment" in q:
+        if re.search(
+            r"\bonly\s+(?:the\s+)?amendments?(?:\s+documents?)?\b|"
+            r"\bamendments?\s+documents?\s+only\b",
+            q,
+        ):
             return {"document_type": "amendment"}
-        if "contract" in q or "agreement" in q:
+        if re.search(
+            r"\bonly\s+(?:the\s+)?(?:contracts?|agreements?)(?:\s+documents?)?\b|"
+            r"\b(?:contracts?|agreements?)\s+documents?\s+only\b",
+            q,
+        ):
             return {"document_type": "contract"}
         return None

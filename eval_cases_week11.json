@@ -1,0 +1,52 @@
+[
+  {
+    "id": "case_01",
+    "query": "What rate does the original Master Services Agreement state for late payments?",
+    "relevant_chunk_ids": ["master_services_agreement::002", "master_services_agreement::005"]
+  },
+  {
+    "id": "case_02",
+    "query": "What rate did Amendment No. 1 set for late payment interest?",
+    "relevant_chunk_ids": ["amendment_01_payment_terms::001", "amendment_01_payment_terms::002"]
+  },
+  {
+    "id": "case_03",
+    "query": "What notice is required to terminate the master services agreement?",
+    "relevant_chunk_ids": ["master_services_agreement::003", "master_services_agreement::006"]
+  },
+  {
+    "id": "case_04",
+    "query": "When does the Enterprise SaaS subscription auto-renew, and what notice prevents renewal?",
+    "relevant_chunk_ids": ["enterprise_saas_subscription_agreement::003"]
+  },
+  {
+    "id": "case_05",
+    "query": "What is the effective date of the Data Processing Consulting Agreement?",
+    "relevant_chunk_ids": ["data_processing_consulting_agreement::000"]
+  },
+  {
+    "id": "case_06",
+    "query": "How many days does the Data Processing and Consulting Agreement amendment allow for invoice payment?",
+    "relevant_chunk_ids": ["data_processing_consulting_agreement::013"]
+  },
+  {
+    "id": "case_07",
+    "query": "What payment term applies to the Software Services Agreement after Amendment No. 2?",
+    "relevant_chunk_ids": ["software_services_agreement_with_amendments::013"]
+  },
+  {
+    "id": "case_08",
+    "query": "What security incident notification window applies under Amendment No. 3 to the Software Services Agreement?",
+    "relevant_chunk_ids": ["software_services_agreement_with_amendments::014"]
+  },
+  {
+    "id": "case_09",
+    "query": "What audit rights does Amendment No. 2 add to the Software Services Agreement?",
+    "relevant_chunk_ids": ["software_services_agreement_with_amendments::013"]
+  },
+  {
+    "id": "case_10",
+    "query": "What monthly uptime does the Enterprise SaaS Subscription Agreement target?",
+    "relevant_chunk_ids": ["enterprise_saas_subscription_agreement::005"]
+  }
+]

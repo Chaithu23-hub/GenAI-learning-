@@ -16,7 +16,17 @@ from legal_rag.infrastructure.prompts.orchestrator_prompts import (
     SYNTHESIZER_PROMPT_V1,
 )
 from legal_rag.infrastructure.prompts.prompt import PromptTemplate
-from legal_rag.infrastructure.prompts.qa_system import QA_SYSTEM_PROMPT
+from legal_rag.infrastructure.prompts.qa_system import (
+    QA_SYSTEM_PROMPT,
+    QA_SYSTEM_PROMPT_V1,
+)
+
+PROMPT_VERSIONS: dict[str, dict[str, PromptTemplate]] = {
+    "qa.system": {
+        "v1": QA_SYSTEM_PROMPT_V1,
+        "v2": QA_SYSTEM_PROMPT,
+    },
+}
 
 # `name` -> currently-active PromptTemplate.
 ACTIVE_PROMPTS: dict[str, PromptTemplate] = {

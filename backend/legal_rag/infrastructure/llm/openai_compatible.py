@@ -48,6 +48,10 @@ class OpenAICompatibleClient:
     def model(self) -> str:
         return self._model
 
+    @model.setter
+    def model(self, value: str) -> None:
+        self._model = value
+
     def chat(
         self,
         *,
@@ -108,15 +112,18 @@ class OpenAICompatibleClient:
         return [item.get("id") for item in data.get("data", []) if item.get("id")]
 
 
-def detect_llm_model(client: OpenAICompatibleClient) -> str | None:
-    """Probe the endpoint and return either the configured model or an available fallback."""
+def select_llm_model(client: OpenAICompatibleClient) -> str | None:
+    """Probe the endpoint and select the configured or first available model."""
     names = client.list_models()
     if client.model in names:
         return client.model
     if names:
+        configured = client.model
+        fallback = names[0]
+        client.model = fallback
         log.warning(
             "configured model not available; using fallback",
-            extra={"configured": client.model, "fallback": names[0]},
+            extra={"configured": configured, "fallback": fallback},
         )
-        return names[0]
+        return fallback
     return None

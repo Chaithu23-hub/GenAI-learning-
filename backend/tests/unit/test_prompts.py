@@ -2,6 +2,7 @@ import pytest
 
 from legal_rag.infrastructure.prompts import (
     ACTIVE_PROMPTS,
+    JUDGE_SYSTEM_PROMPT_V1,
     QA_SYSTEM_PROMPT,
     PromptTemplate,
     get,
@@ -37,7 +38,7 @@ class TestRegistry:
 
     def test_snapshot_returns_pinned_versions(self):
         snap = snapshot()
-        assert snap["qa.system"] == "v1"
+        assert snap["qa.system"] == "v2"
         assert snap["judge.system"] == "v1"
 
     def test_get_unknown_raises(self):
@@ -50,7 +51,6 @@ class TestRegistry:
 
     def test_judge_prompts_are_contract_focused(self):
         from legal_rag.application.workflows.judge import JUDGE_SYSTEM_PROMPT
-        from legal_rag.infrastructure.prompts.judge_prompts import JUDGE_SYSTEM_PROMPT_V1
         text = (JUDGE_SYSTEM_PROMPT + " " + JUDGE_SYSTEM_PROMPT_V1.text).lower()
         assert "constitutional" not in text
         assert "contract" in text

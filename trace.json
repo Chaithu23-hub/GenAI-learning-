@@ -1,0 +1,120 @@
+{
+  "week": 11,
+  "historical_request": {
+    "status": "not_found",
+    "reason": "No squadmate-planted request or persisted production logs were present.",
+    "request_id": null,
+    "trace_id": null,
+    "timestamp": null,
+    "time_to_find": null,
+    "exact_missing_log_field": "answer_clause_refs",
+    "slice": "answer/output"
+  },
+  "controlled_log_search": {
+    "operator": "GitHub Copilot automated search; not a human squadmate",
+    "elapsed_mm_ss": "00:00",
+    "elapsed_seconds": 0.003,
+    "human_search_planning_estimate_mm_ss": "00:30",
+    "human_search_estimate_status": "unmeasured estimate; not a squadmate result",
+    "squadmate_verification": "not verified with a squadmate",
+    "slice": "answer/output",
+    "search_field": "answer_clause_refs",
+    "matched_failure_case": 26,
+    "source": "captured RED full-suite output"
+  },
+  "controlled_red_run": {
+    "test_case_id": 26,
+    "query": "termination notice",
+    "timestamp": "2026-10-06T17:50:24.680Z",
+    "prompt_version": "qa.system@v2",
+    "answer_clause_refs": ["3"],
+    "retrieved_context_ids": [
+      "enterprise_saas_subscription_agreement::001",
+      "enterprise_saas_subscription_agreement::002",
+      "master_services_agreement::002"
+    ],
+    "spans": [
+      {"name": "retrieval", "latency_ms": 0.262, "input_tokens": null, "output_tokens": null, "cost_usd": null},
+      {"name": "generation", "latency_ms": 0.002, "input_tokens": 10, "output_tokens": 5, "cost_usd": null, "candidate_clause_refs": ["3"]}
+    ],
+    "total_latency_ms": 3.779,
+    "answer": "Section 3 permits either party to terminate with 30 days' notice.",
+    "cost_basis": "controlled fake LLM; no provider cost"
+  },
+  "controlled_green_run": {
+    "test_case_id": 26,
+    "prompt_version": "qa.system@v2",
+    "answer_clause_refs": ["2", "5", "9"],
+    "candidate_clause_refs_by_generation": [[], ["3"], []],
+    "retrieved_context_ids": [
+      "enterprise_saas_subscription_agreement::001",
+      "enterprise_saas_subscription_agreement::002",
+      "master_services_agreement::002"
+    ],
+    "spans": [
+      {"name": "retrieval", "latency_ms": 0.249, "input_tokens": null, "output_tokens": null, "cost_usd": null},
+      {"name": "generation", "latency_ms": 0.003, "input_tokens": 10, "output_tokens": 5, "cost_usd": null, "candidate_clause_refs": ["3"], "validation_errors": ["answer cites section(s) not present in its cited sources: 3"]},
+      {"name": "generation", "latency_ms": 0.003, "input_tokens": 0, "output_tokens": 0, "cost_usd": null, "candidate_clause_refs": [], "validation_errors": ["'answer' is a required property"]}
+    ],
+    "total_latency_ms": 6.875,
+    "retry_count": 1,
+    "final_action": "extractive fallback",
+    "cost_basis": "controlled fake LLM; no provider cost"
+  },
+  "live_cost_probe": {
+    "status": "completed",
+    "query": "termination notice",
+    "configured_model": "gemini-1.5-flash",
+    "selected_model": "models/gemini-2.5-flash",
+    "prompt_version": "v2",
+    "retrieved_context_ids": [
+      "data_processing_consulting_agreement::011",
+      "master_services_agreement::006",
+      "software_services_agreement_with_amendments::009"
+    ],
+    "spans": [
+      {"name": "retrieval", "latency_ms": 4666.064, "input_tokens": null, "output_tokens": null, "cost_usd": null},
+      {"name": "generation", "latency_ms": 6093.633, "input_tokens": 1006, "output_tokens": 866, "cost_usd": null}
+    ],
+    "total_latency_ms": 10765.674,
+    "list_price_estimate": {
+      "input_usd_per_million_tokens": 0.30,
+      "output_usd_per_million_tokens": 2.50,
+      "total_cost_usd": 0.0024668,
+      "basis": "Google Gemini 2.5 Flash published paid-tier rates; account billing tier was not observable"
+    },
+    "tool_calls": 0
+  },
+  "free_tier_10x_burst": {
+    "status": "completed",
+    "model": "models/gemini-2.5-flash",
+    "free_tier_quota_observed": {"requests_per_minute_per_model": 5},
+    "requested_concurrency": 10,
+    "wall_clock_ms": 5551.849,
+    "provider_generation_requests": {
+      "accepted": ["week11-load-01", "week11-load-03", "week11-load-05", "week11-load-09", "week11-load-10"],
+      "http_429": ["week11-load-02", "week11-load-04", "week11-load-06", "week11-load-07", "week11-load-08"]
+    },
+    "application_answers": {"grounded": 10, "extractive_fallback_after_429": 5},
+    "latency_ms": {
+      "per_request": [5035.809, 3598.096, 5391.807, 3538.735, 5252.014, 3570.818, 3591.741, 4680.806, 4225.668, 5522.265],
+      "p50": 4453.237,
+      "max": 5522.265
+    },
+    "successful_call_span_latency_ms": {
+      "retrieval_reranking": {"samples": 5, "p50": 867.756, "max": 975.94},
+      "generation": {"samples": 5, "p50": 3068.874, "max": 3285.192},
+      "rate_limited_generation_spans": "not captured during this burst; now covered by regression"
+    },
+    "successful_generation_usage": {"requests": 5, "input_tokens": 3770, "output_tokens": 1436, "total_tokens": 5206},
+    "provider_cost": {
+      "actual_free_tier_charge_usd": 0.0,
+      "paid_list_price_equivalent_usd": 0.004721,
+      "basis": "5 successful requests only; 5 requests were rejected before generation"
+    },
+    "tools_called": 0,
+    "instrumentation_note": "This burst was captured before the 429 trace fix, so five failed-call QA spans are absent here. A regression now verifies failed generation spans are traced before fallback. The production burst was not repeated after reaching quota."
+  },
+  "prompt_change": {"from": "qa.system@v1", "to": "qa.system@v2"},
+  "suite": {"red": {"failed": 1, "passed": 200}, "green": {"failed": 0, "passed": 201}, "final_after_model_fallback_fix": {"passed": 204}, "final_after_rate_limit_trace_fix": {"passed": 205}}
+}
