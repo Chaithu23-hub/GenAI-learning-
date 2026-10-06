@@ -1,9 +1,11 @@
 """POST /api/agent"""
 from __future__ import annotations
 
+from typing import Annotated, Any
+
 from fastapi import APIRouter, Depends
 
-from legal_rag.application.agents.legal_agent import FixedWorkflow, LegalAgent, compare_strategies
+from legal_rag.application.agents.legal_agent import compare_strategies
 from legal_rag.interfaces.http.dependencies import (
     get_agent_factory,
     get_fixed_factory,
@@ -25,9 +27,9 @@ router = APIRouter(prefix="/api", tags=["agent"])
 )
 async def run_agent(
     request: AgentRequest,
-    _: str = Depends(verify_api_key),
-    agent_factory=Depends(get_agent_factory),
-    fixed_factory=Depends(get_fixed_factory),
+    _: Annotated[str, Depends(verify_api_key)],
+    agent_factory: Annotated[Any, Depends(get_agent_factory)],
+    fixed_factory: Annotated[Any, Depends(get_fixed_factory)],
 ) -> AgentResponse | AgentComparisonResponse:
     if request.strategy == "agent":
         report = agent_factory().run(request.question)

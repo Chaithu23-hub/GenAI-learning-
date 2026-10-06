@@ -1,11 +1,11 @@
 from .evaluation import EVALUATION_CASES, EvaluationCase, EvaluationService
 from .generation import (
+    RETRIEVE_TOOL,
+    SYSTEM_PROMPT,
     ExtractiveGenerator,
     GenerationSettings,
     Generator,
     LLMGenerator,
-    RETRIEVE_TOOL,
-    SYSTEM_PROMPT,
     chunks_payload,
 )
 from .ingestion import IngestionService, IngestionSettings
@@ -21,6 +21,7 @@ from .judge import (
 )
 from .mcp_lookup import MCPLookupService
 from .qa import QaService
+
 # `race` is imported from its submodule (not here) to break a workflows↔agents cycle.
 from .retrieval import RetrievalService, RetrievalSettings
 

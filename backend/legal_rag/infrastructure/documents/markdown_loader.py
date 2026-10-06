@@ -1,8 +1,8 @@
 """Filesystem-backed markdown document source."""
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 from legal_rag.infrastructure.errors import DocumentSourceError
 

@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 import math
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 from legal_rag.domain.entities import IndexedChunk
 
@@ -10,7 +11,7 @@ from legal_rag.domain.entities import IndexedChunk
 def _cosine_distance(a: list[float], b: list[float]) -> float:
     if not a or not b:
         return 1.0
-    dot = sum(x * y for x, y in zip(a, b))
+    dot = sum(x * y for x, y in zip(a, b, strict=False))
     na = math.sqrt(sum(x * x for x in a)) or 1.0
     nb = math.sqrt(sum(y * y for y in b)) or 1.0
     return 1.0 - dot / (na * nb)
@@ -30,7 +31,7 @@ class InMemoryVectorStore:
     ) -> None:
         indexed_list = list(indexed)
         assert len(indexed_list) == len(embeddings)
-        for chunk, emb in zip(indexed_list, embeddings):
+        for chunk, emb in zip(indexed_list, embeddings, strict=False):
             if chunk.id in self._ids:
                 index = self._ids.index(chunk.id)
                 self._documents[index] = chunk.text

@@ -11,9 +11,9 @@ from typing import Any
 
 from legal_rag.application.ports import VectorStore
 from legal_rag.application.workflows.generation import (
-    ExtractiveGenerator,
     RETRIEVE_TOOL,
     SYSTEM_PROMPT,
+    ExtractiveGenerator,
     chunks_payload,
 )
 from legal_rag.application.workflows.retrieval import RetrievalService
@@ -197,7 +197,7 @@ class Orchestrator:
         for term in request["terms"]:
             hit = None
             for chunk_id, text, meta in zip(
-                stored["ids"], stored["documents"], stored["metadatas"]
+                stored["ids"], stored["documents"], stored["metadatas"], strict=False
             ):
                 doc_type = (meta or {}).get("document_type", "contract")
                 if request["version"] == "original" and doc_type == "amendment":

@@ -1,4 +1,3 @@
-import pytest
 
 from legal_rag.application.agents.legal_agent import AgentBudgets, LegalAgent
 

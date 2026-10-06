@@ -74,7 +74,7 @@ class Answer:
         }
 
     @classmethod
-    def from_dict(cls, payload: dict[str, Any]) -> "Answer":
+    def from_dict(cls, payload: dict[str, Any]) -> Answer:
         return cls(
             answer=payload["answer"],
             reasoning=payload["reasoning"],

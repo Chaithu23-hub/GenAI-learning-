@@ -1,14 +1,11 @@
 """Regression tests for the 9 bugs surfaced by the code review."""
 from __future__ import annotations
 
-import pytest
-
-from legal_rag.application.agents.orchestrator import Orchestrator, OrchestratorSettings
 from legal_rag.application.workflows.race import classify_failure
 from legal_rag.domain.policies import evaluate_trajectory
 
 
-class TestFinding1_GuardrailNotDroppedInSynthesize:
+class TestFinding1GuardrailNotDroppedInSynthesize:
     """When the clause worker refuses (out_of_scope=True), synthesize must
     preserve that verdict even if definitions succeed."""
 
@@ -38,7 +35,7 @@ class TestFinding1_GuardrailNotDroppedInSynthesize:
         assert result["sources"] == []
 
 
-class TestFinding3_GetDefinitionsIsSafe:
+class TestFinding3GetDefinitionsIsSafe:
     def test_get_definitions_is_in_safe_tool_set(self):
         report = {
             "steps": [
@@ -53,7 +50,7 @@ class TestFinding3_GetDefinitionsIsSafe:
         assert not any("unsafe tool" in f for f in result["findings"])
 
 
-class TestFinding4_VersionSelectionInAgentDefinitions:
+class TestFinding4VersionSelectionInAgentDefinitions:
     def test_amended_returns_only_amendment_chunks(self, container):
         agent = container.new_legal_agent()
         # Seed the state with mixed docs
@@ -88,7 +85,7 @@ class TestFinding4_VersionSelectionInAgentDefinitions:
         assert result["references"] == ["msa::001"]
 
 
-class TestFinding7_DefinedTermsWorkerHandlesMissingMetadata:
+class TestFinding7DefinedTermsWorkerHandlesMissingMetadata:
     def test_missing_document_type_does_not_raise(self, container):
         # Directly poke a chunk with no document_type into the fake store.
         vs = container.vector_store
@@ -102,7 +99,7 @@ class TestFinding7_DefinedTermsWorkerHandlesMissingMetadata:
         assert result["status"] == 200
 
 
-class TestFinding8_MultiplierGuardsAgainstZero:
+class TestFinding8MultiplierGuardsAgainstZero:
     def test_zero_single_tokens_yields_infinity_not_crash(self):
         # No integration harness needed — this is a hot-path formula guard.
         single, multi = 0, 100
@@ -110,7 +107,7 @@ class TestFinding8_MultiplierGuardsAgainstZero:
         assert multiplier == float("inf")
 
 
-class TestFinding9_ClassifyFailureHandlesMissingExcerpt:
+class TestFinding9ClassifyFailureHandlesMissingExcerpt:
     def test_missing_excerpt_key_does_not_raise(self):
         report = {
             "handoffs": [{"hop": "orchestrator -> defined_terms_worker", "status": 500,

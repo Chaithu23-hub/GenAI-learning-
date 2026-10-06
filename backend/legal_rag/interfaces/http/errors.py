@@ -6,10 +6,10 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from legal_rag.domain.exceptions import (
-    AgentBudgetExceeded,
+    AgentBudgetExceededError,
     DomainError,
-    GuardrailBlocked,
-    OutOfScope,
+    GuardrailBlockedError,
+    OutOfScopeError,
     SchemaValidationError,
 )
 from legal_rag.infrastructure.errors import (
@@ -37,20 +37,20 @@ def _problem(status: int, title: str, detail: str) -> JSONResponse:
 
 
 def register_exception_handlers(app: FastAPI) -> None:
-    @app.exception_handler(GuardrailBlocked)
-    async def _guardrail(_: Request, exc: GuardrailBlocked):
+    @app.exception_handler(GuardrailBlockedError)
+    async def _guardrail(_: Request, exc: GuardrailBlockedError):
         return _problem(400, f"Guardrail blocked ({exc.reason})", exc.message)
 
-    @app.exception_handler(OutOfScope)
-    async def _oos(_: Request, exc: OutOfScope):
+    @app.exception_handler(OutOfScopeError)
+    async def _oos(_: Request, exc: OutOfScopeError):
         return _problem(422, "Out of scope", str(exc))
 
     @app.exception_handler(SchemaValidationError)
     async def _schema(_: Request, exc: SchemaValidationError):
         return _problem(422, "Schema validation failed", "; ".join(exc.errors))
 
-    @app.exception_handler(AgentBudgetExceeded)
-    async def _budget(_: Request, exc: AgentBudgetExceeded):
+    @app.exception_handler(AgentBudgetExceededError)
+    async def _budget(_: Request, exc: AgentBudgetExceededError):
         return _problem(504, f"Agent budget exceeded ({exc.budget})", str(exc))
 
     @app.exception_handler(DomainError)

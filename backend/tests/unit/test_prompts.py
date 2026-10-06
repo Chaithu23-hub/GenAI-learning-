@@ -2,10 +2,8 @@ import pytest
 
 from legal_rag.infrastructure.prompts import (
     ACTIVE_PROMPTS,
-    JUDGE_SYSTEM_PROMPT_V1,
-    ORCHESTRATOR_PROMPT_V1,
-    PromptTemplate,
     QA_SYSTEM_PROMPT,
+    PromptTemplate,
     get,
     snapshot,
 )

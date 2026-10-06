@@ -1,6 +1,8 @@
 """GET /api/health"""
 from __future__ import annotations
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 
 from legal_rag import __version__
@@ -14,8 +16,8 @@ router = APIRouter(prefix="/api", tags=["health"])
 
 @router.get("/health", response_model=HealthResponse, summary="Service health check")
 async def health(
-    _: str = Depends(verify_api_key),
-    container: Container = Depends(get_container),
+    _: Annotated[str, Depends(verify_api_key)],
+    container: Annotated[Container, Depends(get_container)],
 ) -> HealthResponse:
     s = container.settings
     return HealthResponse(

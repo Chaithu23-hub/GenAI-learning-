@@ -1,7 +1,5 @@
 import json
 
-import pytest
-
 from legal_rag.application.workflows.generation import (
     ExtractiveGenerator,
     GenerationSettings,

@@ -6,7 +6,7 @@ class DomainError(Exception):
     """Base class for domain-rule failures."""
 
 
-class GuardrailBlocked(DomainError):
+class GuardrailBlockedError(DomainError):
     """Query was rejected by input guardrails (injection or drafting)."""
 
     def __init__(self, reason: str, message: str):
@@ -15,7 +15,7 @@ class GuardrailBlocked(DomainError):
         self.message = message
 
 
-class OutOfScope(DomainError):
+class OutOfScopeError(DomainError):
     """No retrieved chunk cleared the relevance threshold."""
 
 
@@ -27,7 +27,7 @@ class SchemaValidationError(DomainError):
         self.errors = errors
 
 
-class AgentBudgetExceeded(DomainError):
+class AgentBudgetExceededError(DomainError):
     """Agent stopped cleanly because a budget was reached."""
 
     def __init__(self, budget: str):

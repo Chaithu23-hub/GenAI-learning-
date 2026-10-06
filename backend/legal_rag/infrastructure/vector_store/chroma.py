@@ -6,9 +6,10 @@ from __future__ import annotations
 
 import math
 import re
+from collections.abc import Iterable
 from pathlib import Path
 from threading import Lock
-from typing import Any, Iterable
+from typing import Any
 
 from legal_rag.domain.entities import IndexedChunk
 from legal_rag.infrastructure.errors import VectorStoreError

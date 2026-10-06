@@ -8,8 +8,8 @@ import typer
 
 from legal_rag.composition import Container
 from legal_rag.domain.policies import compare_injection_defense, evaluate_trajectory
-from legal_rag.infrastructure.observability.logging import configure_logging
 from legal_rag.infrastructure.mcp import run_lookup
+from legal_rag.infrastructure.observability.logging import configure_logging
 from legal_rag.infrastructure.settings import get_settings
 
 app = typer.Typer(help="LegalRAG command-line interface", no_args_is_help=True)
@@ -59,7 +59,8 @@ def agent(
             fixed_factory=c.new_fixed_workflow, runs=runs,
         )
     else:
-        typer.echo(f"Unknown strategy: {strategy}", err=True); raise typer.Exit(code=2)
+        typer.echo(f"Unknown strategy: {strategy}", err=True)
+        raise typer.Exit(code=2)
     _echo_json(report)
 
 

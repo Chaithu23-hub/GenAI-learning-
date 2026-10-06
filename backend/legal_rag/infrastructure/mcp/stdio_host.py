@@ -31,7 +31,7 @@ class StdioMCPHost:
         self.sessions: dict[str, Any] = {}
         self.discovered: dict[str, list[str]] = {}
 
-    async def __aenter__(self) -> "StdioMCPHost":
+    async def __aenter__(self) -> StdioMCPHost:
         try:
             from mcp import ClientSession, StdioServerParameters
             from mcp.client.stdio import stdio_client
