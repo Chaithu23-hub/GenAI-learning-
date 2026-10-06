@@ -79,7 +79,7 @@ def run_assertions(
 DETERMINISTIC_ASSERTION_COUNT = 3
 JUDGED_CRITERION_COUNT = 1
 
-JUDGE_SYSTEM_PROMPT = """You are an expert legal document evaluator grading answers about constitutional amendments and legal clauses.
+JUDGE_SYSTEM_PROMPT = """You are an expert legal contract evaluator grading answers about contracts, amendments, and negotiated legal terms.
 
 Your only judged criterion is binary: is the answer a supported and useful response to the question based on the supplied documents?
 Do not judge clause-reference existence, date parsing, defined-term presence, or numeric notice periods; those are deterministic assertions run before this prompt.
@@ -116,9 +116,7 @@ Respond with only valid JSON.
 # ─── Race judge (offline) ─────────────────────────────────────────────────
 
 _STOPWORDS = frozenset(
-    "what which does that this with from have there their about under between when where into "
-    "your they them were been being after before only also than then amendment amendments agreement "
-    "contract document documents section clause".split()
+    ["what", "which", "does", "that", "this", "with", "from", "have", "there", "their", "about", "under", "between", "when", "where", "into", "your", "they", "them", "were", "been", "being", "after", "before", "only", "also", "than", "then", "amendment", "amendments", "agreement", "contract", "document", "documents", "section", "clause"]
 )
 
 
@@ -263,7 +261,7 @@ class JudgeService:
 
     @staticmethod
     def _agreement(labels: list[dict[str, Any]], judge) -> float:
-        return sum(judge(l) == l["human_label"] for l in labels) / len(labels)
+        return sum(judge(label) == label["human_label"] for label in labels) / len(labels)
 
     @staticmethod
     def _pass_rate_by_mode(labels: list[dict[str, Any]]) -> dict[str, float]:

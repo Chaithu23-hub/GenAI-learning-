@@ -1,7 +1,7 @@
 """Pydantic HTTP DTOs (transport layer)."""
 from __future__ import annotations
 
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -23,7 +23,7 @@ class AnswerResponse(BaseModel):
 class AskRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=2000,
                           description="The legal question to answer.")
-    document_type: Optional[Literal["contract", "amendment"]] = Field(
+    document_type: Literal["contract", "amendment"] | None = Field(
         None, description="Restrict retrieval to a specific document type.",
     )
 
@@ -101,4 +101,4 @@ class ErrorResponse(BaseModel):
     title: str
     status: int
     detail: str
-    request_id: Optional[str] = None
+    request_id: str | None = None

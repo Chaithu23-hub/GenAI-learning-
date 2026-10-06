@@ -207,7 +207,7 @@ def compare_injection_defense() -> tuple[dict[str, Any], dict[str, Any]]:
     sanitized = [sanitize_document_text(sample) for sample in samples]
     blocked_after = sum(
         detect_prompt_injection(sample) or "[sanitized]" in clean
-        for sample, clean in zip(samples, sanitized)
+        for sample, clean in zip(samples, sanitized, strict=False)
     )
     before = {
         "blocked": 0, "blocked_rate": 0.0,

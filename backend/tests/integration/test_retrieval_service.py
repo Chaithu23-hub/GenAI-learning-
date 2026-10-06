@@ -1,4 +1,3 @@
-import pytest
 
 
 class TestRetrievalService:
@@ -36,6 +35,9 @@ class TestRetrievalService:
         assert container.retrieval_service.detect_metadata_filter(
             "What did the amendment change?"
         ) == {"document_type": "amendment"}
+        assert container.retrieval_service.detect_metadata_filter(
+            "What is the original contract's effective date?"
+        ) == {"document_type": "contract"}
         assert container.retrieval_service.detect_metadata_filter(
             "What is the late payment fee?"
         ) is None

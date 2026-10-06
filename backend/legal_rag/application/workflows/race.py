@@ -6,10 +6,11 @@ import math
 import re
 import statistics
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from legal_rag.application.agents.legal_agent import FixedWorkflow, LegalAgent
 from legal_rag.application.agents.orchestrator import (

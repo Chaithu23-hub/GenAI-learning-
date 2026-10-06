@@ -7,7 +7,7 @@ from typing import Any
 from legal_rag.application.workflows.generation import Generator
 from legal_rag.application.workflows.retrieval import RetrievalService
 from legal_rag.domain.policies import is_greeting, screen_query
-from legal_rag.infrastructure.observability import get_metrics, get_logger
+from legal_rag.infrastructure.observability import get_logger, get_metrics
 
 log = get_logger(__name__)
 _metrics = get_metrics()

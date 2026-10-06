@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from legal_rag import __version__
-from legal_rag.composition import Container, get_container
+from legal_rag.composition import Container
 from legal_rag.infrastructure.observability.logging import configure_logging, get_logger
 from legal_rag.infrastructure.settings import Settings, get_settings
 from legal_rag.interfaces.http.errors import register_exception_handlers

@@ -1,6 +1,8 @@
 """POST /api/mcp/lookup"""
 from __future__ import annotations
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 
 from legal_rag.application.workflows import MCPLookupService
@@ -13,7 +15,7 @@ router = APIRouter(prefix="/api/mcp", tags=["mcp"])
 @router.post("/lookup", summary="Discover MCP tools and look up a contract")
 def lookup_contract_via_mcp(
     request: MCPLookupRequest,
-    _: str = Depends(verify_api_key),
-    service: MCPLookupService = Depends(get_mcp_lookup_service),
+    _: Annotated[str, Depends(verify_api_key)],
+    service: Annotated[MCPLookupService, Depends(get_mcp_lookup_service)],
 ) -> dict:
     return service.lookup_contract(request.contract_id)

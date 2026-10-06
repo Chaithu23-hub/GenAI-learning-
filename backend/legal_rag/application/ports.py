@@ -1,11 +1,11 @@
 """Port interfaces (Protocols). Services depend on these; adapters implement them."""
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 from legal_rag.domain.entities import IndexedChunk
-
 
 # ─── Persistence ──────────────────────────────────────────────────────────
 

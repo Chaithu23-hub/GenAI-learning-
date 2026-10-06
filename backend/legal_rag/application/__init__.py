@@ -1,9 +1,9 @@
 """Application layer facade — agents + workflows re-exported."""
 
 from legal_rag.application.agents import (
+    GET_DEFINITIONS_TOOL,
     AgentBudgets,
     FixedWorkflow,
-    GET_DEFINITIONS_TOOL,
     HandoffLog,
     LegalAgent,
     Orchestrator,
@@ -14,18 +14,40 @@ from legal_rag.application.agents import (
     extract_terms,
 )
 from legal_rag.application.workflows import (
-    DETERMINISTIC_ASSERTION_COUNT, EVALUATION_CASES, EvaluationCase,
-    EvaluationService, ExtractiveGenerator, GenerationSettings, Generator,
-    IngestionService, IngestionSettings, JUDGED_CRITERION_COUNT, JudgeService,
-    JudgeSettings, LLMGenerator, MCPLookupService, QaService, RETRIEVE_TOOL,
-    RetrievalService, RetrievalSettings, SYSTEM_PROMPT, chunks_payload,
-    clause_references_exist, effective_dates_are_parseable,
-    notice_periods_are_numeric, run_assertions,
+    DETERMINISTIC_ASSERTION_COUNT,
+    EVALUATION_CASES,
+    JUDGED_CRITERION_COUNT,
+    RETRIEVE_TOOL,
+    SYSTEM_PROMPT,
+    EvaluationCase,
+    EvaluationService,
+    ExtractiveGenerator,
+    GenerationSettings,
+    Generator,
+    IngestionService,
+    IngestionSettings,
+    JudgeService,
+    JudgeSettings,
+    LLMGenerator,
+    MCPLookupService,
+    QaService,
+    RetrievalService,
+    RetrievalSettings,
+    chunks_payload,
+    clause_references_exist,
+    effective_dates_are_parseable,
+    notice_periods_are_numeric,
+    run_assertions,
 )
-# race pulls in agents; import from its submodule after the agents facade is stable.
 from legal_rag.application.workflows.race import (
-    AgentRace, MeteredLegalAgent, MultiAgentRace, RACE_CASES, RaceCase,
-    classify_failure, hop_shares, summarize_race,
+    RACE_CASES,
+    AgentRace,
+    MeteredLegalAgent,
+    MultiAgentRace,
+    RaceCase,
+    classify_failure,
+    hop_shares,
+    summarize_race,
 )
 
 __all__ = [

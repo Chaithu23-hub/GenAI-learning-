@@ -1,6 +1,8 @@
 """POST /api/ask and POST /api/inspect"""
 from __future__ import annotations
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 
 from legal_rag.application.workflows import QaService
@@ -18,8 +20,8 @@ router = APIRouter(prefix="/api", tags=["qa"])
 @router.post("/ask", response_model=AnswerResponse, summary="Answer a legal question")
 async def ask(
     request: AskRequest,
-    _: str = Depends(verify_api_key),
-    qa: QaService = Depends(get_qa_service),
+    _: Annotated[str, Depends(verify_api_key)],
+    qa: Annotated[QaService, Depends(get_qa_service)],
 ) -> AnswerResponse:
     payload = qa.answer(request.question, document_type=request.document_type)
     return AnswerResponse(**payload)
@@ -28,8 +30,8 @@ async def ask(
 @router.post("/inspect", response_model=InspectResponse, summary="Inspect retrieval + answer")
 async def inspect(
     request: AskRequest,
-    _: str = Depends(verify_api_key),
-    qa: QaService = Depends(get_qa_service),
+    _: Annotated[str, Depends(verify_api_key)],
+    qa: Annotated[QaService, Depends(get_qa_service)],
 ) -> InspectResponse:
     result = qa.inspect(request.question, document_type=request.document_type)
     return InspectResponse(

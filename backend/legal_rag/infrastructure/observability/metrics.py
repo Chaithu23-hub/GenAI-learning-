@@ -8,9 +8,8 @@ from __future__ import annotations
 import threading
 import time
 from collections import defaultdict
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Iterator
-
 
 LabelValues = tuple[tuple[str, str], ...]  # sorted, immutable, hashable
 

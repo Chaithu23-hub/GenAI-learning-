@@ -12,7 +12,7 @@ class TestFixedWorkflowTinyBudget:
     def test_fixed_workflow_survives_impossibly_small_budget(self, container):
         # If max_steps=1 fires before "answer" is stored, the workflow must
         # still return a well-formed report (not KeyError).
-        from legal_rag.application.agents.legal_agent import LegalAgent, FixedWorkflow
+        from legal_rag.application.agents.legal_agent import FixedWorkflow, LegalAgent
 
         def small_agent() -> LegalAgent:
             return LegalAgent(

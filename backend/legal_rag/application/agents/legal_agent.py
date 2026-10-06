@@ -3,8 +3,9 @@ from __future__ import annotations
 
 import statistics
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Literal
+from typing import Any, Literal
 
 from legal_rag.application.workflows.qa import QaService
 from legal_rag.application.workflows.retrieval import RetrievalService
@@ -54,13 +55,17 @@ class LegalAgent:
 
         while state.status == "running":
             if len(state.steps) >= self._budgets.max_steps:
-                self._stop_for_budget(state, "max_iterations"); break
+                self._stop_for_budget(state, "max_iterations")
+                break
             if time.perf_counter() - started >= self._budgets.max_seconds:
-                self._stop_for_budget(state, "wall_clock"); break
+                self._stop_for_budget(state, "wall_clock")
+                break
             if state.token_count >= self._budgets.max_tokens:
-                self._stop_for_budget(state, "max_tokens"); break
+                self._stop_for_budget(state, "max_tokens")
+                break
             if state.estimated_cost_usd >= self._budgets.max_cost_usd:
-                self._stop_for_budget(state, "max_cost"); break
+                self._stop_for_budget(state, "max_cost")
+                break
 
             docs = state.observations["retrieve"]["documents"]
             has_amendment = any(d["document"].lower().startswith("amendment") for d in docs)
@@ -143,7 +148,8 @@ class LegalAgent:
         arguments: dict[str, Any] | None = None,
     ) -> None:
         if len(state.steps) >= self._budgets.max_steps:
-            self._stop_for_budget(state, "max_iterations"); return
+            self._stop_for_budget(state, "max_iterations")
+            return
         arguments = arguments or {}
         state.steps.append({
             "step": len(state.steps) + 1, "action": tool_name,

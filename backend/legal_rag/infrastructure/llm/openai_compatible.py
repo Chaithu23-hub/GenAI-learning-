@@ -10,7 +10,6 @@ import urllib.request
 from typing import Any
 
 from legal_rag.infrastructure.errors import (
-    LLMBackendError,
     PermanentLLMError,
     TransientLLMError,
 )

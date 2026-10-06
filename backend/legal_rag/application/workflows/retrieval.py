@@ -61,7 +61,11 @@ class RetrievalService:
                 distance=dist,
             )
             for chunk_id, text, meta, dist in zip(
-                raw["ids"][0], raw["documents"][0], raw["metadatas"][0], raw["distances"][0]
+                raw["ids"][0],
+                raw["documents"][0],
+                raw["metadatas"][0],
+                raw["distances"][0],
+                strict=True,
             )
         ]
         candidates_by_id = {c.chunk_id: c for c in dense_candidates}
@@ -90,7 +94,7 @@ class RetrievalService:
             return []
 
         scores = self._reranker.score(query, [c.text for c in candidates])
-        for candidate, score in zip(candidates, scores):
+        for candidate, score in zip(candidates, scores, strict=True):
             candidate.score = float(score)
         candidates.sort(key=lambda c: c.score, reverse=True)
         top = candidates[:n]
@@ -102,6 +106,9 @@ class RetrievalService:
 
     def detect_metadata_filter(self, query: str) -> dict[str, str] | None:
         """Auto-detect a document_type filter from query keywords."""
-        if "amendment" in query.lower():
+        q = query.lower()
+        if "amendment" in q:
             return {"document_type": "amendment"}
+        if "contract" in q or "agreement" in q:
+            return {"document_type": "contract"}
         return None

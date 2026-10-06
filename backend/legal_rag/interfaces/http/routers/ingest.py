@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
@@ -23,9 +24,9 @@ _MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # 25 MB per file
 
 @router.post("/ingest", response_model=IngestResponse, summary="Re-ingest all documents")
 async def ingest(
-    _: str = Depends(verify_api_key),
-    ingestion: IngestionService = Depends(get_ingestion_service),
-    container: Container = Depends(get_container),
+    _: Annotated[str, Depends(verify_api_key)],
+    ingestion: Annotated[IngestionService, Depends(get_ingestion_service)],
+    container: Annotated[Container, Depends(get_container)],
 ) -> IngestResponse:
     count = ingestion.ingest()
     return IngestResponse(
@@ -36,11 +37,11 @@ async def ingest(
 
 @router.post("/upload", response_model=IngestResponse, summary="Upload and ingest PDF files")
 async def upload_pdf(
-    files: list[UploadFile] = File(...),
+    files: Annotated[list[UploadFile], File(...)],
+    _: Annotated[str, Depends(verify_api_key)],
+    ingestion: Annotated[IngestionService, Depends(get_ingestion_service)],
+    container: Annotated[Container, Depends(get_container)],
     auto_ingest: bool = True,
-    _: str = Depends(verify_api_key),
-    ingestion: IngestionService = Depends(get_ingestion_service),
-    container: Container = Depends(get_container),
 ) -> IngestResponse:
     if not files:
         raise HTTPException(

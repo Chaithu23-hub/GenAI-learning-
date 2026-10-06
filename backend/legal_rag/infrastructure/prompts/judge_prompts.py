@@ -1,7 +1,7 @@
 """Judge system + user templates (v1)."""
 from legal_rag.infrastructure.prompts.prompt import PromptTemplate
 
-_SYS_TEXT = """You are an expert legal document evaluator grading answers about constitutional amendments and legal clauses.
+_SYS_TEXT = """You are an expert legal contract evaluator grading answers about contracts, amendments, and negotiated legal terms.
 
 Your only judged criterion is binary: is the answer a supported and useful response to the question based on the supplied documents?
 Do not judge clause-reference existence, date parsing, defined-term presence, or numeric notice periods; those are deterministic assertions run before this prompt.

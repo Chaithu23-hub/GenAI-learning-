@@ -4,27 +4,28 @@ from __future__ import annotations
 from functools import cached_property
 from pathlib import Path
 
-from legal_rag.application.agents import (FixedWorkflow, LegalAgent, Orchestrator)
-from legal_rag.application.workflows import (
-    EvaluationService, ExtractiveGenerator, IngestionService, JudgeService,
-    LLMGenerator, MCPLookupService, QaService, RetrievalService,
-)
-from legal_rag.application.workflows.race import (
-    AgentRace, MeteredLegalAgent, MultiAgentRace,
-)
+from legal_rag.application.agents import FixedWorkflow, LegalAgent, Orchestrator
 from legal_rag.application.agents.legal_agent import AgentBudgets
+from legal_rag.application.agents.orchestrator import OrchestratorSettings
+from legal_rag.application.workflows import (
+    EvaluationService,
+    ExtractiveGenerator,
+    IngestionService,
+    JudgeService,
+    LLMGenerator,
+    MCPLookupService,
+    QaService,
+    RetrievalService,
+)
 from legal_rag.application.workflows.generation import GenerationSettings, Generator
 from legal_rag.application.workflows.ingestion import IngestionSettings
 from legal_rag.application.workflows.judge import JudgeSettings
-from legal_rag.application.agents.orchestrator import OrchestratorSettings
+from legal_rag.application.workflows.race import AgentRace, MeteredLegalAgent, MultiAgentRace
 from legal_rag.application.workflows.retrieval import RetrievalSettings
-from legal_rag.infrastructure.embeddings import (
-    CrossEncoderReranker,
-    SentenceTransformerEmbedder,
-)
+from legal_rag.infrastructure.embeddings import CrossEncoderReranker, SentenceTransformerEmbedder
 from legal_rag.infrastructure.llm import OpenAICompatibleClient, detect_llm_model
-from legal_rag.infrastructure.vector_store import ChromaVectorStore
 from legal_rag.infrastructure.settings import Settings, get_settings
+from legal_rag.infrastructure.vector_store import ChromaVectorStore
 
 
 class Container:
