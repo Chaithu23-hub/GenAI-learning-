@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import json
+import re
+import time
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -11,38 +13,11 @@ from legal_rag.domain.entities import RetrievedChunk
 from legal_rag.domain.policies import apply_completeness_adjustment
 from legal_rag.domain.response_schema import parse_json_response, validate_response
 from legal_rag.infrastructure.observability.logging import get_logger
+from legal_rag.infrastructure.prompts.registry import get as get_prompt
 
 log = get_logger(__name__)
 
-SYSTEM_PROMPT = """ROLE
-You are a precise, citation-first legal assistant for a law firm's internal knowledge base.
-
-TASK
-Answer the user's question using ONLY the retrieved document chunks. You never guess or invent.
-
-CONTEXT
-The retrieved chunks for the current question arrive in the user message as a JSON list with
-fields chunk_id, document, heading, excerpt. They are the only facts you may rely on.
-
-CONSTRAINTS
-1. Every claim must trace back to a retrieved chunk; cite document and chunk_id in "sources", with a supporting "excerpt" copied verbatim from the chunk.
-2. If multiple chunks are relevant, synthesise them but cite each one.
-3. If retrieved chunks contradict each other (e.g. an amendment changes a contract clause), surface BOTH versions and note the conflict explicitly.
-4. If the answer is not in the retrieved chunks, set out_of_scope to true and use the fixed out-of-scope sentence.
-5. Never draft, modify, or invent contract language; retrieve and explain only.
-
-OUTPUT FORMAT
-Respond with a single JSON object and nothing else:
-{
-  "answer": "your grounded answer",
-  "reasoning": "step-by-step explanation of how the retrieved chunks lead to the answer",
-  "sources": [{"document": "filename", "chunk_id": "id", "excerpt": "exact supporting passage"}],
-  "confidence": "high | medium | low",
-  "out_of_scope": false
-}
-
-TONE
-Formal, neutral, concise. Quote contract language verbatim where precision matters."""
+SYSTEM_PROMPT = get_prompt("qa.system").text
 
 
 RETRIEVE_TOOL: dict[str, Any] = {
@@ -66,6 +41,12 @@ RETRIEVE_TOOL: dict[str, Any] = {
 }
 
 _EXCERPT_CHARS = 400
+
+
+def _clause_refs(text: str) -> list[str]:
+    return sorted(set(re.findall(
+        r"\bsections?\s+(\d+(?:\.\d+)*)", text, re.IGNORECASE
+    )))
 
 
 @dataclass
@@ -188,7 +169,52 @@ class LLMGenerator:
             return self._fallback.generate(query, where=where, chunks=chunks)
 
     def _generate_llm(self, query: str, *, where: dict[str, Any] | None) -> dict[str, Any]:
-        initial_hits = self._retrieval.retrieve(query, where=where)
+        started_at = time.perf_counter()
+        spans: list[dict[str, Any]] = []
+
+        def retrieve(query_text: str, query_where: dict[str, Any] | None):
+            span_started = time.perf_counter()
+            hits = self._retrieval.retrieve(query_text, where=query_where)
+            spans.append({
+                "name": "retrieval",
+                "latency_ms": round((time.perf_counter() - span_started) * 1000, 3),
+                "input_tokens": None,
+                "output_tokens": None,
+                "cost_usd": None,
+            })
+            return hits
+
+        def chat(messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None = None):
+            span_started = time.perf_counter()
+            try:
+                response = self._llm.chat(
+                    messages=messages,
+                    tools=tools,
+                    temperature=self._settings.llm_temperature,
+                )
+            except Exception as exc:
+                spans.append({
+                    "name": "generation",
+                    "latency_ms": round((time.perf_counter() - span_started) * 1000, 3),
+                    "input_tokens": None,
+                    "output_tokens": None,
+                    "cost_usd": None,
+                    "error_type": type(exc).__name__,
+                })
+                raise
+            usage = response.get("usage", {})
+            spans.append({
+                "name": "generation",
+                "latency_ms": round((time.perf_counter() - span_started) * 1000, 3),
+                "input_tokens": usage.get("prompt_tokens"),
+                "output_tokens": usage.get("completion_tokens"),
+                "cost_usd": None,
+                "candidate_clause_refs": _clause_refs(response.get("content") or ""),
+            })
+            return response
+
+        initial_hits = retrieve(query, where)
+        available_chunks = {chunk.chunk_id: chunk for chunk in initial_hits}
         context = json.dumps(chunks_payload(initial_hits), indent=2)
         user_content = (
             f"{query}\n\n"
@@ -202,11 +228,12 @@ class LLMGenerator:
 
         message: dict[str, Any] | None = None
         for _ in range(self._settings.max_tool_rounds):
-            response = self._llm.chat(
-                messages=messages,
-                tools=[RETRIEVE_TOOL],
-                temperature=self._settings.llm_temperature,
-            )
+            try:
+                response = chat(messages, tools=[RETRIEVE_TOOL])
+            except Exception:
+                result = self._fallback.generate(query, where=where)
+                self._log_trace(query, result, available_chunks, spans, started_at)
+                return result
             message = response
             if not response["tool_calls"]:
                 break
@@ -225,14 +252,17 @@ class LLMGenerator:
                     {"document_type": args["document_type"]}
                     if args.get("document_type") else where
                 )
-                hits = self._retrieval.retrieve(args.get("query", query), where=tool_where)
+                hits = retrieve(args.get("query", query), tool_where)
+                available_chunks.update({chunk.chunk_id: chunk for chunk in hits})
                 messages.append({
                     "role": "tool",
                     "tool_call_id": call["id"],
                     "content": json.dumps(chunks_payload(hits)),
                 })
         else:
-            return self._fallback.generate(query, where=where)
+            result = self._fallback.generate(query, where=where)
+            self._log_trace(query, result, available_chunks, spans, started_at)
+            return result
 
         # Validate + retry once.
         for attempt in range(2):
@@ -240,9 +270,14 @@ class LLMGenerator:
             try:
                 payload = parse_json_response(message["content"] or "")
                 errors = validate_response(payload, self._settings.out_of_scope_answer)
-                errors += self._verify_sources(payload)
                 if not errors:
-                    return apply_completeness_adjustment(payload, query)
+                    errors += self._verify_sources(payload, available_chunks)
+                if errors:
+                    spans[-1]["validation_errors"] = errors
+                if not errors:
+                    result = apply_completeness_adjustment(payload, query)
+                    self._log_trace(query, result, available_chunks, spans, started_at)
+                    return result
             except (ValueError, json.JSONDecodeError) as exc:
                 errors = [f"response did not contain a JSON object ({exc})"]
             if attempt == 0:
@@ -255,18 +290,48 @@ class LLMGenerator:
                         + "\nReply again with ONLY the corrected JSON object."
                     ),
                 })
-                retry = self._llm.chat(
-                    messages=messages, temperature=self._settings.llm_temperature
-                )
+                try:
+                    retry = chat(messages)
+                except Exception:
+                    result = self._fallback.generate(query, where=where)
+                    self._log_trace(query, result, available_chunks, spans, started_at)
+                    return result
                 message = retry
 
         log.warning("llm validation failed twice; extractive fallback")
-        return self._fallback.generate(query, where=where)
+        result = self._fallback.generate(query, where=where)
+        self._log_trace(query, result, available_chunks, spans, started_at)
+        return result
 
-    def _verify_sources(self, payload: dict[str, Any]) -> list[str]:
+    def _log_trace(
+        self,
+        query: str,
+        payload: dict[str, Any],
+        available_chunks: dict[str, RetrievedChunk],
+        spans: list[dict[str, Any]],
+        started_at: float,
+    ) -> None:
+        clause_refs = _clause_refs(payload["answer"])
+        log.info("qa trace", extra={
+            "input_type": "text",
+            "prompt_version": get_prompt("qa.system").version,
+            "answer_clause_refs": clause_refs,
+            "retrieved_context_ids": sorted(available_chunks),
+            "spans": spans,
+            "total_latency_ms": round((time.perf_counter() - started_at) * 1000, 3),
+        })
+
+    def _verify_sources(
+        self, payload: dict[str, Any], available_chunks: dict[str, RetrievedChunk]
+    ) -> list[str]:
         errors: list[str] = []
+        evidence: list[str] = []
         for source in payload["sources"]:
             chunk_id = source["chunk_id"]
+            chunk = available_chunks.get(chunk_id)
+            if chunk is None:
+                errors.append(f"cited chunk_id {chunk_id} was not retrieved for this request")
+                continue
             stored_text = self._vector_store.get_document_text(chunk_id)
             if stored_text is None:
                 errors.append(
@@ -278,4 +343,19 @@ class LLMGenerator:
                 errors.append(
                     f"excerpt for {chunk_id} does not match the stored chunk text"
                 )
+            evidence.append(f"{chunk.heading}\n{stored_text}")
+        cited_sections = set(re.findall(
+            r"\bsections?\s+(\d+(?:\.\d+)*)", payload["answer"], re.IGNORECASE
+        ))
+        supported_sections = set(re.findall(
+            r"\bsections?\s+(\d+(?:\.\d+)*)",
+            "\n".join(evidence),
+            re.IGNORECASE,
+        ))
+        unsupported_sections = cited_sections - supported_sections
+        if unsupported_sections:
+            errors.append(
+                "answer cites section(s) not present in its cited sources: "
+                + ", ".join(sorted(unsupported_sections))
+            )
         return errors

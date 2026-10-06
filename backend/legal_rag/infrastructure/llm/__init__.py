@@ -1,3 +1,3 @@
-from .openai_compatible import OpenAICompatibleClient, detect_llm_model
+from .openai_compatible import OpenAICompatibleClient, select_llm_model
 
-__all__ = ["OpenAICompatibleClient", "detect_llm_model"]
+__all__ = ["OpenAICompatibleClient", "select_llm_model"]

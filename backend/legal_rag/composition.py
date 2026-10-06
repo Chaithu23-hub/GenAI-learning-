@@ -23,7 +23,7 @@ from legal_rag.application.workflows.judge import JudgeSettings
 from legal_rag.application.workflows.race import AgentRace, MeteredLegalAgent, MultiAgentRace
 from legal_rag.application.workflows.retrieval import RetrievalSettings
 from legal_rag.infrastructure.embeddings import CrossEncoderReranker, SentenceTransformerEmbedder
-from legal_rag.infrastructure.llm import OpenAICompatibleClient, detect_llm_model
+from legal_rag.infrastructure.llm import OpenAICompatibleClient, select_llm_model
 from legal_rag.infrastructure.settings import Settings, get_settings
 from legal_rag.infrastructure.vector_store import ChromaVectorStore
 
@@ -111,7 +111,7 @@ class Container:
         if self.llm_client is None:
             return self.extractive_generator
         # Probe for available model; fall back to extractive if endpoint is unreachable.
-        detected = detect_llm_model(self.llm_client)
+        detected = select_llm_model(self.llm_client)
         if detected is None:
             return self.extractive_generator
         return LLMGenerator(
