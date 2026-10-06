@@ -102,6 +102,9 @@ class RetrievalService:
 
     def detect_metadata_filter(self, query: str) -> dict[str, str] | None:
         """Auto-detect a document_type filter from query keywords."""
-        if "amendment" in query.lower():
+        q = query.lower()
+        if "amendment" in q:
             return {"document_type": "amendment"}
+        if "contract" in q or "agreement" in q:
+            return {"document_type": "contract"}
         return None

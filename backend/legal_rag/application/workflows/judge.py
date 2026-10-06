@@ -79,7 +79,7 @@ def run_assertions(
 DETERMINISTIC_ASSERTION_COUNT = 3
 JUDGED_CRITERION_COUNT = 1
 
-JUDGE_SYSTEM_PROMPT = """You are an expert legal document evaluator grading answers about constitutional amendments and legal clauses.
+JUDGE_SYSTEM_PROMPT = """You are an expert legal contract evaluator grading answers about contracts, amendments, and negotiated legal terms.
 
 Your only judged criterion is binary: is the answer a supported and useful response to the question based on the supplied documents?
 Do not judge clause-reference existence, date parsing, defined-term presence, or numeric notice periods; those are deterministic assertions run before this prompt.
