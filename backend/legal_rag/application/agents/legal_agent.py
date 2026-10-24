@@ -1,6 +1,7 @@
 """Legal agent: budget-limited retrieve/check/definitions/answer loop and its fixed-workflow twin."""
 from __future__ import annotations
 
+import re
 import statistics
 import time
 from collections.abc import Callable
@@ -166,8 +167,17 @@ class LegalAgent:
 
     @staticmethod
     def _needs_definitions(query: str) -> bool:
-        return any(term in query.lower()
-                   for term in ("termination", "terminate", "renewal", "defined term"))
+        lower = query.lower()
+        if not lower:
+            return False
+
+        if re.search(r"\b(?:define|defined|definition|meaning|means|term)\b", lower):
+            return True
+
+        if re.search(r'"[^"]+"|\'[^\']+\'', query):
+            return True
+
+        return any(term in lower for term in ("termination", "terminate", "renewal"))
 
     @staticmethod
     def _stop_for_budget(state: AgentState, budget_name: str) -> None:
