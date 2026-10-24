@@ -10,6 +10,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend/data:/app/data
+      - ./backend/data/shared-corpus/contracts:/app/backend/data/shared-corpus/contracts:ro
     env_file:
       - ./backend/.env
     environment:
@@ -18,6 +19,7 @@ services:
       - LEGAL_RAG_API_KEY=${LEGAL_RAG_API_KEY:-}
       - LEGAL_RAG_LOG_LEVEL=${LEGAL_RAG_LOG_LEVEL:-INFO}
       - LEGAL_RAG_LOG_FORMAT=${LEGAL_RAG_LOG_FORMAT:-json}
+      - LEGAL_RAG_DOCS_DIR=/app/backend/data/shared-corpus/contracts
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
       interval: 30s

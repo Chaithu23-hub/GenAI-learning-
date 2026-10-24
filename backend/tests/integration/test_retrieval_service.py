@@ -48,5 +48,17 @@ class TestRetrievalService:
             "Search contract documents only"
         ) == {"document_type": "contract"}
         assert container.retrieval_service.detect_metadata_filter(
+            "What is Section 8.3 liability under the Vertex Master Services Agreement?"
+        ) == {"counterparty": "Vertex Retail"}
+        assert container.retrieval_service.detect_metadata_filter(
+            "What governs Northwind as of 2026-08-01?"
+        ) == {
+            "counterparty": "Northwind Logistics",
+            "effective_date": "2026-08-01",
+        }
+        assert container.retrieval_service.detect_metadata_filter(
+            "Does Apex Industries have a holiday schedule?"
+        ) == {"counterparty": "Apex Industries"}
+        assert container.retrieval_service.detect_metadata_filter(
             "What is the late payment fee?"
         ) is None

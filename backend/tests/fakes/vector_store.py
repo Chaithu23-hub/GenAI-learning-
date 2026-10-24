@@ -40,6 +40,7 @@ class InMemoryVectorStore:
                     "document_type": chunk.document_type,
                     "heading": chunk.heading,
                     "chunk_index": chunk.chunk_index,
+                    **chunk.metadata,
                 }
                 self._embeddings[index] = list(emb)
                 continue
@@ -50,6 +51,7 @@ class InMemoryVectorStore:
                 "document_type": chunk.document_type,
                 "heading": chunk.heading,
                 "chunk_index": chunk.chunk_index,
+                **chunk.metadata,
             })
             self._embeddings.append(list(emb))
 

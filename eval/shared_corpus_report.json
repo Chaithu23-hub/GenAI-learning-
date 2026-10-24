@@ -1,0 +1,731 @@
+﻿{
+  "corpus_format": "md",
+  "corpus_dir": "backend\\data\\shared-corpus\\contracts",
+  "documents_ingested": 6,
+  "source_docs": [
+    "AMD-2026-014-01",
+    "AMD-2026-014-02",
+    "MSA-2026-014",
+    "MSA-2026-022",
+    "NDA-2026-007",
+    "SCH-2026-014"
+  ],
+  "chunks_ingested": 170,
+  "provider": "google",
+  "overall_pass_rate": {
+    "passed": 28,
+    "total": 32
+  },
+  "by_class": {
+    "direct_lookup": {
+      "passed": 7,
+      "total": 8
+    },
+    "amendment_supersession": {
+      "passed": 7,
+      "total": 7
+    },
+    "counterparty_disambiguation": {
+      "passed": 4,
+      "total": 4
+    },
+    "defined_term_chase": {
+      "passed": 3,
+      "total": 3
+    },
+    "multi_hop_dependent": {
+      "passed": 2,
+      "total": 2
+    },
+    "version_comparison": {
+      "passed": 1,
+      "total": 1
+    },
+    "cross_document": {
+      "passed": 1,
+      "total": 1
+    },
+    "computation": {
+      "passed": 1,
+      "total": 2
+    },
+    "out_of_scope": {
+      "passed": 2,
+      "total": 4
+    }
+  },
+  "failure_breakdown": {
+    "fail_wrong_version": 0,
+    "fail_wrong_counterparty": 0,
+    "fail_hallucination": 4,
+    "fail_false_refusal": 0
+  },
+  "cases": [
+    {
+      "id": "GS-001",
+      "class": "direct_lookup",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "1.5%",
+        "per month"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "MSA-2026-014"
+      ],
+      "cited_source_docs": [
+        "AMD-2026-014-01",
+        "AMD-2026-014-02",
+        "MSA-2026-014",
+        "SCH-2026-014"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to AMD-2026-014-01, section \"Section 2.2\": \"2.2 For the avoidance of doubt, the late payment interest rate in Section 3.4 of the Agreement is unchanged and remains at one and one-half percent (1.5%) per month.\n\n---\" According to MSA-2026-014, section \"Section 3.4 Late Payment\": \"3.4 Late Payment. Any undisputed amount not paid when due shall accrue interest at a rate of one and one-half percent (1.5%) per month, or the maximum rate permitted by applicable law, whichever is lower, calculated from the due date until the date of payment.\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-014\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0 (Original â€” see Amendment No. 1 and Amendment No. 2)\nStatus: Executed\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited, a company incorporated under the laws of India with its registered office at Chennai, Tamil Nadu (\"Provider\"), and Northwind Logistics Private Limited, a company incorporated under the laws of India with its registered office at Bengaluru, Karnataka (\"Client\"). Provider and Client are referred to individually as a \"Party\" and collectively as the \"Parties\".\n\n---\" According to AMD-2026-014-02, section \"AMENDMENT NO. 2 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-02\nAmends: MSA-2026-014 (Master Services Agreement), as amended by Amendment No. 1\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 August 2026\nDocument Version: v1.2\nStatus: Executed â€” CURRENT / CONTROLLING\n\n---\n\nThis Amendment No. 2 (this \"Amendment\") is made as of 1 August 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026, as previously amended by Amendment No. 1 dated 1 April 2026 (together, the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT: Schedules\": \"Agreement No.: MSA-2026-014\n\nThe following Schedules form part of this Agreement and are set out in the document SCH-2026-014NorthwindSchedules:\n\n- Schedule A â€” Description of Services\n- Schedule B â€” Fees and Service Levels\n- Schedule B-2 â€” Notice and Escalation Matrix\n- Schedule C â€” Holiday Calendar\n- Schedule D â€” Notice Addresses\n\n---\n\nEXECUTED by the Parties on 14 January 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to SCH-2026-014, section \"SCHEDULES TO MASTER SERVICES AGREEMENT MSA-2026-014\": \"Document No.: SCH-2026-014\nForms part of: MSA-2026-014 (Northwind Logistics Private Limited)\nCounterparty: Northwind Logistics Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0\nStatus: Executed\n\n---\" According to AMD-2026-014-01, section \"AMENDMENT NO. 1 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-01\nAmends: MSA-2026-014 (Master Services Agreement)\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 April 2026\nDocument Version: v1.1\nStatus: Executed â€” superseded in part by Amendment No. 2\n\n---\n\nThis Amendment No. 1 (this \"Amendment\") is made as of 1 April 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026 (the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\""
+    },
+    {
+      "id": "GS-002",
+      "class": "direct_lookup",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "India",
+        "Chennai"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "MSA-2026-014"
+      ],
+      "cited_source_docs": [
+        "AMD-2026-014-01",
+        "AMD-2026-014-02",
+        "MSA-2026-014",
+        "SCH-2026-014"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-014\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0 (Original â€” see Amendment No. 1 and Amendment No. 2)\nStatus: Executed\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited, a company incorporated under the laws of India with its registered office at Chennai, Tamil Nadu (\"Provider\"), and Northwind Logistics Private Limited, a company incorporated under the laws of India with its registered office at Bengaluru, Karnataka (\"Client\"). Provider and Client are referred to individually as a \"Party\" and collectively as the \"Parties\".\n\n---\" According to AMD-2026-014-02, section \"AMENDMENT NO. 2 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-02\nAmends: MSA-2026-014 (Master Services Agreement), as amended by Amendment No. 1\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 August 2026\nDocument Version: v1.2\nStatus: Executed â€” CURRENT / CONTROLLING\n\n---\n\nThis Amendment No. 2 (this \"Amendment\") is made as of 1 August 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026, as previously amended by Amendment No. 1 dated 1 April 2026 (together, the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to AMD-2026-014-01, section \"AMENDMENT NO. 1 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-01\nAmends: MSA-2026-014 (Master Services Agreement)\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 April 2026\nDocument Version: v1.1\nStatus: Executed â€” superseded in part by Amendment No. 2\n\n---\n\nThis Amendment No. 1 (this \"Amendment\") is made as of 1 April 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026 (the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to AMD-2026-014-02, section \"Section 7.2 Where this Amendment and Amendment No\": \"7.2 Where this Amendment and Amendment No. 1 address the same provision, this Amendment governs, in accordance with Section 20.2 of the Agreement.\n\n---\n\nEXECUTED by the Parties on 1 August 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to SCH-2026-014, section \"SCHEDULES TO MASTER SERVICES AGREEMENT MSA-2026-014\": \"Document No.: SCH-2026-014\nForms part of: MSA-2026-014 (Northwind Logistics Private Limited)\nCounterparty: Northwind Logistics Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0\nStatus: Executed\n\n---\" According to AMD-2026-014-01, section \"Section 7.2\": \"7.2 In the event of a conflict between this Amendment and the Agreement, this Amendment governs in respect of the provisions it amends.\n\n---\n\nEXECUTED by the Parties on 1 April 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT: Schedules\": \"Agreement No.: MSA-2026-014\n\nThe following Schedules form part of this Agreement and are set out in the document SCH-2026-014NorthwindSchedules:\n\n- Schedule A â€” Description of Services\n- Schedule B â€” Fees and Service Levels\n- Schedule B-2 â€” Notice and Escalation Matrix\n- Schedule C â€” Holiday Calendar\n- Schedule D â€” Notice Addresses\n\n---\n\nEXECUTED by the Parties on 14 January 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to MSA-2026-014, section \"Section 15.2 Jurisdiction\": \"15.2 Jurisdiction. The courts located in Chennai, Tamil Nadu shall have exclusive jurisdiction over any dispute arising out of or in connection with this Agreement.\""
+    },
+    {
+      "id": "GS-003",
+      "class": "direct_lookup",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "1,000,000",
+        "two (2) years"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "MSA-2026-014"
+      ],
+      "cited_source_docs": [
+        "AMD-2026-014-01",
+        "AMD-2026-014-02",
+        "MSA-2026-014",
+        "SCH-2026-014"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to MSA-2026-014, section \"Section 13.1\": \"13.1 Provider shall maintain, throughout the Term and for 2 years (two (2) years) thereafter: (a) professional indemnity insurance with a limit of not less than USD 1,000,000 per claim; and (b) commercial general liability insurance with a limit of not less than USD 2,000,000 per occurrence.\" According to AMD-2026-014-02, section \"AMENDMENT NO. 2 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-02\nAmends: MSA-2026-014 (Master Services Agreement), as amended by Amendment No. 1\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 August 2026\nDocument Version: v1.2\nStatus: Executed â€” CURRENT / CONTROLLING\n\n---\n\nThis Amendment No. 2 (this \"Amendment\") is made as of 1 August 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026, as previously amended by Amendment No. 1 dated 1 April 2026 (together, the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to AMD-2026-014-01, section \"AMENDMENT NO. 1 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-01\nAmends: MSA-2026-014 (Master Services Agreement)\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 April 2026\nDocument Version: v1.1\nStatus: Executed â€” superseded in part by Amendment No. 2\n\n---\n\nThis Amendment No. 1 (this \"Amendment\") is made as of 1 April 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026 (the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-014\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0 (Original â€” see Amendment No. 1 and Amendment No. 2)\nStatus: Executed\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited, a company incorporated under the laws of India with its registered office at Chennai, Tamil Nadu (\"Provider\"), and Northwind Logistics Private Limited, a company incorporated under the laws of India with its registered office at Bengaluru, Karnataka (\"Client\"). Provider and Client are referred to individually as a \"Party\" and collectively as the \"Parties\".\n\n---\" According to AMD-2026-014-01, section \"Section 7.2\": \"7.2 In the event of a conflict between this Amendment and the Agreement, this Amendment governs in respect of the provisions it amends.\n\n---\n\nEXECUTED by the Parties on 1 April 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to SCH-2026-014, section \"Schedule D â€” Notice Addresses\": \"[TABLE] Party | Postal Address (courier) | Electronic Mail\n Party: Provider | Postal Address (courier): Soft Suave Technologies Private Limited, Tidel Park, Chennai 600113, Tamil Nadu, India â€” Attn: Legal Department | Electronic Mail: legal@softsuave.example\n Party: Client | Postal Address (courier): Northwind Logistics Private Limited, Embassy Tech Village, Bengaluru 560103, Karnataka, India â€” Attn: Company Secretary | Electronic Mail: contracts@northwind-logistics.example\n\nA Party may change its notice address by giving 10 Business Days (ten (10) Business Days)' written notice to the other Party in accordance with Section 14 of the Agreement.\" According to AMD-2026-014-02, section \"Section 7.2 Where this Amendment and Amendment No\": \"7.2 Where this Amendment and Amendment No. 1 address the same provision, this Amendment governs, in accordance with Section 20.2 of the Agreement.\n\n---\n\nEXECUTED by the Parties on 1 August 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT: Schedules\": \"Agreement No.: MSA-2026-014\n\nThe following Schedules form part of this Agreement and are set out in the document SCH-2026-014NorthwindSchedules:\n\n- Schedule A â€” Description of Services\n- Schedule B â€” Fees and Service Levels\n- Schedule B-2 â€” Notice and Escalation Matrix\n- Schedule C â€” Holiday Calendar\n- Schedule D â€” Notice Addresses\n\n---\n\nEXECUTED by the Parties on 14 January 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\""
+    },
+    {
+      "id": "GS-004",
+      "class": "direct_lookup",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "72 hours"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "MSA-2026-014"
+      ],
+      "cited_source_docs": [
+        "MSA-2026-014",
+        "SCH-2026-014"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to MSA-2026-014, section \"Section 10.3 Breach Notification\": \"10.3 Breach Notification. Provider shall notify Client without undue delay, and in any event within 72 hours (seventy-two (72) hours), of becoming aware of any personal data breach affecting Client's personal data.\n\n---\" According to SCH-2026-014, section \"Schedule B-2 â€” Notice and Escalation Matrix: Part 2 â€” Breach Notification Deadlines\": \"For the purposes of Section 7.6 of the Agreement (inserted by Amendment No. 2, Section 3), a Party intending to terminate for cause must give notice of the material breach within the following period after becoming aware of it:\n\n[TABLE] Breach Category | Notice Deadline\n Breach Category: Payment breach | Notice Deadline: 30 calendar days\n Breach Category: Service Level breach | Notice Deadline: **15 Business Days**\n Breach Category: Confidentiality breach | Notice Deadline: 10 Business Days\n Breach Category: Data protection breach | Notice Deadline: 10 Business Days\n Breach Category: All other material breaches | Notice Deadline: 30 calendar days\n\nFailure to give notice within the applicable period waives the right to terminate in respect of that breach.\" According to SCH-2026-014, section \"Schedule B-2 â€” Notice and Escalation Matrix: Part 3 â€” Combined Cure and Notice Sequence\": \"Where a Party terminates for cause following a Service Level breach, the full sequence is:\n\n1. Notice of material breach must be given within 15 Business Days of awareness (Schedule B-2, Part 2).\n2. The breaching Party then has the Cure Period to remedy â€” 45 days as amended by Amendment No. 1, Section 4.\n3. If unremedied at the end of the Cure Period, the non-breaching Party may terminate with immediate effect under Section 7.4(a).\n\n---\" According to SCH-2026-014, section \"Schedule D â€” Notice Addresses\": \"[TABLE] Party | Postal Address (courier) | Electronic Mail\n Party: Provider | Postal Address (courier): Soft Suave Technologies Private Limited, Tidel Park, Chennai 600113, Tamil Nadu, India â€” Attn: Legal Department | Electronic Mail: legal@softsuave.example\n Party: Client | Postal Address (courier): Northwind Logistics Private Limited, Embassy Tech Village, Bengaluru 560103, Karnataka, India â€” Attn: Company Secretary | Electronic Mail: contracts@northwind-logistics.example\n\nA Party may change its notice address by giving ten (10) Business Days' written notice to the other Party in accordance with Section 14 of the Agreement.\" According to MSA-2026-014, section \"Section 11.2\": \"11.2 Audits shall be conducted during normal business hours, shall not unreasonably interfere with Provider's operations, and shall be at Client's cost, save where the audit reveals a material breach by Provider, in which case Provider shall bear the reasonable cost of the audit.\n\n---\" According to MSA-2026-014, section \"Section 10.2\": \"10.2 Where Provider processes personal data on behalf of Client, Provider shall do so only in accordance with Client's documented instructions and shall implement appropriate technical and organisational measures to protect that personal data.\""
+    },
+    {
+      "id": "GS-005",
+      "class": "amendment_supersession",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "5,000,000",
+        "twelve (12) months"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "AMD-2026-014-02"
+      ],
+      "cited_source_docs": [
+        "AMD-2026-014-01",
+        "AMD-2026-014-02",
+        "MSA-2026-014"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to MSA-2026-014, section \"Section 8.3 Liability Cap\": \"8.3 Liability Cap. The aggregate liability of each Party under or in connection with this Agreement, whether in contract, tort (including negligence), or otherwise, shall not exceed two million United States dollars (USD 2,000,000) in aggregate over the life of this Agreement. (Note: this cap was amended â€” see Amendment No. 2, Section 2.)\" According to AMD-2026-014-02, section \"Section 2.1 Section 8\": \"2.1 Section 8.3 (Liability Cap) of the Agreement is deleted and replaced with the following:\n\n> \"8.3 Liability Cap. The aggregate liability of each Party under or in connection with this Agreement, whether in contract, tort (including negligence), or otherwise, shall not exceed the greater of (a) five million United States dollars (USD 5,000,000) or (b) the total fees paid by Client under this Agreement in the 12 months (twelve (12) months) immediately preceding the event giving rise to the claim.\"\" According to MSA-2026-014, section \"Section 8.2 Direct Loss\": \"8.2 Direct Loss. Each Party shall be liable to the other for direct losses arising from its breach of this Agreement, subject to the cap set out in Section 8.3.\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-014\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0 (Original â€” see Amendment No. 1 and Amendment No. 2)\nStatus: Executed\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited, a company incorporated under the laws of India with its registered office at Chennai, Tamil Nadu (\"Provider\"), and Northwind Logistics Private Limited, a company incorporated under the laws of India with its registered office at Bengaluru, Karnataka (\"Client\"). Provider and Client are referred to individually as a \"Party\" and collectively as the \"Parties\".\n\n---\" According to AMD-2026-014-02, section \"AMENDMENT NO. 2 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-02\nAmends: MSA-2026-014 (Master Services Agreement), as amended by Amendment No. 1\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 August 2026\nDocument Version: v1.2\nStatus: Executed â€” CURRENT / CONTROLLING\n\n---\n\nThis Amendment No. 2 (this \"Amendment\") is made as of 1 August 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026, as previously amended by Amendment No. 1 dated 1 April 2026 (together, the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to AMD-2026-014-01, section \"Section 7.2\": \"7.2 In the event of a conflict between this Amendment and the Agreement, this Amendment governs in respect of the provisions it amends.\n\n---\n\nEXECUTED by the Parties on 1 April 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to AMD-2026-014-01, section \"AMENDMENT NO. 1 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-01\nAmends: MSA-2026-014 (Master Services Agreement)\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 April 2026\nDocument Version: v1.1\nStatus: Executed â€” superseded in part by Amendment No. 2\n\n---\n\nThis Amendment No. 1 (this \"Amendment\") is made as of 1 April 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026 (the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to AMD-2026-014-02, section \"Section 2.2 The exclusions from the cap set out in Section 8\": \"2.2 The exclusions from the cap set out in Section 8.4 of the Agreement are unchanged and continue to apply.\n\n---\""
+    },
+    {
+      "id": "GS-006",
+      "class": "counterparty_disambiguation",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "500,000"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "MSA-2026-022"
+      ],
+      "cited_source_docs": [
+        "MSA-2026-022"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to MSA-2026-022, section \"Section 8.3 Liability Cap\": \"8.3 Liability Cap. The aggregate liability of each Party under or in connection with this Agreement shall not exceed five hundred thousand United States dollars (USD 500,000) in aggregate over the life of this Agreement.\" According to MSA-2026-022, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-022\nCounterparty: Vertex Retail Solutions Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 3 March 2026\nDocument Version: v1.0 (Original â€” no amendments)\nStatus: Executed\n\n> Note for readers and retrieval systems: this Agreement uses the same section\n> numbering as MSA-2026-014 (Northwind) but contains different commercial terms.\n> Section 8.3 of this Agreement is not the same as Section 8.3 of MSA-2026-014.\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited (\"Provider\") and Vertex Retail Solutions Limited, a company incorporated under the laws of Singapore with its registered office at 1 Raffles Place, Singapore (\"Client\").\n\n---\" According to MSA-2026-022, section \"Section 8.2 Direct Loss\": \"8.2 Direct Loss. Each Party is liable for direct losses arising from its breach, subject to the cap in Section 8.3.\" According to MSA-2026-022, section \"Section 8.4 Exclusions from Cap\": \"8.4 Exclusions from Cap. The limitations in Sections 8.1 and 8.3 do not apply to: (a) indemnity obligations under Section 9; (b) breach of Section 5; (c) fraud or wilful misconduct; or (d) Client's obligation to pay fees properly due.\n\n---\" According to MSA-2026-022, section \"Section 20. Amendment\": \"20.1 This Agreement may be amended only by a written instrument signed by both Parties. As at the date of this document, no amendments to this Agreement have been executed.\n\n---\n\nEXECUTED by the Parties on 3 March 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\nNotice address: legal@softsuave.example, Chennai, Tamil Nadu, India\n\nFor and on behalf of Vertex Retail Solutions Limited\nName: Daniel Lim â€” Title: Finance Director\nNotice address: contracts@vertexretail.example, 1 Raffles Place, Singapore\" According to MSA-2026-022, section \"Section 7.1 Term\": \"7.1 Term. This Agreement commences on the Effective Date and continues for an initial term of 3 years (three (3) years), expiring on 2 March 2029, unless terminated earlier.\" According to MSA-2026-022, section \"Section 7.3 Termination for Convenience\": \"7.3 Termination for Convenience. Either Party may terminate this Agreement for convenience by giving the other Party not less than 90 days (ninety (90) days)' prior written notice, provided that no such notice may be given during the first 24 months (twenty-four (24) months) of the initial term.\" According to MSA-2026-022, section \"Section 9.2\": \"9.2 Client shall indemnify Provider against third-party claims arising from Client's unlawful use of the Deliverables.\n\n---\""
+    },
+    {
+      "id": "GS-007",
+      "class": "amendment_supersession",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "15",
+        "Business Days"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "AMD-2026-014-02"
+      ],
+      "cited_source_docs": [
+        "AMD-2026-014-01",
+        "AMD-2026-014-02",
+        "MSA-2026-014",
+        "SCH-2026-014"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to MSA-2026-014, section \"Section 7.3 Termination for Convenience\": \"7.3 Termination for Convenience. Either Party may terminate this Agreement for convenience by giving the other Party not less than 60 days (sixty (60) days)' prior written notice, provided that no such notice may be given during the first 12 months (twelve (12) months) of the Initial Term. (Note: this notice period was amended twice â€” see Amendment No. 1, Section 3 and Amendment No. 2, Section 1.)\" According to AMD-2026-014-01, section \"Section 3. Termination for Convenience\": \"3.1 Section 7.3 (Termination for Convenience) of the Agreement is deleted and replaced with the following:\n\n> \"7.3 Termination for Convenience. Either Party may terminate this Agreement for convenience by giving the other Party not less than 30 days (thirty (30) days)' prior written notice, provided that no such notice may be given during the first 12 months (twelve (12) months) of the Initial Term.\"\n\n---\" According to AMD-2026-014-02, section \"Section 1.1 Section 7\": \"1.1 Section 7.3 of the Agreement, as previously amended by Section 3 of Amendment No. 1, is deleted and replaced with the following:\n\n> \"7.3 Termination for Convenience. Either Party may terminate this Agreement for convenience by giving the other Party not less than fifteen (15) Business Days' prior written notice. The restriction on giving notice during the first 12 months (twelve (12) months) of the Initial Term no longer applies.\"\" According to SCH-2026-014, section \"Schedule B-2 â€” Notice and Escalation Matrix: Part 2 â€” Breach Notification Deadlines\": \"For the purposes of Section 7.6 of the Agreement (inserted by Amendment No. 2, Section 3), a Party intending to terminate for cause must give notice of the material breach within the following period after becoming aware of it:\n\n[TABLE] Breach Category | Notice Deadline\n Breach Category: Payment breach | Notice Deadline: 30 calendar days\n Breach Category: Service Level breach | Notice Deadline: **15 Business Days**\n Breach Category: Confidentiality breach | Notice Deadline: 10 Business Days\n Breach Category: Data protection breach | Notice Deadline: 10 Business Days\n Breach Category: All other material breaches | Notice Deadline: 30 calendar days\n\nFailure to give notice within the applicable period waives the right to terminate in respect of that breach.\" According to AMD-2026-014-02, section \"Section 3. Material Breach Notice Deadline\": \"3.1 A new Section 7.6 is inserted into the Agreement:\n\n> \"7.6 Material Breach Notice Deadline. Where a Party intends to terminate for cause under Section 7.4(a), it shall give notice of the material breach within the period specified in Schedule B-2, Part 2 (Breach Notification Deadlines), failing which the right to terminate in respect of that breach is waived.\"\n\n---\" According to MSA-2026-014, section \"Section 7.4 Termination for Cause\": \"7.4 Termination for Cause. Either Party may terminate this Agreement with immediate effect by written notice to the other Party if the other Party: (a) commits a material breach of this Agreement and fails to remedy that breach within the Cure Period; (b) becomes insolvent, enters liquidation, or has a receiver appointed over any of its assets; or (c) ceases or threatens to cease to carry on business.\" According to SCH-2026-014, section \"Schedule D â€” Notice Addresses\": \"[TABLE] Party | Postal Address (courier) | Electronic Mail\n Party: Provider | Postal Address (courier): Soft Suave Technologies Private Limited, Tidel Park, Chennai 600113, Tamil Nadu, India â€” Attn: Legal Department | Electronic Mail: legal@softsuave.example\n Party: Client | Postal Address (courier): Northwind Logistics Private Limited, Embassy Tech Village, Bengaluru 560103, Karnataka, India â€” Attn: Company Secretary | Electronic Mail: contracts@northwind-logistics.example\n\nA Party may change its notice address by giving ten (10) Business Days' written notice to the other Party in accordance with Section 14 of the Agreement.\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT: Schedules\": \"Agreement No.: MSA-2026-014\n\nThe following Schedules form part of this Agreement and are set out in the document SCH-2026-014NorthwindSchedules:\n\n- Schedule A â€” Description of Services\n- Schedule B â€” Fees and Service Levels\n- Schedule B-2 â€” Notice and Escalation Matrix\n- Schedule C â€” Holiday Calendar\n- Schedule D â€” Notice Addresses\n\n---\n\nEXECUTED by the Parties on 14 January 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\""
+    },
+    {
+      "id": "GS-008",
+      "class": "amendment_supersession",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "45 days"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "AMD-2026-014-01"
+      ],
+      "cited_source_docs": [
+        "AMD-2026-014-01",
+        "AMD-2026-014-02",
+        "MSA-2026-014",
+        "SCH-2026-014"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to AMD-2026-014-02, section \"AMENDMENT NO. 2 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-02\nAmends: MSA-2026-014 (Master Services Agreement), as amended by Amendment No. 1\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 August 2026\nDocument Version: v1.2\nStatus: Executed â€” CURRENT / CONTROLLING\n\n---\n\nThis Amendment No. 2 (this \"Amendment\") is made as of 1 August 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026, as previously amended by Amendment No. 1 dated 1 April 2026 (together, the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-014\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0 (Original â€” see Amendment No. 1 and Amendment No. 2)\nStatus: Executed\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited, a company incorporated under the laws of India with its registered office at Chennai, Tamil Nadu (\"Provider\"), and Northwind Logistics Private Limited, a company incorporated under the laws of India with its registered office at Bengaluru, Karnataka (\"Client\"). Provider and Client are referred to individually as a \"Party\" and collectively as the \"Parties\".\n\n---\" According to AMD-2026-014-01, section \"AMENDMENT NO. 1 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-01\nAmends: MSA-2026-014 (Master Services Agreement)\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 April 2026\nDocument Version: v1.1\nStatus: Executed â€” superseded in part by Amendment No. 2\n\n---\n\nThis Amendment No. 1 (this \"Amendment\") is made as of 1 April 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026 (the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to SCH-2026-014, section \"SCHEDULES TO MASTER SERVICES AGREEMENT MSA-2026-014\": \"Document No.: SCH-2026-014\nForms part of: MSA-2026-014 (Northwind Logistics Private Limited)\nCounterparty: Northwind Logistics Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0\nStatus: Executed\n\n---\" According to AMD-2026-014-01, section \"Section 7.2\": \"7.2 In the event of a conflict between this Amendment and the Agreement, this Amendment governs in respect of the provisions it amends.\n\n---\n\nEXECUTED by the Parties on 1 April 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to AMD-2026-014-02, section \"Section 7.2 Where this Amendment and Amendment No\": \"7.2 Where this Amendment and Amendment No. 1 address the same provision, this Amendment governs, in accordance with Section 20.2 of the Agreement.\n\n---\n\nEXECUTED by the Parties on 1 August 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT: Schedules\": \"Agreement No.: MSA-2026-014\n\nThe following Schedules form part of this Agreement and are set out in the document SCH-2026-014NorthwindSchedules:\n\n- Schedule A â€” Description of Services\n- Schedule B â€” Fees and Service Levels\n- Schedule B-2 â€” Notice and Escalation Matrix\n- Schedule C â€” Holiday Calendar\n- Schedule D â€” Notice Addresses\n\n---\n\nEXECUTED by the Parties on 14 January 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to AMD-2026-014-01, section \"Section 2.1 Section 3\": \"2.1 Section 3.3 (Payment Terms) of the Agreement is deleted and replaced with the following:\n\n> \"3.3 Payment Terms. Client shall pay each undisputed invoice within 45 days (forty-five (45) days) of the invoice date.\"\""
+    },
+    {
+      "id": "GS-009",
+      "class": "amendment_supersession",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "seven (7) years",
+        "trade secret"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "AMD-2026-014-02"
+      ],
+      "cited_source_docs": [
+        "AMD-2026-014-01",
+        "AMD-2026-014-02",
+        "MSA-2026-014",
+        "SCH-2026-014"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to AMD-2026-014-02, section \"Section 5. Confidentiality Survival\": \"5.1 Section 5.3 (Survival) of the Agreement is deleted and replaced with the following:\n\n> \"5.3 Survival. The obligations in this Section 5 shall survive the expiry or termination of this Agreement for a period of 7 years (seven (7) years), save in respect of any Confidential Information that constitutes a trade secret, for which the obligations continue for so long as the information remains a trade secret.\"\n\n---\" According to MSA-2026-014, section \"Section 5.3 Survival\": \"5.3 Survival. The obligations in this Section 5 shall survive the expiry or termination of this Agreement for a period of 5 years (five (5) years).\" According to AMD-2026-014-02, section \"Section 1.1 Section 7\": \"1.1 Section 7.3 of the Agreement, as previously amended by Section 3 of Amendment No. 1, is deleted and replaced with the following:\n\n> \"7.3 Termination for Convenience. Either Party may terminate this Agreement for convenience by giving the other Party not less than fifteen (15) Business Days' prior written notice. The restriction on giving notice during the first 12 months (twelve (12) months) of the Initial Term no longer applies.\"\" According to MSA-2026-014, section \"Section 7.3 Termination for Convenience\": \"7.3 Termination for Convenience. Either Party may terminate this Agreement for convenience by giving the other Party not less than 60 days (sixty (60) days)' prior written notice, provided that no such notice may be given during the first 12 months (twelve (12) months) of the Initial Term. (Note: this notice period was amended twice â€” see Amendment No. 1, Section 3 and Amendment No. 2, Section 1.)\" According to AMD-2026-014-01, section \"Section 3. Termination for Convenience\": \"3.1 Section 7.3 (Termination for Convenience) of the Agreement is deleted and replaced with the following:\n\n> \"7.3 Termination for Convenience. Either Party may terminate this Agreement for convenience by giving the other Party not less than 30 days (thirty (30) days)' prior written notice, provided that no such notice may be given during the first 12 months (twelve (12) months) of the Initial Term.\"\n\n---\" According to MSA-2026-014, section \"Section 7.5 Effect of Termination\": \"7.5 Effect of Termination. On expiry or termination of this Agreement: (a) Client shall pay Provider for all Services performed up to the effective date of termination; (b) each Party shall return or destroy the other Party's Confidential Information; and (c) Sections 5, 6, 8, 9, 13 and 15 shall survive.\n\n---\" According to MSA-2026-014, section \"Section 7.1 Term\": \"7.1 Term. This Agreement commences on the Effective Date and continues for an initial term of 2 years (two (2) years) (the \"Initial Term\"), expiring on 13 January 2028, unless terminated earlier in accordance with this Section 7.\" According to SCH-2026-014, section \"Schedule B-2 â€” Notice and Escalation Matrix: Part 2 â€” Breach Notification Deadlines\": \"For the purposes of Section 7.6 of the Agreement (inserted by Amendment No. 2, Section 3), a Party intending to terminate for cause must give notice of the material breach within the following period after becoming aware of it:\n\n[TABLE] Breach Category | Notice Deadline\n Breach Category: Payment breach | Notice Deadline: 30 calendar days\n Breach Category: Service Level breach | Notice Deadline: **15 Business Days**\n Breach Category: Confidentiality breach | Notice Deadline: 10 Business Days\n Breach Category: Data protection breach | Notice Deadline: 10 Business Days\n Breach Category: All other material breaches | Notice Deadline: 30 calendar days\n\nFailure to give notice within the applicable period waives the right to terminate in respect of that breach.\""
+    },
+    {
+      "id": "GS-010",
+      "class": "defined_term_chase",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "Saturday",
+        "Sunday",
+        "Schedule C"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "MSA-2026-014",
+        "SCH-2026-014"
+      ],
+      "cited_source_docs": [
+        "AMD-2026-014-02",
+        "MSA-2026-014",
+        "SCH-2026-014"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to MSA-2026-014, section \"Section 1.2\": \"1.2 \"Business Day\" means any day other than a Saturday, a Sunday, or a public holiday listed in the holiday calendar set out in Schedule C (Holiday Calendar). For the avoidance of doubt, where this Agreement specifies a period in Business Days, the holiday calendar in Schedule C governs the computation of that period.\" According to SCH-2026-014, section \"Schedule C â€” Holiday Calendar\": \"Public holidays observed for the purposes of the definition of \"Business Day\" in Section 1.2 of the Agreement. Days listed below are not Business Days.\" According to SCH-2026-014, section \"Schedule C â€” Holiday Calendar: Calendar Year 2027\": \"Public holidays observed for the purposes of the definition of \"Business Day\" in Section 1.2 of the Agreement. Days listed below are not Business Days.\n\n[TABLE] Date | Holiday\n Date: 1 January 2027 | Holiday: New Year's Day\n Date: 15 January 2027 | Holiday: Pongal\n Date: 26 January 2027 | Holiday: Republic Day\n Date: 26 March 2027 | Holiday: Good Friday\n Date: 1 May 2027 | Holiday: May Day\n Date: 15 August 2027 | Holiday: Independence Day\n Date: 2 October 2027 | Holiday: Gandhi Jayanti\n Date: 8 November 2027 | Holiday: Deepavali\n Date: 25 December 2027 | Holiday: Christmas Day\n\nWhere a holiday listed above falls on a Saturday or Sunday, no substitute Business Day is granted.\n\n---\" According to SCH-2026-014, section \"Schedule C â€” Holiday Calendar: Calendar Year 2026\": \"Public holidays observed for the purposes of the definition of \"Business Day\" in Section 1.2 of the Agreement. Days listed below are not Business Days.\n\n[TABLE] Date | Holiday\n Date: 1 January 2026 | Holiday: New Year's Day\n Date: 14 January 2026 | Holiday: Pongal\n Date: 26 January 2026 | Holiday: Republic Day\n Date: 3 April 2026 | Holiday: Good Friday\n Date: 1 May 2026 | Holiday: May Day\n Date: 15 August 2026 | Holiday: Independence Day\n Date: 2 October 2026 | Holiday: Gandhi Jayanti\n Date: 20 October 2026 | Holiday: Deepavali\n Date: 25 December 2026 | Holiday: Christmas Day\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT: Schedules\": \"Agreement No.: MSA-2026-014\n\nThe following Schedules form part of this Agreement and are set out in the document SCH-2026-014NorthwindSchedules:\n\n- Schedule A â€” Description of Services\n- Schedule B â€” Fees and Service Levels\n- Schedule B-2 â€” Notice and Escalation Matrix\n- Schedule C â€” Holiday Calendar\n- Schedule D â€” Notice Addresses\n\n---\n\nEXECUTED by the Parties on 14 January 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to SCH-2026-014, section \"Schedule D â€” Notice Addresses\": \"[TABLE] Party | Postal Address (courier) | Electronic Mail\n Party: Provider | Postal Address (courier): Soft Suave Technologies Private Limited, Tidel Park, Chennai 600113, Tamil Nadu, India â€” Attn: Legal Department | Electronic Mail: legal@softsuave.example\n Party: Client | Postal Address (courier): Northwind Logistics Private Limited, Embassy Tech Village, Bengaluru 560103, Karnataka, India â€” Attn: Company Secretary | Electronic Mail: contracts@northwind-logistics.example\n\nA Party may change its notice address by giving 10 Business Days (ten (10) Business Days)' written notice to the other Party in accordance with Section 14 of the Agreement.\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-014\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0 (Original â€” see Amendment No. 1 and Amendment No. 2)\nStatus: Executed\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited, a company incorporated under the laws of India with its registered office at Chennai, Tamil Nadu (\"Provider\"), and Northwind Logistics Private Limited, a company incorporated under the laws of India with its registered office at Bengaluru, Karnataka (\"Client\"). Provider and Client are referred to individually as a \"Party\" and collectively as the \"Parties\".\n\n---\" According to AMD-2026-014-02, section \"Section 1.2\": \"1.2 For the avoidance of doubt, the notice period in Section 7.3 is now expressed in Business Days, not calendar days, and is therefore computed by reference to the holiday calendar in Schedule C.\n\n---\""
+    },
+    {
+      "id": "GS-011",
+      "class": "defined_term_chase",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "No",
+        "Deepavali"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "SCH-2026-014"
+      ],
+      "cited_source_docs": [
+        "AMD-2026-014-01",
+        "AMD-2026-014-02",
+        "MSA-2026-014",
+        "SCH-2026-014"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to AMD-2026-014-02, section \"Section 7.2 Where this Amendment and Amendment No\": \"7.2 Where this Amendment and Amendment No. 1 address the same provision, this Amendment governs, in accordance with Section 20.2 of the Agreement.\n\n---\n\nEXECUTED by the Parties on 1 August 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to SCH-2026-014, section \"Schedule C â€” Holiday Calendar: Calendar Year 2026\": \"Public holidays observed for the purposes of the definition of \"Business Day\" in Section 1.2 of the Agreement. Days listed below are not Business Days.\n\n[TABLE] Date | Holiday\n Date: 1 January 2026 | Holiday: New Year's Day\n Date: 14 January 2026 | Holiday: Pongal\n Date: 26 January 2026 | Holiday: Republic Day\n Date: 3 April 2026 | Holiday: Good Friday\n Date: 1 May 2026 | Holiday: May Day\n Date: 15 August 2026 | Holiday: Independence Day\n Date: 2 October 2026 | Holiday: Gandhi Jayanti\n Date: 20 October 2026 | Holiday: Deepavali\n Date: 25 December 2026 | Holiday: Christmas Day\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-014\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0 (Original â€” see Amendment No. 1 and Amendment No. 2)\nStatus: Executed\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited, a company incorporated under the laws of India with its registered office at Chennai, Tamil Nadu (\"Provider\"), and Northwind Logistics Private Limited, a company incorporated under the laws of India with its registered office at Bengaluru, Karnataka (\"Client\"). Provider and Client are referred to individually as a \"Party\" and collectively as the \"Parties\".\n\n---\" According to AMD-2026-014-01, section \"Section 7.2\": \"7.2 In the event of a conflict between this Amendment and the Agreement, this Amendment governs in respect of the provisions it amends.\n\n---\n\nEXECUTED by the Parties on 1 April 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to AMD-2026-014-02, section \"AMENDMENT NO. 2 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-02\nAmends: MSA-2026-014 (Master Services Agreement), as amended by Amendment No. 1\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 August 2026\nDocument Version: v1.2\nStatus: Executed â€” CURRENT / CONTROLLING\n\n---\n\nThis Amendment No. 2 (this \"Amendment\") is made as of 1 August 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026, as previously amended by Amendment No. 1 dated 1 April 2026 (together, the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to AMD-2026-014-01, section \"AMENDMENT NO. 1 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-01\nAmends: MSA-2026-014 (Master Services Agreement)\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 April 2026\nDocument Version: v1.1\nStatus: Executed â€” superseded in part by Amendment No. 2\n\n---\n\nThis Amendment No. 1 (this \"Amendment\") is made as of 1 April 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026 (the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to SCH-2026-014, section \"Schedule C â€” Holiday Calendar: Calendar Year 2027\": \"Public holidays observed for the purposes of the definition of \"Business Day\" in Section 1.2 of the Agreement. Days listed below are not Business Days.\n\n[TABLE] Date | Holiday\n Date: 1 January 2027 | Holiday: New Year's Day\n Date: 15 January 2027 | Holiday: Pongal\n Date: 26 January 2027 | Holiday: Republic Day\n Date: 26 March 2027 | Holiday: Good Friday\n Date: 1 May 2027 | Holiday: May Day\n Date: 15 August 2027 | Holiday: Independence Day\n Date: 2 October 2027 | Holiday: Gandhi Jayanti\n Date: 8 November 2027 | Holiday: Deepavali\n Date: 25 December 2027 | Holiday: Christmas Day\n\nWhere a holiday listed above falls on a Saturday or Sunday, no substitute Business Day is granted.\n\n---\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT: Schedules\": \"Agreement No.: MSA-2026-014\n\nThe following Schedules form part of this Agreement and are set out in the document SCH-2026-014NorthwindSchedules:\n\n- Schedule A â€” Description of Services\n- Schedule B â€” Fees and Service Levels\n- Schedule B-2 â€” Notice and Escalation Matrix\n- Schedule C â€” Holiday Calendar\n- Schedule D â€” Notice Addresses\n\n---\n\nEXECUTED by the Parties on 14 January 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\""
+    },
+    {
+      "id": "GS-012",
+      "class": "amendment_supersession",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "45 days"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "AMD-2026-014-01"
+      ],
+      "cited_source_docs": [
+        "AMD-2026-014-01",
+        "AMD-2026-014-02",
+        "MSA-2026-014",
+        "SCH-2026-014"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to AMD-2026-014-01, section \"Section 4.1 Section 1\": \"4.1 Section 1.4 (Cure Period) of the Agreement is deleted and replaced with the following:\n\n> \"1.4 'Cure Period' means a period of forty-five (45) days from the date a Party receives written notice of a material breach, within which that Party may remedy the breach.\"\" According to MSA-2026-014, section \"Section 1.4\": \"1.4 \"Cure Period\" means a period of 30 days (thirty (30) days) from the date a Party receives written notice of a material breach, within which that Party may remedy the breach. The Cure Period is subject to amendment in accordance with Section 20.\" According to AMD-2026-014-01, section \"Section 4.2\": \"4.2 For the avoidance of doubt, where the Agreement provides that a Cure Period does not apply â€” including upon a Qualifying Event under Section 4.3 of the Agreement â€” that provision is unchanged.\n\n---\" According to MSA-2026-014, section \"Section 7.4 Termination for Cause\": \"7.4 Termination for Cause. Either Party may terminate this Agreement with immediate effect by written notice to the other Party if the other Party: (a) commits a material breach of this Agreement and fails to remedy that breach within the Cure Period; (b) becomes insolvent, enters liquidation, or has a receiver appointed over any of its assets; or (c) ceases or threatens to cease to carry on business.\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-014\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0 (Original â€” see Amendment No. 1 and Amendment No. 2)\nStatus: Executed\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited, a company incorporated under the laws of India with its registered office at Chennai, Tamil Nadu (\"Provider\"), and Northwind Logistics Private Limited, a company incorporated under the laws of India with its registered office at Bengaluru, Karnataka (\"Client\"). Provider and Client are referred to individually as a \"Party\" and collectively as the \"Parties\".\n\n---\" According to SCH-2026-014, section \"Schedule B-2 â€” Notice and Escalation Matrix: Part 3 â€” Combined Cure and Notice Sequence\": \"Where a Party terminates for cause following a Service Level breach, the full sequence is:\n\n1. Notice of material breach must be given within 15 Business Days of awareness (Schedule B-2, Part 2).\n2. The breaching Party then has the Cure Period to remedy â€” 45 days as amended by Amendment No. 1, Section 4.\n3. If unremedied at the end of the Cure Period, the non-breaching Party may terminate with immediate effect under Section 7.4(a).\n\n---\" According to AMD-2026-014-01, section \"Section 7.2\": \"7.2 In the event of a conflict between this Amendment and the Agreement, this Amendment governs in respect of the provisions it amends.\n\n---\n\nEXECUTED by the Parties on 1 April 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to AMD-2026-014-02, section \"AMENDMENT NO. 2 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-02\nAmends: MSA-2026-014 (Master Services Agreement), as amended by Amendment No. 1\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 August 2026\nDocument Version: v1.2\nStatus: Executed â€” CURRENT / CONTROLLING\n\n---\n\nThis Amendment No. 2 (this \"Amendment\") is made as of 1 August 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026, as previously amended by Amendment No. 1 dated 1 April 2026 (together, the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\""
+    },
+    {
+      "id": "GS-013",
+      "class": "multi_hop_dependent",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "15 Business Days",
+        "45",
+        "Cure Period"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "AMD-2026-014-01",
+        "AMD-2026-014-02",
+        "SCH-2026-014"
+      ],
+      "cited_source_docs": [
+        "AMD-2026-014-01",
+        "AMD-2026-014-02",
+        "MSA-2026-014",
+        "SCH-2026-014"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to SCH-2026-014, section \"Schedule B-2 â€” Notice and Escalation Matrix: Part 3 â€” Combined Cure and Notice Sequence\": \"Where a Party terminates for cause following a Service Level breach, the full sequence is:\n\n1. Notice of material breach must be given within 15 Business Days of awareness (Schedule B-2, Part 2).\n2. The breaching Party then has the Cure Period to remedy â€” 45 days as amended by Amendment No. 1, Section 4.\n3. If unremedied at the end of the Cure Period, the non-breaching Party may terminate with immediate effect under Section 7.4(a).\n\n---\" According to AMD-2026-014-02, section \"AMENDMENT NO. 2 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-02\nAmends: MSA-2026-014 (Master Services Agreement), as amended by Amendment No. 1\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 August 2026\nDocument Version: v1.2\nStatus: Executed â€” CURRENT / CONTROLLING\n\n---\n\nThis Amendment No. 2 (this \"Amendment\") is made as of 1 August 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026, as previously amended by Amendment No. 1 dated 1 April 2026 (together, the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-014\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0 (Original â€” see Amendment No. 1 and Amendment No. 2)\nStatus: Executed\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited, a company incorporated under the laws of India with its registered office at Chennai, Tamil Nadu (\"Provider\"), and Northwind Logistics Private Limited, a company incorporated under the laws of India with its registered office at Bengaluru, Karnataka (\"Client\"). Provider and Client are referred to individually as a \"Party\" and collectively as the \"Parties\".\n\n---\" According to AMD-2026-014-01, section \"AMENDMENT NO. 1 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-01\nAmends: MSA-2026-014 (Master Services Agreement)\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 April 2026\nDocument Version: v1.1\nStatus: Executed â€” superseded in part by Amendment No. 2\n\n---\n\nThis Amendment No. 1 (this \"Amendment\") is made as of 1 April 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026 (the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT: Schedules\": \"Agreement No.: MSA-2026-014\n\nThe following Schedules form part of this Agreement and are set out in the document SCH-2026-014NorthwindSchedules:\n\n- Schedule A â€” Description of Services\n- Schedule B â€” Fees and Service Levels\n- Schedule B-2 â€” Notice and Escalation Matrix\n- Schedule C â€” Holiday Calendar\n- Schedule D â€” Notice Addresses\n\n---\n\nEXECUTED by the Parties on 14 January 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to AMD-2026-014-01, section \"Section 7.2\": \"7.2 In the event of a conflict between this Amendment and the Agreement, this Amendment governs in respect of the provisions it amends.\n\n---\n\nEXECUTED by the Parties on 1 April 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to AMD-2026-014-02, section \"Section 7.2 Where this Amendment and Amendment No\": \"7.2 Where this Amendment and Amendment No. 1 address the same provision, this Amendment governs, in accordance with Section 20.2 of the Agreement.\n\n---\n\nEXECUTED by the Parties on 1 August 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to SCH-2026-014, section \"Schedule D â€” Notice Addresses\": \"[TABLE] Party | Postal Address (courier) | Electronic Mail\n Party: Provider | Postal Address (courier): Soft Suave Technologies Private Limited, Tidel Park, Chennai 600113, Tamil Nadu, India â€” Attn: Legal Department | Electronic Mail: legal@softsuave.example\n Party: Client | Postal Address (courier): Northwind Logistics Private Limited, Embassy Tech Village, Bengaluru 560103, Karnataka, India â€” Attn: Company Secretary | Electronic Mail: contracts@northwind-logistics.example\n\nA Party may change its notice address by giving 10 Business Days (ten (10) Business Days)' written notice to the other Party in accordance with Section 14 of the Agreement.\""
+    },
+    {
+      "id": "GS-014",
+      "class": "multi_hop_dependent",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "three (3)",
+        "30",
+        "no",
+        "Cure Period"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "MSA-2026-014",
+        "SCH-2026-014"
+      ],
+      "cited_source_docs": [
+        "AMD-2026-014-01",
+        "AMD-2026-014-02",
+        "MSA-2026-014",
+        "SCH-2026-014"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to AMD-2026-014-01, section \"Section 7.2\": \"7.2 In the event of a conflict between this Amendment and the Agreement, this Amendment governs in respect of the provisions it amends.\n\n---\n\nEXECUTED by the Parties on 1 April 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-014\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0 (Original â€” see Amendment No. 1 and Amendment No. 2)\nStatus: Executed\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited, a company incorporated under the laws of India with its registered office at Chennai, Tamil Nadu (\"Provider\"), and Northwind Logistics Private Limited, a company incorporated under the laws of India with its registered office at Bengaluru, Karnataka (\"Client\"). Provider and Client are referred to individually as a \"Party\" and collectively as the \"Parties\".\n\n---\" According to MSA-2026-014, section \"Section 1.6\": \"1.6 \"Qualifying Event\" means the occurrence of three (3) or more Service Failures within any rolling period of 30 days (thirty (30) days).\" According to AMD-2026-014-01, section \"AMENDMENT NO. 1 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-01\nAmends: MSA-2026-014 (Master Services Agreement)\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 April 2026\nDocument Version: v1.1\nStatus: Executed â€” superseded in part by Amendment No. 2\n\n---\n\nThis Amendment No. 1 (this \"Amendment\") is made as of 1 April 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026 (the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to AMD-2026-014-02, section \"AMENDMENT NO. 2 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-02\nAmends: MSA-2026-014 (Master Services Agreement), as amended by Amendment No. 1\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 August 2026\nDocument Version: v1.2\nStatus: Executed â€” CURRENT / CONTROLLING\n\n---\n\nThis Amendment No. 2 (this \"Amendment\") is made as of 1 August 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026, as previously amended by Amendment No. 1 dated 1 April 2026 (together, the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to AMD-2026-014-01, section \"Section 4.2\": \"4.2 For the avoidance of doubt, where the Agreement provides that a Cure Period does not apply â€” including upon a Qualifying Event under Section 4.3 of the Agreement â€” that provision is unchanged.\n\n---\" According to AMD-2026-014-02, section \"Section 7.2 Where this Amendment and Amendment No\": \"7.2 Where this Amendment and Amendment No. 1 address the same provision, this Amendment governs, in accordance with Section 20.2 of the Agreement.\n\n---\n\nEXECUTED by the Parties on 1 August 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to SCH-2026-014, section \"SCHEDULES TO MASTER SERVICES AGREEMENT MSA-2026-014\": \"Document No.: SCH-2026-014\nForms part of: MSA-2026-014 (Northwind Logistics Private Limited)\nCounterparty: Northwind Logistics Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0\nStatus: Executed\n\n---\""
+    },
+    {
+      "id": "GS-015",
+      "class": "defined_term_chase",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "99.9%",
+        "Critical"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "SCH-2026-014"
+      ],
+      "cited_source_docs": [
+        "AMD-2026-014-01",
+        "MSA-2026-014",
+        "SCH-2026-014"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to SCH-2026-014, section \"Schedule A â€” Description of Services: Part 2 â€” Critical Service Designation\": \"For the purposes of the definition of \"Critical Service\" introduced by Amendment No. 1, the following Services are designated Critical:\n\n- SVC-01 â€” Shipment Tracking Platform (Critical)\n- SVC-02 â€” Carrier Integration (Critical)\n- SVC-03 â€” Data Warehouse (Non-critical)\n- SVC-04 â€” Support Desk (Non-critical)\n\n---\" According to AMD-2026-014-01, section \"Section 1. New Defined Terms\": \"1.1 Section 1 of the Agreement is amended by inserting the following new definitions:\n\n\"Critical Service\" means any Service designated as Critical in Schedule A, Part 2.\n\n\"Escalation Contact\" means the individual named for each escalation tier in Schedule B-2 (Notice and Escalation Matrix).\n\n\"Priority Incident\" means an incident affecting a Critical Service that prevents Client from processing shipments, for which the response and resolution targets in Schedule B, Part 2 apply.\n\n---\" According to MSA-2026-014, section \"Section 1.8\": \"1.8 \"Service Level\" means a performance standard set out in Schedule B (Fees and Service Levels), including the availability target, the response-time target, and the resolution-time target applicable to each Service.\" According to SCH-2026-014, section \"Schedule A â€” Description of Services: Part 1 â€” Services\": \"[TABLE] Service ID | Service Name | Description\n Service ID: SVC-01 | Service Name: Shipment Tracking Platform | Description: Hosting, maintenance and support of the Client shipment tracking application.\n Service ID: SVC-02 | Service Name: Carrier Integration | Description: Development and maintenance of integrations with third-party carrier APIs.\n Service ID: SVC-03 | Service Name: Data Warehouse | Description: Operation of the Client analytics data warehouse and nightly ETL pipelines.\n Service ID: SVC-04 | Service Name: Support Desk | Description: Tier 2 and Tier 3 application support during Business Hours.\" According to SCH-2026-014, section \"Schedule B â€” Fees and Service Levels: Part 2 â€” Service Levels\": \"[TABLE] Service ID | Availability Target | Response Time (Priority Incident) | Resolution Time (Priority Incident)\n Service ID: SVC-01 | Availability Target: 99.9% monthly | Response Time (Priority Incident): 30 minutes | Resolution Time (Priority Incident): 4 hours\n Service ID: SVC-02 | Availability Target: 99.5% monthly | Response Time (Priority Incident): 1 hour | Resolution Time (Priority Incident): 8 hours\n Service ID: SVC-03 | Availability Target: 99.0% monthly | Response Time (Priority Incident): 4 Business Hours | Resolution Time (Priority Incident): 2 Business Days\n Service ID: SVC-04 | Availability Target: n/a | Response Time (Priority Incident): 2 Business Hours | Resolution Time (Priority Incident): 1 Business Day\n\n\"Business Hours\" means 09:00 to 18:00 India Standard Time on a Business Day.\n\nA Service Failure occurs where Provider fails to meet any target in this Part 2 for a Service in a calendar month. Three (3) Service Failures within any rolling 30 day (thirty (30) day) period constitute a Qualifying Event under Section 1.6 of the Agreement.\""
+    },
+    {
+      "id": "GS-016",
+      "class": "version_comparison",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "30",
+        "45"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "AMD-2026-014-01",
+        "MSA-2026-014"
+      ],
+      "cited_source_docs": [
+        "AMD-2026-014-01",
+        "AMD-2026-014-02",
+        "MSA-2026-014"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to AMD-2026-014-01, section \"Section 4.1 Section 1\": \"4.1 Section 1.4 (Cure Period) of the Agreement is deleted and replaced with the following:\n\n> \"1.4 'Cure Period' means a period of 45 days (forty-five (45) days) from the date a Party receives written notice of a material breach, within which that Party may remedy the breach.\"\" According to AMD-2026-014-02, section \"AMENDMENT NO. 2 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-02\nAmends: MSA-2026-014 (Master Services Agreement), as amended by Amendment No. 1\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 August 2026\nDocument Version: v1.2\nStatus: Executed â€” CURRENT / CONTROLLING\n\n---\n\nThis Amendment No. 2 (this \"Amendment\") is made as of 1 August 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026, as previously amended by Amendment No. 1 dated 1 April 2026 (together, the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to AMD-2026-014-01, section \"Section 4.2\": \"4.2 For the avoidance of doubt, where the Agreement provides that a Cure Period does not apply â€” including upon a Qualifying Event under Section 4.3 of the Agreement â€” that provision is unchanged.\n\n---\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-014\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0 (Original â€” see Amendment No. 1 and Amendment No. 2)\nStatus: Executed\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited, a company incorporated under the laws of India with its registered office at Chennai, Tamil Nadu (\"Provider\"), and Northwind Logistics Private Limited, a company incorporated under the laws of India with its registered office at Bengaluru, Karnataka (\"Client\"). Provider and Client are referred to individually as a \"Party\" and collectively as the \"Parties\".\n\n---\" According to MSA-2026-014, section \"Section 1.4\": \"1.4 \"Cure Period\" means a period of 30 days (thirty (30) days) from the date a Party receives written notice of a material breach, within which that Party may remedy the breach. The Cure Period is subject to amendment in accordance with Section 20.\" According to AMD-2026-014-01, section \"AMENDMENT NO. 1 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-01\nAmends: MSA-2026-014 (Master Services Agreement)\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 April 2026\nDocument Version: v1.1\nStatus: Executed â€” superseded in part by Amendment No. 2\n\n---\n\nThis Amendment No. 1 (this \"Amendment\") is made as of 1 April 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026 (the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to AMD-2026-014-01, section \"Section 7.2\": \"7.2 In the event of a conflict between this Amendment and the Agreement, this Amendment governs in respect of the provisions it amends.\n\n---\n\nEXECUTED by the Parties on 1 April 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to MSA-2026-014, section \"Section 7.4 Termination for Cause\": \"7.4 Termination for Cause. Either Party may terminate this Agreement with immediate effect by written notice to the other Party if the other Party: (a) commits a material breach of this Agreement and fails to remedy that breach within the Cure Period; (b) becomes insolvent, enters liquidation, or has a receiver appointed over any of its assets; or (c) ceases or threatens to cease to carry on business.\""
+    },
+    {
+      "id": "GS-017",
+      "class": "cross_document",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "15",
+        "90"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "AMD-2026-014-02",
+        "MSA-2026-022"
+      ],
+      "cited_source_docs": [
+        "AMD-2026-014-01",
+        "AMD-2026-014-02",
+        "MSA-2026-014",
+        "MSA-2026-022",
+        "NDA-2026-007"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to AMD-2026-014-01, section \"Section 3. Termination for Convenience\": \"3.1 Section 7.3 (Termination for Convenience) of the Agreement is deleted and replaced with the following:\n\n> \"7.3 Termination for Convenience. Either Party may terminate this Agreement for convenience by giving the other Party not less than 30 days (thirty (30) days)' prior written notice, provided that no such notice may be given during the first 12 months (twelve (12) months) of the Initial Term.\"\n\n---\" According to MSA-2026-014, section \"Section 7.3 Termination for Convenience\": \"7.3 Termination for Convenience. Either Party may terminate this Agreement for convenience by giving the other Party not less than 60 days (sixty (60) days)' prior written notice, provided that no such notice may be given during the first 12 months (twelve (12) months) of the Initial Term. (Note: this notice period was amended twice â€” see Amendment No. 1, Section 3 and Amendment No. 2, Section 1.)\" According to MSA-2026-022, section \"Section 7.3 Termination for Convenience\": \"7.3 Termination for Convenience. Either Party may terminate this Agreement for convenience by giving the other Party not less than 90 days (ninety (90) days)' prior written notice, provided that no such notice may be given during the first 24 months (twenty-four (24) months) of the initial term.\" According to AMD-2026-014-02, section \"Section 1.1 Section 7\": \"1.1 Section 7.3 of the Agreement, as previously amended by Section 3 of Amendment No. 1, is deleted and replaced with the following:\n\n> \"7.3 Termination for Convenience. Either Party may terminate this Agreement for convenience by giving the other Party not less than 15 Business Days (fifteen (15) Business Days)' prior written notice. The restriction on giving notice during the first 12 months (twelve (12) months) of the Initial Term no longer applies.\"\" According to MSA-2026-022, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-022\nCounterparty: Vertex Retail Solutions Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 3 March 2026\nDocument Version: v1.0 (Original â€” no amendments)\nStatus: Executed\n\n> Note for readers and retrieval systems: this Agreement uses the same section\n> numbering as MSA-2026-014 (Northwind) but contains different commercial terms.\n> Section 8.3 of this Agreement is not the same as Section 8.3 of MSA-2026-014.\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited (\"Provider\") and Vertex Retail Solutions Limited, a company incorporated under the laws of Singapore with its registered office at 1 Raffles Place, Singapore (\"Client\").\n\n---\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-014\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0 (Original â€” see Amendment No. 1 and Amendment No. 2)\nStatus: Executed\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited, a company incorporated under the laws of India with its registered office at Chennai, Tamil Nadu (\"Provider\"), and Northwind Logistics Private Limited, a company incorporated under the laws of India with its registered office at Bengaluru, Karnataka (\"Client\"). Provider and Client are referred to individually as a \"Party\" and collectively as the \"Parties\".\n\n---\" According to NDA-2026-007, section \"Section 4.1 Term\": \"4.1 Term. This Agreement commences on the Effective Date and continues for 2 years (two (2) years), unless terminated earlier by either Party on 30 days (thirty (30) days)' written notice.\" According to MSA-2026-014, section \"Section 7.4 Termination for Cause\": \"7.4 Termination for Cause. Either Party may terminate this Agreement with immediate effect by written notice to the other Party if the other Party: (a) commits a material breach of this Agreement and fails to remedy that breach within the Cure Period; (b) becomes insolvent, enters liquidation, or has a receiver appointed over any of its assets; or (c) ceases or threatens to cease to carry on business.\""
+    },
+    {
+      "id": "GS-018",
+      "class": "computation",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "81,100",
+        "973,200"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "SCH-2026-014"
+      ],
+      "cited_source_docs": [
+        "AMD-2026-014-01",
+        "AMD-2026-014-02",
+        "MSA-2026-014",
+        "SCH-2026-014"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to SCH-2026-014, section \"Schedule B â€” Fees and Service Levels: Part 1 â€” Fees\": \"[TABLE] Service ID | Fee Basis | Monthly Fee (USD)\n Service ID: SVC-01 | Fee Basis: Fixed monthly | Monthly Fee (USD): 42,000\n Service ID: SVC-02 | Fee Basis: Fixed monthly | Monthly Fee (USD): 18,500\n Service ID: SVC-03 | Fee Basis: Fixed monthly | Monthly Fee (USD): 11,000\n Service ID: SVC-04 | Fee Basis: Per-seat (12 seats) | Monthly Fee (USD): 9,600\n Fee Basis: **Total monthly** | Monthly Fee (USD): **81,100**\n\nAnnual contract value at the Effective Date: USD 973,200.\" According to AMD-2026-014-02, section \"Section 2.1 Section 8\": \"2.1 Section 8.3 (Liability Cap) of the Agreement is deleted and replaced with the following:\n\n> \"8.3 Liability Cap. The aggregate liability of each Party under or in connection with this Agreement, whether in contract, tort (including negligence), or otherwise, shall not exceed the greater of (a) five million United States dollars (USD 5,000,000) or (b) the total fees paid by Client under this Agreement in the 12 months (twelve (12) months) immediately preceding the event giving rise to the claim.\"\" According to AMD-2026-014-01, section \"Section 2.2\": \"2.2 For the avoidance of doubt, the late payment interest rate in Section 3.4 of the Agreement is unchanged and remains at one and one-half percent (1.5%) per month.\n\n---\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-014\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0 (Original â€” see Amendment No. 1 and Amendment No. 2)\nStatus: Executed\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited, a company incorporated under the laws of India with its registered office at Chennai, Tamil Nadu (\"Provider\"), and Northwind Logistics Private Limited, a company incorporated under the laws of India with its registered office at Bengaluru, Karnataka (\"Client\"). Provider and Client are referred to individually as a \"Party\" and collectively as the \"Parties\".\n\n---\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT: Schedules\": \"Agreement No.: MSA-2026-014\n\nThe following Schedules form part of this Agreement and are set out in the document SCH-2026-014NorthwindSchedules:\n\n- Schedule A â€” Description of Services\n- Schedule B â€” Fees and Service Levels\n- Schedule B-2 â€” Notice and Escalation Matrix\n- Schedule C â€” Holiday Calendar\n- Schedule D â€” Notice Addresses\n\n---\n\nEXECUTED by the Parties on 14 January 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to AMD-2026-014-01, section \"Section 5. Service Credits\": \"5.1 Schedule B, Part 3 (Service Credits) of the Agreement is amended by increasing the maximum monthly service credit from five percent (5%) to ten percent (10%) of the monthly fees for the affected Service.\n\n---\" According to SCH-2026-014, section \"SCHEDULES TO MASTER SERVICES AGREEMENT MSA-2026-014\": \"Document No.: SCH-2026-014\nForms part of: MSA-2026-014 (Northwind Logistics Private Limited)\nCounterparty: Northwind Logistics Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0\nStatus: Executed\n\n---\" According to AMD-2026-014-01, section \"AMENDMENT NO. 1 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-01\nAmends: MSA-2026-014 (Master Services Agreement)\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 April 2026\nDocument Version: v1.1\nStatus: Executed â€” superseded in part by Amendment No. 2\n\n---\n\nThis Amendment No. 1 (this \"Amendment\") is made as of 1 April 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026 (the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\""
+    },
+    {
+      "id": "GS-019",
+      "class": "computation",
+      "passed": false,
+      "failure_type": "fail_hallucination",
+      "matched_values": [
+        "5%"
+      ],
+      "missing_values": [
+        "2,100"
+      ],
+      "expected_source_docs": [
+        "SCH-2026-014"
+      ],
+      "cited_source_docs": [
+        "AMD-2026-014-01",
+        "AMD-2026-014-02",
+        "MSA-2026-014",
+        "SCH-2026-014"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to SCH-2026-014, section \"Schedule B â€” Fees and Service Levels: Part 3 â€” Service Credits\": \"[TABLE] Availability Achieved (SVC-01) | Service Credit\n Availability Achieved (SVC-01): â‰¥ 99.9% | Service Credit: None\n Availability Achieved (SVC-01): 99.0% â€“ 99.89% | Service Credit: 2% of monthly fee for that Service\n Availability Achieved (SVC-01): 98.0% â€“ 98.99% | Service Credit: 5% of monthly fee for that Service\n Availability Achieved (SVC-01): < 98.0% | Service Credit: 10% of monthly fee for that Service\n\nMaximum aggregate service credit in any calendar month: ten percent (10%) of the monthly fees for the affected Service. (Increased from 5% by Amendment No. 1, Section 5.)\n\n---\" According to AMD-2026-014-01, section \"AMENDMENT NO. 1 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-01\nAmends: MSA-2026-014 (Master Services Agreement)\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 April 2026\nDocument Version: v1.1\nStatus: Executed â€” superseded in part by Amendment No. 2\n\n---\n\nThis Amendment No. 1 (this \"Amendment\") is made as of 1 April 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026 (the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-014\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0 (Original â€” see Amendment No. 1 and Amendment No. 2)\nStatus: Executed\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited, a company incorporated under the laws of India with its registered office at Chennai, Tamil Nadu (\"Provider\"), and Northwind Logistics Private Limited, a company incorporated under the laws of India with its registered office at Bengaluru, Karnataka (\"Client\"). Provider and Client are referred to individually as a \"Party\" and collectively as the \"Parties\".\n\n---\" According to AMD-2026-014-02, section \"AMENDMENT NO. 2 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-02\nAmends: MSA-2026-014 (Master Services Agreement), as amended by Amendment No. 1\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 August 2026\nDocument Version: v1.2\nStatus: Executed â€” CURRENT / CONTROLLING\n\n---\n\nThis Amendment No. 2 (this \"Amendment\") is made as of 1 August 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026, as previously amended by Amendment No. 1 dated 1 April 2026 (together, the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT: Schedules\": \"Agreement No.: MSA-2026-014\n\nThe following Schedules form part of this Agreement and are set out in the document SCH-2026-014NorthwindSchedules:\n\n- Schedule A â€” Description of Services\n- Schedule B â€” Fees and Service Levels\n- Schedule B-2 â€” Notice and Escalation Matrix\n- Schedule C â€” Holiday Calendar\n- Schedule D â€” Notice Addresses\n\n---\n\nEXECUTED by the Parties on 14 January 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to AMD-2026-014-01, section \"Section 7.2\": \"7.2 In the event of a conflict between this Amendment and the Agreement, this Amendment governs in respect of the provisions it amends.\n\n---\n\nEXECUTED by the Parties on 1 April 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to SCH-2026-014, section \"Schedule D â€” Notice Addresses\": \"[TABLE] Party | Postal Address (courier) | Electronic Mail\n Party: Provider | Postal Address (courier): Soft Suave Technologies Private Limited, Tidel Park, Chennai 600113, Tamil Nadu, India â€” Attn: Legal Department | Electronic Mail: legal@softsuave.example\n Party: Client | Postal Address (courier): Northwind Logistics Private Limited, Embassy Tech Village, Bengaluru 560103, Karnataka, India â€” Attn: Company Secretary | Electronic Mail: contracts@northwind-logistics.example\n\nA Party may change its notice address by giving 10 Business Days (ten (10) Business Days)' written notice to the other Party in accordance with Section 14 of the Agreement.\" According to AMD-2026-014-02, section \"Section 7.2 Where this Amendment and Amendment No\": \"7.2 Where this Amendment and Amendment No. 1 address the same provision, this Amendment governs, in accordance with Section 20.2 of the Agreement.\n\n---\n\nEXECUTED by the Parties on 1 August 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\""
+    },
+    {
+      "id": "GS-020",
+      "class": "direct_lookup",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "13 January 2028"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "MSA-2026-014"
+      ],
+      "cited_source_docs": [
+        "AMD-2026-014-01",
+        "AMD-2026-014-02",
+        "MSA-2026-014",
+        "SCH-2026-014"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-014\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0 (Original â€” see Amendment No. 1 and Amendment No. 2)\nStatus: Executed\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited, a company incorporated under the laws of India with its registered office at Chennai, Tamil Nadu (\"Provider\"), and Northwind Logistics Private Limited, a company incorporated under the laws of India with its registered office at Bengaluru, Karnataka (\"Client\"). Provider and Client are referred to individually as a \"Party\" and collectively as the \"Parties\".\n\n---\" According to AMD-2026-014-02, section \"AMENDMENT NO. 2 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-02\nAmends: MSA-2026-014 (Master Services Agreement), as amended by Amendment No. 1\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 August 2026\nDocument Version: v1.2\nStatus: Executed â€” CURRENT / CONTROLLING\n\n---\n\nThis Amendment No. 2 (this \"Amendment\") is made as of 1 August 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026, as previously amended by Amendment No. 1 dated 1 April 2026 (together, the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to AMD-2026-014-01, section \"AMENDMENT NO. 1 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-01\nAmends: MSA-2026-014 (Master Services Agreement)\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 April 2026\nDocument Version: v1.1\nStatus: Executed â€” superseded in part by Amendment No. 2\n\n---\n\nThis Amendment No. 1 (this \"Amendment\") is made as of 1 April 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026 (the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to SCH-2026-014, section \"SCHEDULES TO MASTER SERVICES AGREEMENT MSA-2026-014\": \"Document No.: SCH-2026-014\nForms part of: MSA-2026-014 (Northwind Logistics Private Limited)\nCounterparty: Northwind Logistics Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0\nStatus: Executed\n\n---\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT: Schedules\": \"Agreement No.: MSA-2026-014\n\nThe following Schedules form part of this Agreement and are set out in the document SCH-2026-014NorthwindSchedules:\n\n- Schedule A â€” Description of Services\n- Schedule B â€” Fees and Service Levels\n- Schedule B-2 â€” Notice and Escalation Matrix\n- Schedule C â€” Holiday Calendar\n- Schedule D â€” Notice Addresses\n\n---\n\nEXECUTED by the Parties on 14 January 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to MSA-2026-014, section \"Section 7.1 Term\": \"7.1 Term. This Agreement commences on the Effective Date and continues for an initial term of 2 years (two (2) years) (the \"Initial Term\"), expiring on 13 January 2028, unless terminated earlier in accordance with this Section 7.\" According to AMD-2026-014-01, section \"Section 7.2\": \"7.2 In the event of a conflict between this Amendment and the Agreement, this Amendment governs in respect of the provisions it amends.\n\n---\n\nEXECUTED by the Parties on 1 April 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to MSA-2026-014, section \"Section 7.2 Renewal\": \"7.2 Renewal. Following the Initial Term, this Agreement shall automatically renew for successive periods of 1 year (one (1) year) each, unless either Party gives written notice of non-renewal not less than 90 days (ninety (90) days) before the end of the then-current term.\""
+    },
+    {
+      "id": "GS-021",
+      "class": "amendment_supersession",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "twice",
+        "15 Business Days"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "AMD-2026-014-01",
+        "MSA-2026-014"
+      ],
+      "cited_source_docs": [
+        "AMD-2026-014-01",
+        "AMD-2026-014-02",
+        "MSA-2026-014",
+        "SCH-2026-014"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to MSA-2026-014, section \"Section 11.1\": \"11.1 Client may, not more than once per calendar year, audit Provider's compliance with this Agreement, on not less than 15 Business Days (fifteen (15) Business Days)' prior written notice.\" According to SCH-2026-014, section \"Schedule D â€” Notice Addresses\": \"[TABLE] Party | Postal Address (courier) | Electronic Mail\n Party: Provider | Postal Address (courier): Soft Suave Technologies Private Limited, Tidel Park, Chennai 600113, Tamil Nadu, India â€” Attn: Legal Department | Electronic Mail: legal@softsuave.example\n Party: Client | Postal Address (courier): Northwind Logistics Private Limited, Embassy Tech Village, Bengaluru 560103, Karnataka, India â€” Attn: Company Secretary | Electronic Mail: contracts@northwind-logistics.example\n\nA Party may change its notice address by giving 10 Business Days (ten (10) Business Days)' written notice to the other Party in accordance with Section 14 of the Agreement.\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT: Schedules\": \"Agreement No.: MSA-2026-014\n\nThe following Schedules form part of this Agreement and are set out in the document SCH-2026-014NorthwindSchedules:\n\n- Schedule A â€” Description of Services\n- Schedule B â€” Fees and Service Levels\n- Schedule B-2 â€” Notice and Escalation Matrix\n- Schedule C â€” Holiday Calendar\n- Schedule D â€” Notice Addresses\n\n---\n\nEXECUTED by the Parties on 14 January 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to AMD-2026-014-01, section \"Section 6. Audit Frequency\": \"6.1 Section 11.1 of the Agreement is amended by replacing \"once per calendar year\" with \"twice per calendar year\", provided that the second audit in any calendar year shall be at Client's sole cost regardless of its findings.\n\n---\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-014\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0 (Original â€” see Amendment No. 1 and Amendment No. 2)\nStatus: Executed\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited, a company incorporated under the laws of India with its registered office at Chennai, Tamil Nadu (\"Provider\"), and Northwind Logistics Private Limited, a company incorporated under the laws of India with its registered office at Bengaluru, Karnataka (\"Client\"). Provider and Client are referred to individually as a \"Party\" and collectively as the \"Parties\".\n\n---\" According to AMD-2026-014-02, section \"AMENDMENT NO. 2 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-02\nAmends: MSA-2026-014 (Master Services Agreement), as amended by Amendment No. 1\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 August 2026\nDocument Version: v1.2\nStatus: Executed â€” CURRENT / CONTROLLING\n\n---\n\nThis Amendment No. 2 (this \"Amendment\") is made as of 1 August 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026, as previously amended by Amendment No. 1 dated 1 April 2026 (together, the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to AMD-2026-014-01, section \"Section 7.2\": \"7.2 In the event of a conflict between this Amendment and the Agreement, this Amendment governs in respect of the provisions it amends.\n\n---\n\nEXECUTED by the Parties on 1 April 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to AMD-2026-014-01, section \"AMENDMENT NO. 1 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-01\nAmends: MSA-2026-014 (Master Services Agreement)\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 April 2026\nDocument Version: v1.1\nStatus: Executed â€” superseded in part by Amendment No. 2\n\n---\n\nThis Amendment No. 1 (this \"Amendment\") is made as of 1 April 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026 (the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\""
+    },
+    {
+      "id": "GS-022",
+      "class": "amendment_supersession",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "India",
+        "10.4"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "AMD-2026-014-02"
+      ],
+      "cited_source_docs": [
+        "AMD-2026-014-01",
+        "AMD-2026-014-02",
+        "MSA-2026-014",
+        "SCH-2026-014"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to AMD-2026-014-02, section \"Section 4. Data Residency\": \"4.1 A new Section 10.4 is inserted into the Agreement:\n\n> \"10.4 Data Residency. Provider shall store and process all Client personal data within the territory of India, and shall not transfer such data outside India without Client's prior written consent.\"\n\n---\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-014\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0 (Original â€” see Amendment No. 1 and Amendment No. 2)\nStatus: Executed\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited, a company incorporated under the laws of India with its registered office at Chennai, Tamil Nadu (\"Provider\"), and Northwind Logistics Private Limited, a company incorporated under the laws of India with its registered office at Bengaluru, Karnataka (\"Client\"). Provider and Client are referred to individually as a \"Party\" and collectively as the \"Parties\".\n\n---\" According to SCH-2026-014, section \"SCHEDULES TO MASTER SERVICES AGREEMENT MSA-2026-014\": \"Document No.: SCH-2026-014\nForms part of: MSA-2026-014 (Northwind Logistics Private Limited)\nCounterparty: Northwind Logistics Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0\nStatus: Executed\n\n---\" According to AMD-2026-014-01, section \"AMENDMENT NO. 1 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-01\nAmends: MSA-2026-014 (Master Services Agreement)\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 April 2026\nDocument Version: v1.1\nStatus: Executed â€” superseded in part by Amendment No. 2\n\n---\n\nThis Amendment No. 1 (this \"Amendment\") is made as of 1 April 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026 (the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to AMD-2026-014-02, section \"AMENDMENT NO. 2 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-02\nAmends: MSA-2026-014 (Master Services Agreement), as amended by Amendment No. 1\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 August 2026\nDocument Version: v1.2\nStatus: Executed â€” CURRENT / CONTROLLING\n\n---\n\nThis Amendment No. 2 (this \"Amendment\") is made as of 1 August 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026, as previously amended by Amendment No. 1 dated 1 April 2026 (together, the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to AMD-2026-014-01, section \"Section 7.2\": \"7.2 In the event of a conflict between this Amendment and the Agreement, this Amendment governs in respect of the provisions it amends.\n\n---\n\nEXECUTED by the Parties on 1 April 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to AMD-2026-014-02, section \"Section 7.2 Where this Amendment and Amendment No\": \"7.2 Where this Amendment and Amendment No. 1 address the same provision, this Amendment governs, in accordance with Section 20.2 of the Agreement.\n\n---\n\nEXECUTED by the Parties on 1 August 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT: Schedules\": \"Agreement No.: MSA-2026-014\n\nThe following Schedules form part of this Agreement and are set out in the document SCH-2026-014NorthwindSchedules:\n\n- Schedule A â€” Description of Services\n- Schedule B â€” Fees and Service Levels\n- Schedule B-2 â€” Notice and Escalation Matrix\n- Schedule C â€” Holiday Calendar\n- Schedule D â€” Notice Addresses\n\n---\n\nEXECUTED by the Parties on 14 January 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\""
+    },
+    {
+      "id": "GS-023",
+      "class": "direct_lookup",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "reasonable degree of care"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "MSA-2026-014"
+      ],
+      "cited_source_docs": [
+        "AMD-2026-014-01",
+        "AMD-2026-014-02",
+        "MSA-2026-014"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to MSA-2026-014, section \"Section 5.1\": \"5.1 Each Party shall hold the other Party's Confidential Information in confidence and shall use a reasonable degree of care â€” being not less than the degree of care it uses to protect its own confidential information of a similar nature â€” to prevent its unauthorised disclosure.\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-014\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0 (Original â€” see Amendment No. 1 and Amendment No. 2)\nStatus: Executed\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited, a company incorporated under the laws of India with its registered office at Chennai, Tamil Nadu (\"Provider\"), and Northwind Logistics Private Limited, a company incorporated under the laws of India with its registered office at Bengaluru, Karnataka (\"Client\"). Provider and Client are referred to individually as a \"Party\" and collectively as the \"Parties\".\n\n---\" According to AMD-2026-014-02, section \"AMENDMENT NO. 2 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-02\nAmends: MSA-2026-014 (Master Services Agreement), as amended by Amendment No. 1\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 August 2026\nDocument Version: v1.2\nStatus: Executed â€” CURRENT / CONTROLLING\n\n---\n\nThis Amendment No. 2 (this \"Amendment\") is made as of 1 August 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026, as previously amended by Amendment No. 1 dated 1 April 2026 (together, the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to AMD-2026-014-01, section \"Section 7.2\": \"7.2 In the event of a conflict between this Amendment and the Agreement, this Amendment governs in respect of the provisions it amends.\n\n---\n\nEXECUTED by the Parties on 1 April 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to AMD-2026-014-01, section \"AMENDMENT NO. 1 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-01\nAmends: MSA-2026-014 (Master Services Agreement)\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 April 2026\nDocument Version: v1.1\nStatus: Executed â€” superseded in part by Amendment No. 2\n\n---\n\nThis Amendment No. 1 (this \"Amendment\") is made as of 1 April 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026 (the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to MSA-2026-014, section \"Section 5.4 Exclusions\": \"5.4 Exclusions. The obligations in this Section 5 do not apply to information that: (a) is or becomes publicly available through no breach of this Agreement; (b) was lawfully known to the receiving Party before disclosure; (c) is lawfully received from a third party without restriction; or (d) is independently developed without reference to the disclosing Party's Confidential Information.\n\n---\" According to MSA-2026-014, section \"Section 1.3\": \"1.3 \"Confidential Information\" means all non-public information disclosed by one Party to the other, whether orally, in writing, or in any other form, that is designated as confidential at the time of disclosure or that a reasonable person would understand to be confidential given its nature and the circumstances of disclosure.\" According to AMD-2026-014-02, section \"Section 7.2 Where this Amendment and Amendment No\": \"7.2 Where this Amendment and Amendment No. 1 address the same provision, this Amendment governs, in accordance with Section 20.2 of the Agreement.\n\n---\n\nEXECUTED by the Parties on 1 August 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\""
+    },
+    {
+      "id": "GS-024",
+      "class": "counterparty_disambiguation",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "3%",
+        "90 days"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "MSA-2026-022"
+      ],
+      "cited_source_docs": [
+        "MSA-2026-022"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to MSA-2026-022, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-022\nCounterparty: Vertex Retail Solutions Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 3 March 2026\nDocument Version: v1.0 (Original â€” no amendments)\nStatus: Executed\n\n> Note for readers and retrieval systems: this Agreement uses the same section\n> numbering as MSA-2026-014 (Northwind) but contains different commercial terms.\n> Section 8.3 of this Agreement is not the same as Section 8.3 of MSA-2026-014.\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited (\"Provider\") and Vertex Retail Solutions Limited, a company incorporated under the laws of Singapore with its registered office at 1 Raffles Place, Singapore (\"Client\").\n\n---\" According to MSA-2026-022, section \"Section 3.6 Fee Increases\": \"3.6 Fee Increases. Provider may increase fees by not more than three percent (3%) per annum on each anniversary of the Effective Date, on not less than 90 days (ninety (90) days)' prior written notice.\n\n---\" According to MSA-2026-022, section \"Section 20. Amendment\": \"20.1 This Agreement may be amended only by a written instrument signed by both Parties. As at the date of this document, no amendments to this Agreement have been executed.\n\n---\n\nEXECUTED by the Parties on 3 March 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\nNotice address: legal@softsuave.example, Chennai, Tamil Nadu, India\n\nFor and on behalf of Vertex Retail Solutions Limited\nName: Daniel Lim â€” Title: Finance Director\nNotice address: contracts@vertexretail.example, 1 Raffles Place, Singapore\""
+    },
+    {
+      "id": "GS-025",
+      "class": "counterparty_disambiguation",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "arbitration",
+        "Singapore",
+        "SIAC"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "MSA-2026-022"
+      ],
+      "cited_source_docs": [
+        "MSA-2026-022"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to MSA-2026-022, section \"Section 15.2 Arbitration\": \"15.2 Arbitration. Any dispute arising out of or in connection with this Agreement shall be referred to and finally resolved by arbitration administered by the Singapore International Arbitration Centre (SIAC) in accordance with its Rules in force at the time. The seat of arbitration shall be Singapore and the tribunal shall consist of one (1) arbitrator.\" According to MSA-2026-022, section \"Section 20. Amendment\": \"20.1 This Agreement may be amended only by a written instrument signed by both Parties. As at the date of this document, no amendments to this Agreement have been executed.\n\n---\n\nEXECUTED by the Parties on 3 March 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\nNotice address: legal@softsuave.example, Chennai, Tamil Nadu, India\n\nFor and on behalf of Vertex Retail Solutions Limited\nName: Daniel Lim â€” Title: Finance Director\nNotice address: contracts@vertexretail.example, 1 Raffles Place, Singapore\" According to MSA-2026-022, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-022\nCounterparty: Vertex Retail Solutions Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 3 March 2026\nDocument Version: v1.0 (Original â€” no amendments)\nStatus: Executed\n\n> Note for readers and retrieval systems: this Agreement uses the same section\n> numbering as MSA-2026-014 (Northwind) but contains different commercial terms.\n> Section 8.3 of this Agreement is not the same as Section 8.3 of MSA-2026-014.\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited (\"Provider\") and Vertex Retail Solutions Limited, a company incorporated under the laws of Singapore with its registered office at 1 Raffles Place, Singapore (\"Client\").\n\n---\""
+    },
+    {
+      "id": "GS-026",
+      "class": "counterparty_disambiguation",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "20 days"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "MSA-2026-022"
+      ],
+      "cited_source_docs": [
+        "MSA-2026-022"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to MSA-2026-022, section \"Section 1.4\": \"1.4 \"Cure Period\" means a period of 20 days (twenty (20) days) from the date a Party receives written notice of a material breach, within which that Party may remedy the breach.\" According to MSA-2026-022, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-022\nCounterparty: Vertex Retail Solutions Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 3 March 2026\nDocument Version: v1.0 (Original â€” no amendments)\nStatus: Executed\n\n> Note for readers and retrieval systems: this Agreement uses the same section\n> numbering as MSA-2026-014 (Northwind) but contains different commercial terms.\n> Section 8.3 of this Agreement is not the same as Section 8.3 of MSA-2026-014.\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited (\"Provider\") and Vertex Retail Solutions Limited, a company incorporated under the laws of Singapore with its registered office at 1 Raffles Place, Singapore (\"Client\").\n\n---\" According to MSA-2026-022, section \"Section 20. Amendment\": \"20.1 This Agreement may be amended only by a written instrument signed by both Parties. As at the date of this document, no amendments to this Agreement have been executed.\n\n---\n\nEXECUTED by the Parties on 3 March 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\nNotice address: legal@softsuave.example, Chennai, Tamil Nadu, India\n\nFor and on behalf of Vertex Retail Solutions Limited\nName: Daniel Lim â€” Title: Finance Director\nNotice address: contracts@vertexretail.example, 1 Raffles Place, Singapore\" According to MSA-2026-022, section \"Section 7.4 Termination for Cause\": \"7.4 Termination for Cause. Either Party may terminate with immediate effect if the other Party commits a material breach and fails to remedy it within the Cure Period, becomes insolvent, or ceases to carry on business.\n\n---\" According to MSA-2026-022, section \"Section 7.1 Term\": \"7.1 Term. This Agreement commences on the Effective Date and continues for an initial term of 3 years (three (3) years), expiring on 2 March 2029, unless terminated earlier.\""
+    },
+    {
+      "id": "GS-027",
+      "class": "direct_lookup",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "three (3) years",
+        "trade secret"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "NDA-2026-007"
+      ],
+      "cited_source_docs": [
+        "NDA-2026-007"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to NDA-2026-007, section \"Section 4.2 Survival of Obligations\": \"4.2 Survival of Obligations. The confidentiality obligations in Section 3 survive termination or expiry of this Agreement for a period of 3 years (three (3) years) from the date of termination or expiry.\" According to NDA-2026-007, section \"MUTUAL NON-DISCLOSURE AGREEMENT\": \"Agreement No.: NDA-2026-007\nCounterparty: Halcyon Analytics GmbH\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 22 May 2026\nDocument Version: v1.0\nStatus: Executed\n\n---\n\nThis Mutual Non-Disclosure Agreement (this \"Agreement\") is made as of 22 May 2026 between Soft Suave Technologies Private Limited, of Chennai, India (\"Soft Suave\"), and Halcyon Analytics GmbH, of Berlin, Germany (\"Halcyon\"). Each may act as a \"Disclosing Party\" or a \"Receiving Party\".\n\n---\" According to NDA-2026-007, section \"Section 6.1\": \"6.1 On written request by the Disclosing Party, or on termination or expiry of this Agreement, the Receiving Party shall within 30 days (thirty (30) days) return or destroy all Confidential Information in its possession and certify the destruction in writing.\" According to NDA-2026-007, section \"Section 1.1\": \"1.1 The Parties wish to explore a potential commercial relationship concerning the integration of Halcyon's analytics platform with Soft Suave's delivery tooling (the \"Purpose\"). This Agreement governs the exchange of Confidential Information for the Purpose only.\" According to NDA-2026-007, section \"Section 4.1 Term\": \"4.1 Term. This Agreement commences on the Effective Date and continues for 2 years (two (2) years), unless terminated earlier by either Party on 30 days (thirty (30) days)' written notice.\" According to NDA-2026-007, section \"Section 4.3 Trade Secrets\": \"4.3 Trade Secrets. Notwithstanding Section 4.2, where Confidential Information constitutes a trade secret under applicable law, the obligations in Section 3 continue for so long as the information remains a trade secret.\n\n---\" According to NDA-2026-007, section \"Section 2.1\": \"2.1 \"Confidential Information\" means any information disclosed by a Disclosing Party to a Receiving Party, in any form, that is marked confidential, is identified as confidential at the time of oral disclosure and confirmed in writing within 14 days (fourteen (14) days), or that a reasonable person would understand to be confidential from its nature or the circumstances of its disclosure.\""
+    },
+    {
+      "id": "GS-028",
+      "class": "direct_lookup",
+      "passed": false,
+      "failure_type": "fail_hallucination",
+      "matched_values": [],
+      "missing_values": [
+        "50,000",
+        "Section 3"
+      ],
+      "expected_source_docs": [
+        "NDA-2026-007"
+      ],
+      "cited_source_docs": [
+        "NDA-2026-007"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to NDA-2026-007, section \"MUTUAL NON-DISCLOSURE AGREEMENT\": \"Agreement No.: NDA-2026-007\nCounterparty: Halcyon Analytics GmbH\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 22 May 2026\nDocument Version: v1.0\nStatus: Executed\n\n---\n\nThis Mutual Non-Disclosure Agreement (this \"Agreement\") is made as of 22 May 2026 between Soft Suave Technologies Private Limited, of Chennai, India (\"Soft Suave\"), and Halcyon Analytics GmbH, of Berlin, Germany (\"Halcyon\"). Each may act as a \"Disclosing Party\" or a \"Receiving Party\".\n\n---\" According to NDA-2026-007, section \"Section 1.1\": \"1.1 The Parties wish to explore a potential commercial relationship concerning the integration of Halcyon's analytics platform with Soft Suave's delivery tooling (the \"Purpose\"). This Agreement governs the exchange of Confidential Information for the Purpose only.\" According to NDA-2026-007, section \"Section 10.4 Counterparts\": \"10.4 Counterparts. This Agreement may be executed in counterparts, each of which is an original and all of which together constitute one agreement.\n\n---\n\nEXECUTED by the Parties on 22 May 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Halcyon Analytics GmbH\nName: Katrin Vogel â€” Title: Managing Director\""
+    },
+    {
+      "id": "GS-029",
+      "class": "out_of_scope",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [],
+      "missing_values": [],
+      "expected_source_docs": [],
+      "cited_source_docs": [],
+      "out_of_scope": true,
+      "answer": "I don't know â€” this information is not in the provided documents."
+    },
+    {
+      "id": "GS-030",
+      "class": "out_of_scope",
+      "passed": false,
+      "failure_type": "fail_hallucination",
+      "matched_values": [
+        "Singapore"
+      ],
+      "missing_values": [
+        "no separate"
+      ],
+      "expected_source_docs": [
+        "MSA-2026-022"
+      ],
+      "cited_source_docs": [
+        "MSA-2026-022"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to MSA-2026-022, section \"Section 1.2\": \"1.2 \"Business Day\" means any day other than a Saturday, a Sunday, or a public holiday observed in Singapore. This Agreement does not incorporate a separate holiday calendar schedule.\" According to MSA-2026-022, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-022\nCounterparty: Vertex Retail Solutions Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 3 March 2026\nDocument Version: v1.0 (Original â€” no amendments)\nStatus: Executed\n\n> Note for readers and retrieval systems: this Agreement uses the same section\n> numbering as MSA-2026-014 (Northwind) but contains different commercial terms.\n> Section 8.3 of this Agreement is not the same as Section 8.3 of MSA-2026-014.\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited (\"Provider\") and Vertex Retail Solutions Limited, a company incorporated under the laws of Singapore with its registered office at 1 Raffles Place, Singapore (\"Client\").\n\n---\" According to MSA-2026-022, section \"Section 20. Amendment\": \"20.1 This Agreement may be amended only by a written instrument signed by both Parties. As at the date of this document, no amendments to this Agreement have been executed.\n\n---\n\nEXECUTED by the Parties on 3 March 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\nNotice address: legal@softsuave.example, Chennai, Tamil Nadu, India\n\nFor and on behalf of Vertex Retail Solutions Limited\nName: Daniel Lim â€” Title: Finance Director\nNotice address: contracts@vertexretail.example, 1 Raffles Place, Singapore\""
+    },
+    {
+      "id": "GS-031",
+      "class": "out_of_scope",
+      "passed": false,
+      "failure_type": "fail_hallucination",
+      "matched_values": [],
+      "missing_values": [],
+      "expected_source_docs": [],
+      "cited_source_docs": [
+        "AMD-2026-014-01",
+        "AMD-2026-014-02",
+        "MSA-2026-014",
+        "SCH-2026-014"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-014\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0 (Original â€” see Amendment No. 1 and Amendment No. 2)\nStatus: Executed\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited, a company incorporated under the laws of India with its registered office at Chennai, Tamil Nadu (\"Provider\"), and Northwind Logistics Private Limited, a company incorporated under the laws of India with its registered office at Bengaluru, Karnataka (\"Client\"). Provider and Client are referred to individually as a \"Party\" and collectively as the \"Parties\".\n\n---\" According to MSA-2026-014, section \"MASTER SERVICES AGREEMENT: Schedules\": \"Agreement No.: MSA-2026-014\n\nThe following Schedules form part of this Agreement and are set out in the document SCH-2026-014NorthwindSchedules:\n\n- Schedule A â€” Description of Services\n- Schedule B â€” Fees and Service Levels\n- Schedule B-2 â€” Notice and Escalation Matrix\n- Schedule C â€” Holiday Calendar\n- Schedule D â€” Notice Addresses\n\n---\n\nEXECUTED by the Parties on 14 January 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to AMD-2026-014-02, section \"AMENDMENT NO. 2 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-02\nAmends: MSA-2026-014 (Master Services Agreement), as amended by Amendment No. 1\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 August 2026\nDocument Version: v1.2\nStatus: Executed â€” CURRENT / CONTROLLING\n\n---\n\nThis Amendment No. 2 (this \"Amendment\") is made as of 1 August 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026, as previously amended by Amendment No. 1 dated 1 April 2026 (together, the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to SCH-2026-014, section \"SCHEDULES TO MASTER SERVICES AGREEMENT MSA-2026-014\": \"Document No.: SCH-2026-014\nForms part of: MSA-2026-014 (Northwind Logistics Private Limited)\nCounterparty: Northwind Logistics Private Limited\nEffective Date: 14 January 2026\nDocument Version: v1.0\nStatus: Executed\n\n---\" According to AMD-2026-014-01, section \"AMENDMENT NO. 1 TO MASTER SERVICES AGREEMENT\": \"Amendment No.: AMD-2026-014-01\nAmends: MSA-2026-014 (Master Services Agreement)\nCounterparty: Northwind Logistics Private Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 1 April 2026\nDocument Version: v1.1\nStatus: Executed â€” superseded in part by Amendment No. 2\n\n---\n\nThis Amendment No. 1 (this \"Amendment\") is made as of 1 April 2026 between Soft Suave Technologies Private Limited (\"Provider\") and Northwind Logistics Private Limited (\"Client\"), and amends the Master Services Agreement No. MSA-2026-014 dated 14 January 2026 (the \"Agreement\").\n\nCapitalised terms used but not defined in this Amendment have the meanings given in the Agreement.\n\n---\" According to SCH-2026-014, section \"Schedule B â€” Fees and Service Levels: Part 2 â€” Service Levels\": \"[TABLE] Service ID | Availability Target | Response Time (Priority Incident) | Resolution Time (Priority Incident)\n Service ID: SVC-01 | Availability Target: 99.9% monthly | Response Time (Priority Incident): 30 minutes | Resolution Time (Priority Incident): 4 hours\n Service ID: SVC-02 | Availability Target: 99.5% monthly | Response Time (Priority Incident): 1 hour | Resolution Time (Priority Incident): 8 hours\n Service ID: SVC-03 | Availability Target: 99.0% monthly | Response Time (Priority Incident): 4 Business Hours | Resolution Time (Priority Incident): 2 Business Days\n Service ID: SVC-04 | Availability Target: n/a | Response Time (Priority Incident): 2 Business Hours | Resolution Time (Priority Incident): 1 Business Day\n\n\"Business Hours\" means 09:00 to 18:00 India Standard Time on a Business Day.\n\nA Service Failure occurs where Provider fails to meet any target in this Part 2 for a Service in a calendar month. Three (3) Service Failures within any rolling 30 day (thirty (30) day) period constitute a Qualifying Event under Section 1.6 of the Agreement.\" According to AMD-2026-014-01, section \"Section 7.2\": \"7.2 In the event of a conflict between this Amendment and the Agreement, this Amendment governs in respect of the provisions it amends.\n\n---\n\nEXECUTED by the Parties on 1 April 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\" According to AMD-2026-014-02, section \"Section 7.2 Where this Amendment and Amendment No\": \"7.2 Where this Amendment and Amendment No. 1 address the same provision, this Amendment governs, in accordance with Section 20.2 of the Agreement.\n\n---\n\nEXECUTED by the Parties on 1 August 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\n\nFor and on behalf of Northwind Logistics Private Limited\nName: Meera Krishnan â€” Title: Chief Operating Officer\""
+    },
+    {
+      "id": "GS-032",
+      "class": "out_of_scope",
+      "passed": true,
+      "failure_type": null,
+      "matched_values": [
+        "no amendments"
+      ],
+      "missing_values": [],
+      "expected_source_docs": [
+        "MSA-2026-022"
+      ],
+      "cited_source_docs": [
+        "MSA-2026-022"
+      ],
+      "out_of_scope": false,
+      "answer": "Based on the retrieved documents: According to MSA-2026-022, section \"MASTER SERVICES AGREEMENT\": \"Agreement No.: MSA-2026-022\nCounterparty: Vertex Retail Solutions Limited\nProvider: Soft Suave Technologies Private Limited\nEffective Date: 3 March 2026\nDocument Version: v1.0 (Original â€” no amendments)\nStatus: Executed\n\n> Note for readers and retrieval systems: this Agreement uses the same section\n> numbering as MSA-2026-014 (Northwind) but contains different commercial terms.\n> Section 8.3 of this Agreement is not the same as Section 8.3 of MSA-2026-014.\n\n---\n\nThis Master Services Agreement (the \"Agreement\") is entered into as of the Effective Date set out above by and between Soft Suave Technologies Private Limited (\"Provider\") and Vertex Retail Solutions Limited, a company incorporated under the laws of Singapore with its registered office at 1 Raffles Place, Singapore (\"Client\").\n\n---\" According to MSA-2026-022, section \"Section 20. Amendment\": \"20.1 This Agreement may be amended only by a written instrument signed by both Parties. As at the date of this document, no amendments to this Agreement have been executed.\n\n---\n\nEXECUTED by the Parties on 3 March 2026.\n\nFor and on behalf of Soft Suave Technologies Private Limited\nName: R. Anand â€” Title: Director\nNotice address: legal@softsuave.example, Chennai, Tamil Nadu, India\n\nFor and on behalf of Vertex Retail Solutions Limited\nName: Daniel Lim â€” Title: Finance Director\nNotice address: contracts@vertexretail.example, 1 Raffles Place, Singapore\""
+    }
+  ]
+}
+

@@ -18,7 +18,7 @@ from legal_rag.infrastructure.observability.logging import get_logger
 log = get_logger(__name__)
 
 _TOKEN_RE = re.compile(r"[a-z0-9]+(?:[-'][a-z0-9]+)*")
-COLLECTION_NAME = "legal_docs"
+COLLECTION_NAME = "legal_docs_shared_corpus"
 
 
 class ChromaVectorStore:
@@ -67,6 +67,7 @@ class ChromaVectorStore:
                         "document_type": c.document_type,
                         "heading": c.heading,
                         "chunk_index": c.chunk_index,
+                        **c.metadata,
                     }
                     for c in indexed_list
                 ],
