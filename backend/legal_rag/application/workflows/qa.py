@@ -91,6 +91,7 @@ class QaService:
     def _resolve_where(
         self, query: str, document_type: str | None
     ) -> dict[str, str] | None:
+        where = self._retrieval.detect_metadata_filter(query) or {}
         if document_type:
-            return {"document_type": document_type}
-        return self._retrieval.detect_metadata_filter(query)
+            where["document_type"] = document_type
+        return where or None

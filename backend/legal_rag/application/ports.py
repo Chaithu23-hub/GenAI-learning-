@@ -5,7 +5,7 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
-from legal_rag.domain.entities import IndexedChunk
+from legal_rag.domain.entities import Chunk, Document, IndexedChunk
 
 # ─── Persistence ──────────────────────────────────────────────────────────
 
@@ -93,11 +93,16 @@ class LLMClient(Protocol):
 
 @runtime_checkable
 class DocumentSource(Protocol):
-    def iter_documents(self) -> Iterable[tuple[Path, str]]:
-        """Yield ``(path, text)`` for every source document."""
+    def iter_documents(self, docs_dir: Path | None = None) -> Iterable[Document]:
+        """Yield parsed documents and metadata from the selected source directory."""
 
     def write_document(self, name: str, text: str) -> Path:
         """Persist a new source document; return its path."""
+
+
+@runtime_checkable
+class Chunker(Protocol):
+    def chunk(self, text: str, *, chunk_size: int, overlap: int) -> list[Chunk]: ...
 
 
 # ─── MCP ──────────────────────────────────────────────────────────────────

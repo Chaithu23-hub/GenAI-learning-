@@ -62,7 +62,7 @@ Check the backend metrics: `https://<space>/metrics`.
 - **Space sleeps after ~48 h idle** on the free tier — first request wakes it in ~30 s.
 - **HF disk is persistent** — Chroma index and downloaded models survive restarts.
 - **Rotate the API key** any time by editing the Space + Vercel env vars; no code change.
-- **Update the corpus**: push new `.md` files under `data/legal/` and POST `/api/ingest`.
+- **Update the corpus**: push new `.md` files under `backend/data/shared-corpus/contracts` and POST `/api/ingest`.
 
 ## Alternative frontends
 

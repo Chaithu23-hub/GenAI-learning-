@@ -14,8 +14,9 @@ class EvaluationCase:
     relevant_chunk_ids: frozenset[str]
 
 
-# Labels target real chunks produced by ingesting backend/data/legal/*.md with
-# the default section-aware chunker. Chunk ids follow "{stem}::{index:03d}".
+# Labels target real chunks produced by ingesting the shared-corpus Markdown
+# documents with the default section-aware chunker. Chunk ids follow
+# "{stem}::{index:03d}".
 EVALUATION_CASES: tuple[EvaluationCase, ...] = (
     EvaluationCase(
         "What rate does the original Master Services Agreement state for late payments?",

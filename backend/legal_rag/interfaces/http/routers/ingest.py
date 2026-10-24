@@ -8,8 +8,8 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
 from legal_rag.application.workflows import IngestionService
 from legal_rag.composition import Container
-from legal_rag.infrastructure.documents.markdown_loader import MarkdownDocumentSource
 from legal_rag.infrastructure.documents.pdf_loader import extract_pdf_text
+from legal_rag.infrastructure.documents.shared_corpus_loader import SharedCorpusDocumentSource
 from legal_rag.interfaces.http.dependencies import (
     get_container,
     get_ingestion_service,
@@ -47,7 +47,7 @@ async def upload_pdf(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="No files supplied.",
         )
-    source = MarkdownDocumentSource(container.settings.docs_dir)
+    source = SharedCorpusDocumentSource(container.settings.docs_dir)
     written = 0
     for upload in files:
         filename = upload.filename or ""
