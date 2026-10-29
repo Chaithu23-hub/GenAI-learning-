@@ -27,3 +27,4 @@ models/
 *.log
 *.md
 !README.md
+!data/shared-corpus/contracts/*.md

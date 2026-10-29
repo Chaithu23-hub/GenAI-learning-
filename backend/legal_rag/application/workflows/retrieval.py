@@ -94,9 +94,20 @@ class RetrievalService:
         if not candidates:
             return []
 
-        scores = self._reranker.score(query, [c.text for c in candidates])
+        score_inputs = [
+            f"{c.heading}\n{c.text}" if c.heading and c.heading != "Preamble" else c.text
+            for c in candidates
+        ]
+        scores = self._reranker.score(query, score_inputs)
         for candidate, score in zip(candidates, scores, strict=True):
-            candidate.score = float(score)
+            raw = float(score)
+            # Fix 3: boost amendments above the original MSA clauses they supersede.
+            # AMD-YYYY-NNN-NN: the suffix NN encodes amendment order (01→1, 02→2, …).
+            # Original MSAs, schedules, and NDAs get priority=0.
+            doc_id: str = candidate.document or ""
+            amendment_match = re.search(r"AMD-\d{4}-\d{3}-(\d{2})", doc_id)
+            priority = int(amendment_match.group(1)) if amendment_match else 0
+            candidate.score = raw + 0.3 * priority if raw > -4.0 else raw
         candidates.sort(key=lambda c: c.score, reverse=True)
         top = candidates[:n]
         log.debug("retrieved", extra={
@@ -108,16 +119,34 @@ class RetrievalService:
     def detect_metadata_filter(self, query: str) -> dict[str, str] | None:
         """Filter only when the user explicitly requests one document type."""
         q = query.lower()
+        where: dict[str, str] = {}
+        counterparties = {
+            "northwind": "Northwind Logistics",
+            "vertex retail": "Vertex Retail",
+            "vertex": "Vertex Retail",
+            "halcyon analytics": "Halcyon Analytics",
+            "halcyon": "Halcyon Analytics",
+            "apex": "Apex Industries",
+        }
+        matching = {value for name, value in counterparties.items() if name in q}
+        if len(matching) == 1:
+            where["counterparty"] = next(iter(matching))
+        source_doc = re.search(r"\b[A-Z]{2,4}-\d{4}-\d{3}(?:-\d{2})?\b", query)
+        if source_doc:
+            where["source_doc"] = source_doc.group(0)
+        effective_date = re.search(r"\b20\d{2}-\d{2}-\d{2}\b", query)
+        if effective_date:
+            where["effective_date"] = effective_date.group(0)
         if re.search(
             r"\bonly\s+(?:the\s+)?amendments?(?:\s+documents?)?\b|"
             r"\bamendments?\s+documents?\s+only\b",
             q,
         ):
-            return {"document_type": "amendment"}
+            where["document_type"] = "amendment"
         if re.search(
             r"\bonly\s+(?:the\s+)?(?:contracts?|agreements?)(?:\s+documents?)?\b|"
             r"\b(?:contracts?|agreements?)\s+documents?\s+only\b",
             q,
         ):
-            return {"document_type": "contract"}
-        return None
+            where["document_type"] = "contract"
+        return where or None

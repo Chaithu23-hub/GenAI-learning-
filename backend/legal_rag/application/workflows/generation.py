@@ -21,7 +21,7 @@ log = get_logger(__name__)
 SYSTEM_PROMPT = get_prompt("qa.system").text
 
 
-_EXCERPT_CHARS = 400
+_EXCERPT_CHARS = 2000
 
 
 def _clause_refs(text: str) -> list[str]:
@@ -145,12 +145,26 @@ class LLMGenerator:
         where: dict[str, Any] | None = None,
         chunks: list[RetrievedChunk] | None = None,
     ) -> dict[str, Any]:
-        try:
-            return self._generate_llm(query, where=where)
-        except Exception as exc:  # noqa: BLE001
-            log.warning("llm generation failed; extractive fallback",
-                        extra={"error": str(exc)})
-            return self._fallback.generate(query, where=where, chunks=chunks)
+        max_attempts = 3
+        for attempt in range(max_attempts):
+            try:
+                return self._generate_llm(query, where=where)
+            except Exception as exc:  # noqa: BLE001
+                msg = str(exc).lower()
+                is_transient = any(
+                    k in msg
+                    for k in ("rate", "429", "quota", "resource", "timeout", "transient", "overloaded")
+                )
+                if is_transient and attempt < max_attempts - 1:
+                    log.info(
+                        "transient error in llm generation; retrying after backoff",
+                        extra={"attempt": attempt + 1, "error": str(exc)},
+                    )
+                    time.sleep(2.0 * (attempt + 1))
+                    continue
+                log.warning("llm generation failed; extractive fallback",
+                            extra={"error": str(exc)})
+                return self._fallback.generate(query, where=where, chunks=chunks)
 
     def _generate_llm(self, query: str, *, where: dict[str, Any] | None) -> dict[str, Any]:
         started_at = time.perf_counter()
@@ -214,12 +228,27 @@ class LLMGenerator:
         for _ in range(self._settings.max_tool_rounds):
             try:
                 response = chat(messages, tools=[RETRIEVE_TOOL])
-            except Exception:
-                result = self._fallback.generate(query, where=where)
-                self._log_trace(query, result, available_chunks, spans, started_at)
-                return result
+            except Exception as exc:
+                log.info("tools call unsupported or failed; falling back to direct LLM chat", extra={"error": str(exc)})
+                all_context = json.dumps(chunks_payload(list(available_chunks.values())), indent=2)
+                clean_user = (
+                    f"{query}\n\n"
+                    f"Retrieved document chunks (cite ONLY these chunk_ids in sources):\n{all_context}\n\n"
+                    f"Answer using only these chunks."
+                )
+                clean_messages = [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": clean_user},
+                ]
+                try:
+                    message = chat(clean_messages, tools=None)
+                except Exception:
+                    result = self._fallback.generate(query, where=where)
+                    self._log_trace(query, result, available_chunks, spans, started_at)
+                    return result
+                break
             message = response
-            if not response["tool_calls"]:
+            if not response.get("tool_calls"):
                 break
             messages.append({
                 "role": "assistant",
@@ -244,9 +273,12 @@ class LLMGenerator:
                     "content": json.dumps(chunks_payload(hits)),
                 })
         else:
-            result = self._fallback.generate(query, where=where)
-            self._log_trace(query, result, available_chunks, spans, started_at)
-            return result
+            try:
+                message = chat(messages, tools=None)
+            except Exception:
+                result = self._fallback.generate(query, where=where)
+                self._log_trace(query, result, available_chunks, spans, started_at)
+                return result
 
         # Validate + retry once.
         for attempt in range(2):

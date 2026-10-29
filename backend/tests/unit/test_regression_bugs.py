@@ -121,3 +121,18 @@ class TestFinding9ClassifyFailureHandlesMissingExcerpt:
         # Must not KeyError.
         classification = classify_failure(report, ["Term A"])
         assert classification["behaviour"] in {"degraded", "unknown", "lied"}
+
+
+class TestDefinedTermDetectionCatchesNaturalLanguageQuestions:
+    def test_agent_detects_meaning_question_for_contract_term(self):
+        from legal_rag.application.agents.legal_agent import LegalAgent
+
+        assert LegalAgent._needs_definitions("What does the term 'Affiliate' mean?") is True
+        assert LegalAgent._needs_definitions("What is the meaning of Affiliate?") is True
+        assert LegalAgent._needs_definitions("Define Confidential Information.") is True
+
+    def test_agent_ignores_plain_factual_clause_questions(self):
+        from legal_rag.application.agents.legal_agent import LegalAgent
+
+        assert LegalAgent._needs_definitions("What is the agreement effective date?") is False
+        assert LegalAgent._needs_definitions("What is the liability cap?") is False

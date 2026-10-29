@@ -8,6 +8,16 @@ Compose loads application settings from `backend/.env`. Use a separate environme
 
 The runtime image excludes pytest and Ruff. Tests and lint run separately in CI using `backend/requirements-dev.txt`.
 
+The default corpus is `backend/data/shared-corpus/contracts/`. The image includes
+the shared corpus; the Compose data mount supplies the repository's copy. Set
+`LEGAL_RAG_DOCS_DIR` only to override the default, using a path inside the container
+for Docker deployments (for example `/app/data/shared-corpus/contracts`).
+
+When migrating an existing legacy-corpus installation, select a fresh index path
+such as `LEGAL_RAG_CHROMA_DIR=/app/data/chroma-shared` and run ingestion after
+recreating the backend. This preserves the previous index and prevents old and
+new corpus chunks being mixed; ingestion upserts do not remove obsolete sources.
+
 ## Persistent data
 
 The Compose bind mount `./backend/data:/app/data` contains source documents, the vector index, and evaluation labels. Back up this directory using your deployment's backup process. Do not remove it as a cache-cleaning operation. Re-run ingestion after changing source documents.

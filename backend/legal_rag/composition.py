@@ -21,6 +21,8 @@ from legal_rag.application.workflows.ingestion import IngestionSettings
 from legal_rag.application.workflows.judge import JudgeSettings
 from legal_rag.application.workflows.race import AgentRace, MeteredLegalAgent, MultiAgentRace
 from legal_rag.application.workflows.retrieval import RetrievalSettings
+from legal_rag.infrastructure.chunking.section_chunker import SectionChunker
+from legal_rag.infrastructure.documents.shared_corpus_loader import SharedCorpusDocumentSource
 from legal_rag.infrastructure.embeddings import CrossEncoderReranker, SentenceTransformerEmbedder
 from legal_rag.infrastructure.llm import OpenAICompatibleClient, select_llm_model
 from legal_rag.infrastructure.llm.conversation import LLMConversation
@@ -71,11 +73,12 @@ class Container:
         return IngestionService(
             vector_store=self.vector_store,
             embedder=self.embedder,
+            document_source=SharedCorpusDocumentSource(self._settings.docs_dir),
+            chunker=SectionChunker(),
             settings=IngestionSettings(
                 chunk_size_tokens=self._settings.chunk_size_tokens,
                 chunk_overlap_tokens=self._settings.chunk_overlap_tokens,
             ),
-            docs_dir=self._settings.docs_dir,
         )
 
     @cached_property

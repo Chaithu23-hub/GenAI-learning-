@@ -23,6 +23,7 @@ COPY legal_rag/ ./legal_rag/
 COPY mcp_servers.json ./
 COPY pyproject.toml ./
 COPY data/evaluation/ ./data/evaluation/
+COPY data/shared-corpus/ ./data/shared-corpus/
 
 # Data directories (Chroma persisted via bind mount in compose)
 RUN mkdir -p data/legal data/chroma

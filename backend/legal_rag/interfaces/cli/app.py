@@ -27,7 +27,7 @@ def _echo_json(payload: object) -> None:
 
 @app.command()
 def ingest():
-    """Chunk, embed, and store all docs in data/legal/."""
+    """Chunk, embed, and store all docs in data/shared-corpus/."""
     container = _container()
     count = container.ingestion_service.ingest()
     typer.echo(f"Ingested {count} chunks into {container.settings.chroma_dir}")

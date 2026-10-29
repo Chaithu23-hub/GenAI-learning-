@@ -10,6 +10,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # ``backend/`` — resolved from this file's location.
 _BACKEND_ROOT = Path(__file__).resolve().parents[2]
+_PROJECT_DATA_ROOT = _BACKEND_ROOT / "data"
 
 
 class Settings(BaseSettings):
@@ -24,7 +25,7 @@ class Settings(BaseSettings):
     )
 
     # ── Paths ────────────────────────────────────────────────────────────
-    docs_dir: Path = Field(default=_BACKEND_ROOT / "data" / "legal")
+    docs_dir: Path = Field(default=_PROJECT_DATA_ROOT / "shared-corpus" / "contracts")
     chroma_dir: Path = Field(default=_BACKEND_ROOT / "data" / "chroma")
     mcp_config_path: Path = Field(default=_BACKEND_ROOT / "mcp_servers.json")
     evaluation_labels_path: Path = Field(default=_BACKEND_ROOT / "data" / "evaluation" / "labels.json")
@@ -35,11 +36,11 @@ class Settings(BaseSettings):
     chunk_overlap_tokens: int = Field(default=50, ge=0, le=1024)
 
     # ── Retrieval ────────────────────────────────────────────────────────
-    top_k_candidates: int = Field(default=5, ge=1, le=50)
-    top_n_answers: int = Field(default=3, ge=1, le=20)
+    top_k_candidates: int = Field(default=20, ge=1, le=50)
+    top_n_answers: int = Field(default=8, ge=1, le=20)
     hybrid_enabled: bool = Field(default=True)
     rrf_k: int = Field(default=60, ge=1)
-    min_relevant_score: float = Field(default=0.0)
+    min_relevant_score: float = Field(default=-6.5)
     high_confidence_score: float = Field(default=3.0)
 
     # ── Models ───────────────────────────────────────────────────────────

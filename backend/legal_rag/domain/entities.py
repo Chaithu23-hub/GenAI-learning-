@@ -16,7 +16,8 @@ class Chunk:
 class Document:
     name: str
     text: str
-    document_type: Literal["contract", "amendment"]
+    document_type: str
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -27,6 +28,7 @@ class IndexedChunk:
     chunk_index: int
     document: str
     document_type: str
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

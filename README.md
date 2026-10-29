@@ -1,4 +1,4 @@
-﻿# LegalRAG
+# LegalRAG
 
 An Angular chat workspace and FastAPI service for searching legal contracts and amendments. Contract answers use retrieved passages and retain evidence in the API response; the chat displays the answer. General conversation uses the configured LLM.
 
@@ -14,7 +14,7 @@ backend/
     interfaces/            HTTP API, CLI, and MCP servers
     composition.py         Dependency injection container
   data/
-    legal/                 Sample contract corpus and uploaded markdown
+    shared-corpus/         Shared Markdown, DOCX, PDF contracts and golden cases
     evaluation/labels.json Labelled cases used by judge and race commands
     chroma/                Local vector index (ignored by Git)
   tests/                   Unit, integration, HTTP, and slow infrastructure tests
@@ -122,6 +122,7 @@ python -m legal_rag.interfaces.cli --help
 python -m legal_rag.interfaces.cli ingest
 python -m legal_rag.interfaces.cli agent "What is the late payment fee?" --strategy compare
 python -m legal_rag.interfaces.cli evaluate --k 3
+python -m legal_rag.interfaces.cli.evaluate_shared_corpus --provider extractive
 python -m legal_rag.interfaces.cli validate-judge
 python -m legal_rag.interfaces.cli race-agent
 python -m legal_rag.interfaces.cli race-orchestrator

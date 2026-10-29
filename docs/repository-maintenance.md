@@ -45,3 +45,12 @@ Python package metadata reads its runtime dependencies from `requirements.txt`
 so an installed package declares what it needs.
 
 Do not switch the current working tree to the archive branch while it contains uncommitted work. Use `git show` for inspection or create a separate worktree.
+
+Before pushing, upstream shared-corpus and retrieval changes were merged without
+reintroducing archived learning reports. The shared corpus, parsers, and golden
+dataset remain in `backend/data/shared-corpus/`. Its evaluation runner is now
+`python -m legal_rag.interfaces.cli.evaluate_shared_corpus`; generated output goes
+to `backend/data/evaluation/generated/`. The newly received historical reports
+and deployment walkthrough are preserved in the local archive's
+`upstream-integration/` directory. The pre-merge local tree is also backed up on
+`archive/pre-push-integration-2026-10-29`.

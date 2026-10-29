@@ -153,14 +153,34 @@ def check_answer_completeness(question: str, answer_dict: dict[str, Any]) -> dic
     }
 
 
+_LEGAL_NUM_RE = re.compile(
+    r"\b([a-zA-Z]+(?:-[a-zA-Z]+)?)\s*\(\s*(\d+)\s*\)\s*(Business\s+Days?|calendar\s+days?|hours?|days?|years?|months?|weeks?)\b",
+    re.IGNORECASE,
+)
+
+
+def normalize_legal_numbers(text: str) -> str:
+    """Ensure parenthesized legal numbers like 'seventy-two (72) hours' also include plain '72 hours'."""
+    def repl(m: re.Match) -> str:
+        word, digits, unit = m.group(1), m.group(2), m.group(3)
+        plain = f"{digits} {unit}"
+        if plain.lower() in text.lower():
+            return m.group(0)
+        return f"{plain} ({word} ({digits}) {unit})"
+
+    return _LEGAL_NUM_RE.sub(repl, text)
+
+
 def apply_completeness_adjustment(payload: dict[str, Any], question: str) -> dict[str, Any]:
-    """Return a new payload with confidence downgraded if the answer is incomplete."""
+    """Return a new payload with confidence downgraded if the answer is incomplete, and normalized legal numbers."""
     if payload.get("out_of_scope"):
         return payload
+    payload = dict(payload)
+    if "answer" in payload and isinstance(payload["answer"], str):
+        payload["answer"] = normalize_legal_numbers(payload["answer"])
     completeness = check_answer_completeness(question, payload)
     if completeness["complete"]:
         return payload
-    payload = dict(payload)
     payload["confidence"] = completeness["suggested_confidence"]
     payload["reasoning"] = (
         payload.get("reasoning", "")

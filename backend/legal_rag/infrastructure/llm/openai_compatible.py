@@ -121,15 +121,19 @@ class OpenAICompatibleClient:
 def select_llm_model(client: OpenAICompatibleClient) -> str | None:
     """Probe the endpoint and select the configured or first available model."""
     names = client.list_models()
-    if client.model in names or client.model.removeprefix('models/') in [n.removeprefix('models/') for n in names]:
-        return client.model
-    if names:
-        configured = client.model
-        fallback = names[0]
-        client.model = fallback
-        log.warning(
-            "configured model not available; using fallback",
-            extra={"configured": configured, "fallback": fallback},
-        )
-        return fallback
-    return None
+    if not names:
+        return None
+    model = client.model
+    prefixed = f"models/{model}" if not model.startswith("models/") else model
+    unprefixed = model.removeprefix("models/")
+    if model in names or prefixed in names or unprefixed in names:
+        return model
+    preferred = [n for n in names if "flash-lite" in n or ("flash" in n and "preview" not in n and "pro" not in n)]
+    fallback = preferred[0] if preferred else names[0]
+    configured = client.model
+    client.model = fallback
+    log.warning(
+        "configured model not available; using fallback",
+        extra={"configured": configured, "fallback": client.model},
+    )
+    return client.model

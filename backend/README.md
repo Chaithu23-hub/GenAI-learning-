@@ -5,7 +5,9 @@ FastAPI, CLI, and MCP interfaces over the same dependency-injection container.
 - Source: `legal_rag/` (domain, application, infrastructure, interfaces).
 - Runtime dependencies: `requirements.txt`; development dependencies: `requirements-dev.txt`.
 - Configuration: copy `.env.example` to `.env` on first setup and choose an LLM provider.
-- Documents: `data/legal/`; vector index: `data/chroma/` (ignored).
+- Documents: `data/shared-corpus/contracts/` by default (Markdown); parallel DOCX/PDF
+  fixtures and a 32-case golden set live under `data/shared-corpus/`.
+- Vector index: `data/chroma/` (ignored).
 - Evaluation inputs: `data/evaluation/labels.json`; generated reports: `data/evaluation/generated/` (ignored).
 
 From this directory:
@@ -13,6 +15,7 @@ From this directory:
 ```powershell
 python -m uvicorn legal_rag.interfaces.http.app:app --reload --port 8000
 python -m legal_rag.interfaces.cli --help
+python -m legal_rag.interfaces.cli.evaluate_shared_corpus --help
 python -m pytest -m "not slow"
 python -m ruff check legal_rag tests
 ```
