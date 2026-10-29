@@ -13,32 +13,13 @@ from legal_rag.domain.entities import RetrievedChunk
 from legal_rag.domain.policies import apply_completeness_adjustment
 from legal_rag.domain.response_schema import parse_json_response, validate_response
 from legal_rag.infrastructure.observability.logging import get_logger
+from legal_rag.infrastructure.prompts import RETRIEVE_TOOL
 from legal_rag.infrastructure.prompts.registry import get as get_prompt
 
 log = get_logger(__name__)
 
 SYSTEM_PROMPT = get_prompt("qa.system").text
 
-
-RETRIEVE_TOOL: dict[str, Any] = {
-    "type": "function",
-    "function": {
-        "name": "retrieve_chunks",
-        "description": "Search the firm's legal document knowledge base for passages relevant to a question.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "query": {"type": "string", "description": "The search query."},
-                "document_type": {
-                    "type": "string",
-                    "enum": ["contract", "amendment"],
-                    "description": "Optional: restrict the search to contracts or amendments.",
-                },
-            },
-            "required": ["query"],
-        },
-    },
-}
 
 _EXCERPT_CHARS = 400
 

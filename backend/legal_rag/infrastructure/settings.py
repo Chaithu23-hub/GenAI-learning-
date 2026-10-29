@@ -24,7 +24,6 @@ class Settings(BaseSettings):
     )
 
     # ── Paths ────────────────────────────────────────────────────────────
-    project_root: Path = Field(default=_BACKEND_ROOT, description="Backend root")
     docs_dir: Path = Field(default=_BACKEND_ROOT / "data" / "legal")
     chroma_dir: Path = Field(default=_BACKEND_ROOT / "data" / "chroma")
     mcp_config_path: Path = Field(default=_BACKEND_ROOT / "mcp_servers.json")

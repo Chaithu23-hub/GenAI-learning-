@@ -33,4 +33,15 @@ git ls-tree -r --name-only archive/pre-production-cleanup-2026-10-29
 git show archive/pre-production-cleanup-2026-10-29:eval/labels_25.json
 ```
 
+The second cleanup pass is backed up on `archive/pre-second-cleanup-2026-10-29`
+(the complete source as of commit `34ad4ac`). It removes the unused application
+DTO module, unused global container helpers and HTTP scaffolding, and frontend
+API wrappers/types with no consumers. The backend agent, ingestion, inspection,
+and MCP endpoints remain available. The removed DTO file also lives in the local
+archive's `second-pass/` directory.
+
+Repeated prompt/tool literals now import the existing canonical definitions.
+Python package metadata reads its runtime dependencies from `requirements.txt`
+so an installed package declares what it needs.
+
 Do not switch the current working tree to the archive branch while it contains uncommitted work. Use `git show` for inspection or create a separate worktree.

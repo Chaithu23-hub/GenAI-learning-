@@ -222,20 +222,3 @@ class Container:
     @cached_property
     def mcp_lookup_service(self) -> MCPLookupService:
         return MCPLookupService(mcp_config_path=self._settings.mcp_config_path)
-
-
-_container: Container | None = None
-
-
-def get_container(settings: Settings | None = None) -> Container:
-    """Return the process-wide container, building it on first call."""
-    global _container
-    if _container is None:
-        _container = Container(settings)
-    return _container
-
-
-def reset_container() -> None:
-    """Test helper — discard the cached container."""
-    global _container
-    _container = None

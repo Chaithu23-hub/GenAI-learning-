@@ -44,7 +44,6 @@ backend/legal_rag/
 ├── domain/            # entities.py, policies.py, response_schema.py, exceptions.py
 ├── application/
 │   ├── ports.py       # Protocols for every external dependency
-│   ├── dto.py
 │   ├── agents/        # LegalAgent, Orchestrator
 │   └── workflows/     # ingestion, retrieval, generation, qa, race, judge, evaluation, mcp_lookup
 ├── infrastructure/

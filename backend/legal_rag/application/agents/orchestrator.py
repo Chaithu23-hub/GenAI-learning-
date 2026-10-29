@@ -20,37 +20,15 @@ from legal_rag.application.workflows.retrieval import RetrievalService
 from legal_rag.domain.policies import detect_prompt_injection, screen_query
 from legal_rag.domain.response_schema import validate_response
 from legal_rag.infrastructure.observability.logging import get_logger
+from legal_rag.infrastructure.prompts import (
+    DEFINED_TERMS_PROMPT,
+    GET_DEFINITIONS_TOOL,
+    ORCHESTRATOR_PROMPT,
+    SYNTHESIZER_PROMPT,
+)
 
 log = get_logger(__name__)
 
-ORCHESTRATOR_PROMPT = """ROLE
-You route one legal question to narrow workers; you never answer it yourself.
-Return JSON: {"subtasks": ["clause", "defined_terms"?], "terms": [...], "governing_version": "original|amended", "effective_date": "YYYY-MM-DD"}.
-Send the clause worker only the question, governing version and effective date. Send the defined-terms worker only the terms and version."""
-
-DEFINED_TERMS_PROMPT = """ROLE
-Return the Definitions-clause text for each requested term, for exactly one contract version.
-Quote verbatim. If a term is not defined in that version, list it under not_found. Never paraphrase or infer a meaning."""
-
-SYNTHESIZER_PROMPT = """ROLE
-Merge worker outputs into one answer in the fixed response schema (answer, reasoning, sources, confidence, out_of_scope).
-Use only worker outputs. If a worker failed, say which fact is unverified. Never state the meaning of a term the defined-terms worker did not return."""
-
-GET_DEFINITIONS_TOOL: dict[str, Any] = {
-    "type": "function",
-    "function": {
-        "name": "get_definitions",
-        "description": "Resolve defined terms for exactly one selected contract version.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "terms": {"type": "array", "items": {"type": "string"}},
-                "version": {"type": "string", "enum": ["original", "amended"]},
-            },
-            "required": ["terms", "version"],
-        },
-    },
-}
 
 _TERM_PATTERNS = (
     re.compile(r'"([^"]+)"'),

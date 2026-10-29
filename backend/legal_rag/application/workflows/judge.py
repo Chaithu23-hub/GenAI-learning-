@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from legal_rag.application.ports import LLMClient, VectorStore
+from legal_rag.infrastructure.prompts import JUDGE_SYSTEM_PROMPT, JUDGE_USER_TEMPLATE
 
 # ─── Deterministic assertions ─────────────────────────────────────────────
 
@@ -78,39 +79,6 @@ def run_assertions(
 
 DETERMINISTIC_ASSERTION_COUNT = 3
 JUDGED_CRITERION_COUNT = 1
-
-JUDGE_SYSTEM_PROMPT = """You are an expert legal contract evaluator grading answers about contracts, amendments, and negotiated legal terms.
-
-Your only judged criterion is binary: is the answer a supported and useful response to the question based on the supplied documents?
-Do not judge clause-reference existence, date parsing, defined-term presence, or numeric notice periods; those are deterministic assertions run before this prompt.
-Use the provided question, sources, answer, and confidence to decide whether the answer is substantively supported and useful.
-
-Return a JSON object with:
-- score (1-10, where 10 = perfect answer)
-- completeness (0-3)
-- accuracy (0-3)
-- calibration (0-4)
-- reason (short explanation of scoring)
-- major_gaps (list of missing legal elements, if any)
-- hallucinations (list of facts not in sources, if any)
-"""
-
-JUDGE_USER_TEMPLATE = """
-Question: {question}
-
-Retrieved Documents:
-{sources}
-
-System Answer:
-{answer}
-
-Reasoning given: {reasoning}
-Confidence: {confidence}
-Out-of-scope: {out_of_scope}
-
-Decide whether this answer is substantively supported and useful. Mechanical source and format checks are handled outside the judge.
-Respond with only valid JSON.
-"""
 
 
 # ─── Race judge (offline) ─────────────────────────────────────────────────

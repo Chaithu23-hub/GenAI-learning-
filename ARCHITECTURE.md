@@ -34,7 +34,6 @@ backend/
 │   │   ├── __init__.py             # Facade — single import surface for services
 │   │   ├── ports.py                # Protocol interfaces (VectorStore, Embedder, Reranker,
 │   │   │                           #   LLMClient, DocumentSource, MCPHostPort, Clock)
-│   │   ├── dto.py                  # Command / Result DTOs (framework-free)
 │   │   ├── agents/                 # Agent definitions
 │   │   │   ├── legal_agent.py      # LegalAgent, FixedWorkflow, compare_strategies
 │   │   │   └── orchestrator.py     # Orchestrator (planner + workers + synthesiser)
@@ -103,6 +102,10 @@ Benefits:
 `legal_rag/composition.py` wires ports → adapters → services from a single
 `Settings` object. Interfaces (HTTP, CLI, MCP) each build their container once at
 startup and hand services down through DI.
+
+Prompt and tool definitions have one source under `infrastructure/prompts/`.
+Generation, orchestration, and judging import those definitions rather than
+keeping inline copies that can drift from the version registry.
 
 ### Config
 `infrastructure/settings.py` uses `pydantic-settings.BaseSettings`. Env vars are

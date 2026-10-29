@@ -92,13 +92,3 @@ class HealthResponse(BaseModel):
     vector_store_path: str
     api_key_configured: bool
     prompt_versions: dict[str, str]
-
-
-class ErrorResponse(BaseModel):
-    """RFC 7807-style problem details."""
-
-    type: str = Field(default="about:blank")
-    title: str
-    status: int
-    detail: str
-    request_id: str | None = None

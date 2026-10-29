@@ -8,7 +8,6 @@ from fastapi.security import APIKeyHeader
 
 from legal_rag.application.workflows import (
     IngestionService,
-    JudgeService,
     MCPLookupService,
     QaService,
 )
@@ -43,10 +42,6 @@ def get_agent_factory(container: Annotated[Container, Depends(get_container)]):
 
 def get_fixed_factory(container: Annotated[Container, Depends(get_container)]):
     return container.new_fixed_workflow
-
-
-def get_judge_service(container: Annotated[Container, Depends(get_container)]) -> JudgeService:
-    return container.judge_service
 
 
 async def verify_api_key(
