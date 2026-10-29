@@ -19,12 +19,16 @@ from legal_rag.infrastructure.prompts.prompt import PromptTemplate
 from legal_rag.infrastructure.prompts.qa_system import (
     QA_SYSTEM_PROMPT,
     QA_SYSTEM_PROMPT_V1,
+    QA_SYSTEM_PROMPT_V2,
+    QA_SYSTEM_PROMPT_V3,
 )
 
 PROMPT_VERSIONS: dict[str, dict[str, PromptTemplate]] = {
     "qa.system": {
         "v1": QA_SYSTEM_PROMPT_V1,
-        "v2": QA_SYSTEM_PROMPT,
+        "v2": QA_SYSTEM_PROMPT_V2,
+        "v3": QA_SYSTEM_PROMPT_V3,
+        "v4": QA_SYSTEM_PROMPT,
     },
 }
 

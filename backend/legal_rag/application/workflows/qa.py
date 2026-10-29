@@ -4,6 +4,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
+from legal_rag.application.ports import Conversation
 from legal_rag.application.workflows.generation import Generator
 from legal_rag.application.workflows.retrieval import RetrievalService
 from legal_rag.domain.policies import is_greeting, screen_query
@@ -22,12 +23,14 @@ class QaService:
         guardrail_answer: str,
         no_drafting_answer: str,
         greeting_answer: str,
+        conversation: Conversation | None = None,
     ):
         self._retrieval = retrieval
         self._generator = generator
         self._guardrail_answer = guardrail_answer
         self._no_drafting_answer = no_drafting_answer
         self._greeting_answer = greeting_answer
+        self._conversation = conversation
 
     def answer(
         self,
@@ -68,6 +71,17 @@ class QaService:
                 "confidence": "high",
                 "out_of_scope": True,
             }
+        if self._conversation is not None and document_type is None:
+            reply = self._conversation.reply_if_general(query)
+            if reply:
+                _metrics.requests.inc(outcome="general")
+                return {
+                    "answer": reply,
+                    "reasoning": "General conversation; no document claims were requested.",
+                    "sources": [],
+                    "confidence": "medium",
+                    "out_of_scope": False,
+                }
         where = self._resolve_where(query, document_type)
         started = time.perf_counter()
         result = self._generator.generate(query, where=where)

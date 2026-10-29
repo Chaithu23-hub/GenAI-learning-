@@ -110,7 +110,7 @@ read once, validated at startup, and passed as an immutable object. No module-le
 env reads. No hard-coded API keys. `.env.example` documents the surface.
 
 ### Logging & observability
-`infrastructure/logging.py` configures **structured JSON logging** on the root
+`infrastructure/observability/logging.py` configures **structured JSON logging** on the root
 logger. Every request gets an id via ASGI middleware; every service logs at
 INFO with `extra={...}`. Token usage, latency, and cost are logged, never
 printed to stderr. LLM prompts are logged at DEBUG only.
@@ -131,11 +131,17 @@ printed to stderr. LLM prompts are logged at DEBUG only.
 - **E2E** — FastAPI `TestClient` against a real composition root with fake infra.
 - **Slow** (marked `@pytest.mark.slow`) — real Chroma + real embeddings.
 
-### Backward compatibility
-Every old import path (`app.main`, `legal_assistant.*`, `mcp_servers.*`, `cli.py`)
-is preserved as a **thin re-export shim**. Deprecation is silent for now; a
-`DeprecationWarning` can be added in a follow-up. CLI, MCP server args, and API
-routes are unchanged.
+### Entry points and evaluation data
+
+HTTP starts at `legal_rag.interfaces.http.app:app`. The CLI runs through
+`python -m legal_rag.interfaces.cli` or the installed `legal-rag` command.
+MCP entry points live under `legal_rag.interfaces.mcp_servers`.
+
+Required evaluation labels are in `backend/data/evaluation/labels.json` and are
+included in the backend image. Settings controls that input path and the ignored
+`backend/data/evaluation/generated/` report directory. Historical reports and
+unused learning material are preserved outside the production tree; see
+[repository maintenance](docs/repository-maintenance.md).
 
 ## Request lifecycle — `POST /api/ask`
 
@@ -149,7 +155,7 @@ interfaces/http/routers/qa.py           (Pydantic validation)
 interfaces/http/dependencies.py         (resolve QaService from composition root)
    │
    ▼
-application/services/qa.py              (guardrails → filter → retrieval → generation)
+application/workflows/qa.py             (guardrails → route → retrieve → generate)
    │       │           │           │
    │       ▼           ▼           ▼
    │    domain      RetrievalSvc  GeneratorPort

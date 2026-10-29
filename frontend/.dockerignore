@@ -1,0 +1,11 @@
+node_modules
+dist
+.angular
+.git
+npm-debug.log
+src/environments/environment.generated.ts
+.env
+.env.*
+!.env.example
+coverage
+out-tsc

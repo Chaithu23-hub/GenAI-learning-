@@ -57,8 +57,11 @@ def test_termination_answer_cannot_cite_a_different_section(container, caplog):
         (record.getMessage(), getattr(record, "error", None))
         for record in caplog.records
     ]
-    assert trace.prompt_version == "v2"
-    assert "5" in trace.answer_clause_refs
+    assert trace.prompt_version == "v4"
+    # The direct fallback reply omits section labels but retains its evidence.
+    assert trace.answer_clause_refs == []
+    assert termination_chunk.text in result["answer"]
+    assert any(source["chunk_id"] == termination_chunk.chunk_id for source in result["sources"])
     assert "3" in trace.spans[1]["candidate_clause_refs"]
     assert trace.spans[1]["validation_errors"]
     assert termination_chunk.chunk_id in trace.retrieved_context_ids

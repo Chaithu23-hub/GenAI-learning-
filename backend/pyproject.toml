@@ -7,7 +7,7 @@ name = "legal-rag"
 version = "2.0.0"
 description = "Production-grade Clean Architecture RAG pipeline for legal contracts."
 requires-python = ">=3.13"
-readme = "../README.md"
+readme = "README.md"
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -19,6 +19,7 @@ legal-rag = "legal_rag.interfaces.cli.app:main"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 markers = [
     "slow: real infrastructure (chroma / sentence-transformers) — off by default",
 ]

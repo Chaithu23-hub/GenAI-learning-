@@ -112,18 +112,21 @@ class ExtractiveGenerator:
             "high" if relevant[0].score >= self._settings.high_confidence_score else "medium"
         )
         parts, sources = [], []
+        multiple_documents = len({c.document for c in relevant}) > 1
         for c in relevant:
-            location = (
-                f'{c.document}, section "{c.heading}"' if c.heading != "Preamble" else c.document
-            )
-            parts.append(f'According to {location}: "{c.text[:_EXCERPT_CHARS]}"')
+            passage = c.text[:_EXCERPT_CHARS].strip()
+            if multiple_documents:
+                title = c.document.rsplit(".", 1)[0].replace("_", " ").replace("-", " ").title()
+                parts.append(f"**{title}**\n\n{passage}")
+            else:
+                parts.append(passage)
             sources.append({
                 "document": c.document,
                 "chunk_id": c.chunk_id,
                 "excerpt": c.text[:_EXCERPT_CHARS],
             })
         payload = {
-            "answer": "Based on the retrieved documents: " + " ".join(parts),
+            "answer": "\n\n".join(parts),
             "reasoning": (
                 f"Retrieved {len(relevant)} relevant chunk(s); top cross-encoder "
                 f"score {relevant[0].score:.2f}. The answer quotes each chunk "

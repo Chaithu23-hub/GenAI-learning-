@@ -362,7 +362,7 @@ class MultiAgentRace:
         lines = [
             "# Race — single agent vs orchestrator",
             "",
-            f"Cases: `eval/labels_25.json` ids {race['case_ids'][0]}"
+            f"Cases: `{self._labels_path.name}` ids {race['case_ids'][0]}"
             f"–{race['case_ids'][-1]} (sha256 `{race['labels_sha256'][:12]}`), unchanged.",
             "Judge: race_judge.py, same function for both arms.",
             f"Tokens: serialised payload / {self._chars_per_token} chars, same estimator.",

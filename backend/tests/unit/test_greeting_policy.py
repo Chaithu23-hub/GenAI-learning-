@@ -6,6 +6,7 @@ from legal_rag.domain.policies import is_greeting
 class TestGreetingDetection:
     @pytest.mark.parametrize("query", [
         "Hi", "hello", "Hey!", "hola", "Yo", "Howdy", "greetings",
+        "Hi, how are you", "Hello! How's it going?", "Hi, thanks!",
         "Good morning", "Good afternoon", "Good evening", "good day",
         "how are you", "how's it going", "what's up",
         "thanks", "thank you", "thx", "ty",

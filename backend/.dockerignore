@@ -22,6 +22,7 @@ tests/
 .env.*
 !.env.example
 data/chroma/
+data/evaluation/generated/
 models/
 *.log
 *.md

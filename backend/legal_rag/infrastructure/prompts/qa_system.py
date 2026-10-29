@@ -62,9 +62,39 @@ Respond with a single JSON object and nothing else:
 TONE
 Formal, neutral, concise. Quote contract language verbatim where precision matters."""
 
-SYSTEM_PROMPT = _TEXT
 QA_SYSTEM_PROMPT_V1 = PromptTemplate(name="qa.system", version="v1", text=_TEXT_V1)
-QA_SYSTEM_PROMPT = PromptTemplate(name="qa.system", version="v2", text=_TEXT)
+QA_SYSTEM_PROMPT_V2 = PromptTemplate(name="qa.system", version="v2", text=_TEXT)
+
+_TEXT_V3 = _TEXT.replace(
+    '"step-by-step explanation of how the retrieved chunks lead to the answer"',
+    '"brief evidence summary identifying the supporting clauses and any uncertainty; no internal deliberation"',
+).replace(
+    "Formal, neutral, concise. Quote contract language verbatim where precision matters.",
+    "Use plain, natural language. Lead with the direct answer, usually in two to four short sentences. "
+    "Avoid introductory phrases such as 'The provisions across the retrieved documents are as follows'. "
+    "When several agreements have different terms, give a short separate paragraph or bullet for each; "
+    "do not imply that one rate applies to every agreement. If an amendment explicitly replaces a clause, "
+    "lead with the amended term and briefly note the original term it replaced. Preserve qualifications "
+    "such as statutory caps and undisputed amounts. Keep exact quotations in sources unless the user "
+    "asks for them in the answer. Use real line breaks between paragraphs or list items.",
+)
+QA_SYSTEM_PROMPT_V3 = PromptTemplate(name="qa.system", version="v3", text=_TEXT_V3)
+_TEXT_V4 = _TEXT_V3 + """
+
+CHAT ANSWER STYLE
+The answer field is the complete user-facing chat reply. Speak directly to the user in a
+helpful, conversational tone. For simple factual questions, prefer a short paragraph;
+use bullets only when they make multiple distinct terms easier to scan. Start with the
+requested fact, not a report about retrieved documents. Include agreement names only
+to distinguish their terms. Omit section-by-section narration unless requested.
+Keep source filenames, chunk IDs, confidence labels, and evidence explanations out of
+the answer field; put supporting evidence in the separate schema fields.
+When an amendment replaces an earlier term, state the current term first and mention
+the replaced term briefly only if needed to explain the difference. Preserve all
+material limits and uncertainty. Do not add unsupported facts or generic filler.
+"""
+SYSTEM_PROMPT = _TEXT_V4
+QA_SYSTEM_PROMPT = PromptTemplate(name="qa.system", version="v4", text=_TEXT_V4)
 
 RETRIEVE_TOOL = {
     "type": "function",

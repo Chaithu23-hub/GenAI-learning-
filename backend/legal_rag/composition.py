@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from functools import cached_property
-from pathlib import Path
 
 from legal_rag.application.agents import FixedWorkflow, LegalAgent, Orchestrator
 from legal_rag.application.agents.legal_agent import AgentBudgets
@@ -24,6 +23,7 @@ from legal_rag.application.workflows.race import AgentRace, MeteredLegalAgent, M
 from legal_rag.application.workflows.retrieval import RetrievalSettings
 from legal_rag.infrastructure.embeddings import CrossEncoderReranker, SentenceTransformerEmbedder
 from legal_rag.infrastructure.llm import OpenAICompatibleClient, select_llm_model
+from legal_rag.infrastructure.llm.conversation import LLMConversation
 from legal_rag.infrastructure.settings import Settings, get_settings
 from legal_rag.infrastructure.vector_store import ChromaVectorStore
 
@@ -54,12 +54,13 @@ class Container:
     @cached_property
     def llm_client(self) -> OpenAICompatibleClient | None:
         s = self._settings
-        if s.llm_provider == "extractive" or not s.google_api_key_value:
+        if s.llm_provider == "extractive" or not s.llm_api_key:
             return None
         return OpenAICompatibleClient(
-            base_url=s.llm_base_url,
-            api_key=s.google_api_key_value,
-            model=s.google_model,
+            base_url=s.effective_llm_base_url,
+            api_key=s.llm_api_key,
+            model=s.llm_model,
+            reasoning_effort=s.openai_reasoning_effort if s.llm_provider == "openai" else None,
             timeout=s.llm_timeout_seconds,
             max_retries=s.llm_max_retries,
         )
@@ -111,7 +112,12 @@ class Container:
         if self.llm_client is None:
             return self.extractive_generator
         # Probe for available model; fall back to extractive if endpoint is unreachable.
-        detected = select_llm_model(self.llm_client)
+        # OpenAI model lists include embeddings and other non-chat models. Keep
+        # the explicitly configured model and let chat report access errors.
+        detected = (
+            self.llm_client.model if self._settings.llm_provider in {"openai", "groq"}
+            else select_llm_model(self.llm_client)
+        )
         if detected is None:
             return self.extractive_generator
         return LLMGenerator(
@@ -123,6 +129,10 @@ class Container:
         )
 
     @cached_property
+    def conversation(self) -> LLMConversation | None:
+        return LLMConversation(self.llm_client) if self.llm_client is not None else None
+
+    @cached_property
     def qa_service(self) -> QaService:
         return QaService(
             retrieval=self.retrieval_service,
@@ -130,6 +140,7 @@ class Container:
             guardrail_answer=self._settings.guardrail_answer,
             no_drafting_answer=self._settings.no_drafting_answer,
             greeting_answer=self._settings.greeting_answer,
+            conversation=self.conversation,
         )
 
     @cached_property
@@ -176,7 +187,7 @@ class Container:
 
     @cached_property
     def judge_service(self) -> JudgeService:
-        labels_path = Path(self._settings.project_root).parent / "eval" / "labels_25.json"
+        labels_path = self._settings.evaluation_labels_path
         return JudgeService(
             vector_store=self.vector_store,
             llm=self.llm_client,
@@ -195,8 +206,8 @@ class Container:
 
     @cached_property
     def multi_agent_race(self) -> MultiAgentRace:
-        artifact_dir = Path(self._settings.project_root).parent / "eval" / "week10"
-        labels_path = Path(self._settings.project_root).parent / "eval" / "labels_25.json"
+        artifact_dir = self._settings.evaluation_artifact_dir
+        labels_path = self._settings.evaluation_labels_path
         return MultiAgentRace(
             agent_factory=self.new_metered_agent,
             orchestrator=self.orchestrator,

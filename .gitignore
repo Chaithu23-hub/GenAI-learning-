@@ -67,6 +67,7 @@ nosetests.xml
 
 # ─── Backend-specific ─────────────────────────────────────────────────
 backend/data/chroma/
+backend/data/evaluation/generated/
 backend/.env
 backend/models/                       # HuggingFace / SentenceTransformer local caches if pinned here
 backend/eval/week*/generated/         # regenerated artifacts under eval/week*/
@@ -95,3 +96,9 @@ frontend/pnpm-debug.log*
 *.seed
 *.pid.lock
 docker-compose.override.yml
+
+# Generated evaluation reports belong outside the production source tree.
+/eval/
+/trace.json
+/eval_cases_week*.json
+/backend/pytest_full.txt

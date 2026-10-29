@@ -1,27 +1,18 @@
-# Frontend
+# LegalRAG frontend
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.21.
+Angular chat UI with Markdown answers, persistent conversation history, suggested questions, and a same-origin API client.
 
-## Development server
+```powershell
+npm ci
+npm start
+npm run build
+npm test -- --watch=false --browsers=ChromeHeadless
+```
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+`npm start` runs the development server with `proxy.conf.json`. The production build writes to `dist/frontend/browser`. Docker serves this directory through nginx and proxies `/api/` to the backend.
 
-## Code scaffolding
+The build script generates `src/environments/environment.generated.ts` from `LEGAL_RAG_API_URL` (default `/api`) and the optional shared API gate key `LEGAL_RAG_API_KEY`. A remote API URL must include `/api`. Never add an LLM provider key to the frontend. Browser configuration is public.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+ChromeHeadless tests need Chrome or a Chromium-compatible executable set through `CHROME_BIN`. CI runs both the production build and these tests.
 
-## Build
-
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
-
-## Running unit tests
-
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+See the [deployment guide](../docs/deployment.md).

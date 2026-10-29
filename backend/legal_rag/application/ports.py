@@ -88,6 +88,11 @@ class LLMClient(Protocol):
         """Return the available model ids, or an empty list if unknown."""
 
 
+class Conversation(Protocol):
+    def reply_if_general(self, query: str) -> str | None:
+        """Answer general conversation; return None when document retrieval is needed."""
+
+
 # ─── Documents ────────────────────────────────────────────────────────────
 
 

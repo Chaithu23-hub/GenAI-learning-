@@ -38,7 +38,7 @@ class TestRegistry:
 
     def test_snapshot_returns_pinned_versions(self):
         snap = snapshot()
-        assert snap["qa.system"] == "v2"
+        assert snap["qa.system"] == "v4"
         assert snap["judge.system"] == "v1"
 
     def test_get_unknown_raises(self):

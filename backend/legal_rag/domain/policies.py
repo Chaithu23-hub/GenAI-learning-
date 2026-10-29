@@ -51,21 +51,27 @@ _GREETING_RE = re.compile(
     r"|thanks?(?:\s+you)?|thank\s+you|thx|ty"
     r"|bye|goodbye|see\s+ya|see\s+you"
     r"|help|what\s+can\s+you\s+(?:do|help(?:\s+with)?)"
-    r")[\s!.?]*$",
+    r")(?:[\s,.!?]+|$)",
     re.IGNORECASE,
 )
 
 
 def is_greeting(query: str) -> bool:
-    """True if the query is a bare greeting, thanks, farewell, or a help ping.
+    """True for short greetings, thanks, farewells, help pings, or combinations.
 
     Deliberately conservative: only fires on very short messages that are
     *only* small talk, so real questions like "hi, what is the late payment
     fee?" fall through to retrieval.
     """
-    if not query or len(query.strip()) > 40:
+    if not query or not query.strip() or len(query.strip()) > 40:
         return False
-    return bool(_GREETING_RE.match(query))
+    remaining = query.strip()
+    while remaining:
+        match = _GREETING_RE.match(remaining)
+        if not match:
+            return False
+        remaining = remaining[match.end():].strip()
+    return True
 
 
 # ─── Retrieved-document injection defence ─────────────────────────────────

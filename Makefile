@@ -1,8 +1,9 @@
-.PHONY: help install install-frontend backend-run frontend-run test test-slow test-fast lint format ingest race clean
+.PHONY: help install install-dev install-frontend backend-run frontend-run test test-slow test-fast lint format ingest race
 
 help:
 	@echo "Common commands:"
 	@echo "  make install          Install backend deps into current Python env"
+	@echo "  make install-dev      Install backend test and lint dependencies"
 	@echo "  make install-frontend Install Angular deps"
 	@echo "  make backend-run      Run the FastAPI backend on :8000"
 	@echo "  make frontend-run     Run the Angular dev server on :4200"
@@ -19,7 +20,10 @@ install:
 	cd backend && python -m pip install -r requirements.txt
 
 install-frontend:
-	cd frontend && npm install
+	cd frontend && npm ci
+
+install-dev:
+	cd backend && python -m pip install -r requirements-dev.txt
 
 backend-run:
 	cd backend && python -m uvicorn legal_rag.interfaces.http.app:app --reload --port 8000
@@ -44,10 +48,7 @@ format:
 	cd backend && python -m ruff check --fix .
 
 ingest:
-	cd backend && python -m legal_rag ingest
+	cd backend && python -m legal_rag.interfaces.cli ingest
 
 race:
-	cd backend && python -m legal_rag race-orchestrator
-
-clean:
-	cd backend && rm -rf .pytest_cache __pycache__ **/__pycache__ data/chroma
+	cd backend && python -m legal_rag.interfaces.cli race-orchestrator

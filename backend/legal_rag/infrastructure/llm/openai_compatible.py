@@ -29,6 +29,7 @@ class OpenAICompatibleClient:
         model: str,
         timeout: float = 30.0,
         max_retries: int = 3,
+        reasoning_effort: str | None = None,
     ):
         try:
             from openai import OpenAI
@@ -43,6 +44,7 @@ class OpenAICompatibleClient:
         self._model = model
         self._base_url = base_url
         self._api_key = api_key
+        self._reasoning_effort = reasoning_effort
 
     @property
     def model(self) -> str:
@@ -60,7 +62,11 @@ class OpenAICompatibleClient:
         temperature: float = 0.0,
     ) -> dict[str, Any]:
         try:
-            kwargs = {"model": self._model, "messages": messages, "temperature": temperature}
+            kwargs = {"model": self._model, "messages": messages}
+            if self._reasoning_effort is not None:
+                kwargs["reasoning_effort"] = self._reasoning_effort
+            if self._reasoning_effort in (None, "none"):
+                kwargs["temperature"] = temperature
             if tools:
                 kwargs["tools"] = tools
             response = self._client.chat.completions.create(**kwargs)
@@ -115,7 +121,7 @@ class OpenAICompatibleClient:
 def select_llm_model(client: OpenAICompatibleClient) -> str | None:
     """Probe the endpoint and select the configured or first available model."""
     names = client.list_models()
-    if client.model in names:
+    if client.model in names or client.model.removeprefix('models/') in [n.removeprefix('models/') for n in names]:
         return client.model
     if names:
         configured = client.model

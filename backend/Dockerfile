@@ -22,13 +22,15 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY legal_rag/ ./legal_rag/
 COPY mcp_servers.json ./
 COPY pyproject.toml ./
+COPY data/evaluation/ ./data/evaluation/
 
 # Data directories (Chroma persisted via bind mount in compose)
 RUN mkdir -p data/legal data/chroma
 
 # Non-root user
-RUN useradd --no-create-home --shell /bin/false appuser && \
-    chown -R appuser:appuser /app
+RUN useradd --create-home --shell /bin/false appuser && \
+    mkdir -p /home/appuser/.cache && \
+    chown -R appuser:appuser /home/appuser /app
 USER appuser
 
 EXPOSE 8000

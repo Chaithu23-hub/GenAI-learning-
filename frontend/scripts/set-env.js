@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Emit src/environments/environment.prod.ts from build-time env vars so
+ * Emit an ignored production environment module from build-time env vars so
  * Vercel / any host can inject the backend URL + API key without a code edit.
  *
  *   LEGAL_RAG_API_URL   e.g. https://<space>.hf.space
@@ -20,7 +20,7 @@ export const environment = {
 };
 `;
 
-const outPath = path.join(__dirname, '..', 'src', 'environments', 'environment.prod.ts');
+const outPath = path.join(__dirname, '..', 'src', 'environments', 'environment.generated.ts');
 fs.writeFileSync(outPath, contents, 'utf8');
 console.log(`[set-env] wrote ${outPath}`);
 console.log(`[set-env]   apiUrl = ${apiUrl}`);

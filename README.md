@@ -1,171 +1,151 @@
-# LegalRAG
+﻿# LegalRAG
 
-A production-grade **Retrieval-Augmented Generation** service for legal contracts.
-Every answer is grounded in retrieved passages with source citations; every
-external dependency is behind a Protocol port so the whole thing is testable
-without touching the network.
+An Angular chat workspace and FastAPI service for searching legal contracts and amendments. Contract answers use retrieved passages and retain evidence in the API response; the chat displays the answer. General conversation uses the configured LLM.
 
-- **Architecture**: Clean / Hexagonal. See [ARCHITECTURE.md](ARCHITECTURE.md).
-- **Contribution rules**: See [AGENTS.md](AGENTS.md).
-- **Weekly work log**: See `WEEK3_REQUIREMENTS.md` … `WEEK10_REQUIREMENTS.md`.
+## Project structure
 
-## What it does
-
-1. **Ingest** markdown contracts and amendments (or PDFs via `/api/upload`).
-2. **Chunk** by section headings, embed with SentenceTransformers, index in Chroma.
-3. **Retrieve** with dense + BM25 → RRF fusion → cross-encoder rerank.
-4. **Guard** against prompt injection, drafting requests, and out-of-scope questions.
-5. **Generate** grounded JSON answers (extractive by default, LLM when configured).
-6. **Verify** every cited excerpt against the vector store before returning it.
-7. **Expose** the pipeline over FastAPI, a Typer CLI, and MCP servers.
-8. **Audit** with trajectory checks, deterministic judge assertions, and agent-vs-orchestrator races.
-
-## Layout
-
-```
-backend/legal_rag/
-├── domain/            # Entities, policies, response schema — pure Python
-├── application/       # Ports (Protocols), DTOs, services (use cases)
-├── infrastructure/    # Chroma, SentenceTransformers, OpenAI, MCP, settings, logging
-├── interfaces/        # HTTP (FastAPI), CLI (Typer), MCP servers
-└── composition.py     # DI container
-backend/tests/
-├── unit/              # Pure domain
-├── fakes/             # In-memory port implementations
-├── integration/       # Services wired against fakes
-└── e2e/               # HTTP TestClient over the container
-frontend/              # Angular UI (unchanged)
-eval/                  # Evaluation evidence and MCP artifacts
-data/legal/            # Contract + amendment corpus
+```text
+.github/workflows/          CI: backend lint/tests and frontend build/tests
+backend/
+  legal_rag/
+    domain/                Entities, policies, response schema, exceptions
+    application/           Ports, agents, and workflows
+    infrastructure/        LLM, retrieval, documents, settings, observability
+    interfaces/            HTTP API, CLI, and MCP servers
+    composition.py         Dependency injection container
+  data/
+    legal/                 Sample contract corpus and uploaded markdown
+    evaluation/labels.json Labelled cases used by judge and race commands
+    chroma/                Local vector index (ignored by Git)
+  tests/                   Unit, integration, HTTP, and slow infrastructure tests
+  requirements.txt         Runtime dependencies
+  requirements-dev.txt     Development/test dependencies
+frontend/
+  src/app/                 Chat UI, state, API client, interceptors, Markdown rendering
+  scripts/                 Build-time environment generation
+  public/                  Static assets
+  Dockerfile               Angular build and nginx runtime
+  nginx.conf               Same-origin API proxy and SPA routing
+docs/                      Deployment and maintenance documentation
+AGENTS.md                  Contribution rules
+ARCHITECTURE.md             Layer design
+docker-compose.yml         Local full-stack deployment
+Makefile                   Development shortcuts
 ```
 
-Full explanation: [ARCHITECTURE.md](ARCHITECTURE.md).
+Historical learning notes and generated reports are archived; see [repository maintenance](docs/repository-maintenance.md). Existing agents, evaluation workflows, CLI commands, MCP servers, and tests remain part of the application.
 
-## Quick start
+## Run with Docker
 
-### Prerequisites
-
-- Python 3.13
-- (Optional) Google Gemini API key for the LLM-backed generator; otherwise the
-  extractive generator runs offline.
-
-### Backend
+Prerequisites: Docker with Compose. From the repository root:
 
 ```powershell
-# From repo root
+Copy-Item backend/.env.example backend/.env  # First setup only; do not overwrite an existing file.
+# Edit backend/.env and configure the selected provider.
+docker compose up -d --build
+# Populate the index on first setup, or after changing the corpus:
+docker compose exec backend python -m legal_rag.interfaces.cli ingest
+```
+
+- Chat: http://localhost
+- API docs: http://localhost:8000/api/docs
+- Health: http://localhost:8000/api/health
+- Metrics: http://localhost:8000/metrics
+
+Compose reads backend configuration from `backend/.env`. The root `.env` is not needed for application configuration. Model downloads can make the first retrieval request slow. The `backend/data` bind mount preserves documents and the vector index across container recreation.
+
+## LLM configuration
+
+Keep credentials in the ignored `backend/.env`. Choose one provider:
+
+| Provider | Settings |
+|---|---|
+| Groq | `LEGAL_RAG_LLM_PROVIDER=groq`, `GROQ_API_KEY`, `LEGAL_RAG_GROQ_MODEL` |
+| Gemini | `LEGAL_RAG_LLM_PROVIDER=google`, `GOOGLE_API_KEY`, `LEGAL_RAG_GOOGLE_MODEL` |
+| OpenAI | `LEGAL_RAG_LLM_PROVIDER=openai`, `OPENAI_API_KEY`, `LEGAL_RAG_OPENAI_MODEL`, `LEGAL_RAG_OPENAI_REASONING_EFFORT` |
+| Offline | `LEGAL_RAG_LLM_PROVIDER=extractive` (retrieved excerpts, no general knowledge generation) |
+
+The selected provider uses its own credentials. Leave `LEGAL_RAG_LLM_BASE_URL` unset to use its default endpoint. All runtime settings are defined in [Settings](backend/legal_rag/infrastructure/settings.py); examples are in [backend/.env.example](backend/.env.example).
+
+After changing backend configuration:
+
+```powershell
+docker compose up -d --build backend
+docker compose restart frontend
+```
+
+## Local development
+
+Python 3.13 and Node.js 20 are used in CI and Docker.
+
+```powershell
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+.\.venv\Scripts\python.exe -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+.\.venv\Scripts\python.exe -m pip install -r backend/requirements-dev.txt
 Push-Location backend
-..\.venv\Scripts\python.exe -m pip install torch --index-url https://download.pytorch.org/whl/cpu
-..\.venv\Scripts\python.exe -m pip install -r requirements.txt
-
-# Configure
-Copy-Item .env.example .env
-# edit .env if you have a GOOGLE_API_KEY
-
-# Ingest the sample corpus
-..\.venv\Scripts\python.exe -m legal_rag ingest
-
-# Serve
 ..\.venv\Scripts\python.exe -m uvicorn legal_rag.interfaces.http.app:app --reload --port 8000
 Pop-Location
 ```
 
-Health check: `http://localhost:8000/api/health`.
-Interactive docs: `http://localhost:8000/api/docs`.
-
-### Frontend
+In another terminal:
 
 ```powershell
 Push-Location frontend
-npm install
+npm ci
 npm start
 Pop-Location
 ```
 
-Angular dev server on `http://localhost:4200`, proxied `/api` → backend.
+The Angular development server uses `/api` through its proxy to port 8000.
 
-### Docker
-
-```powershell
-docker compose up --build
-```
-
-Backend on `:8000`, production frontend on `:80`.
-
-## CLI
+## Validation
 
 ```powershell
-..\.venv\Scripts\python.exe -m legal_rag ingest
-..\.venv\Scripts\python.exe -m legal_rag agent "What is the late payment fee?" --strategy compare
-..\.venv\Scripts\python.exe -m legal_rag evaluate --k 3
-..\.venv\Scripts\python.exe -m legal_rag validate-judge
-..\.venv\Scripts\python.exe -m legal_rag race-agent
-..\.venv\Scripts\python.exe -m legal_rag race-orchestrator
-..\.venv\Scripts\python.exe -m legal_rag mcp-lookup MSA-2021-0142
+Push-Location backend
+..\.venv\Scripts\python.exe -m pytest -m "not slow"
+..\.venv\Scripts\python.exe -m ruff check legal_rag tests
+Pop-Location
+Push-Location frontend
+npm run build
+npm test -- --watch=false --browsers=ChromeHeadless
+Pop-Location
 ```
 
-## API
+Chrome must be installed for `ChromeHeadless`; `CHROME_BIN` may point to another compatible Chromium executable. Slow backend tests exercise real infrastructure and are excluded from normal CI. CI installs `requirements-dev.txt`; the runtime image installs `requirements.txt`.
 
-Every endpoint accepts JSON, returns JSON, echoes a `X-Request-ID`, and maps
-errors to RFC 7807 problem+json responses.
+## CLI and integrations
 
-| Method | Path              | Purpose                                                   |
-|--------|-------------------|-----------------------------------------------------------|
-| GET    | `/api/health`     | Service configuration + readiness                          |
-| POST   | `/api/ask`        | Answer one legal question                                  |
-| POST   | `/api/inspect`    | Answer + full retrieval trace (debugging)                  |
-| POST   | `/api/ingest`     | Re-ingest all documents in `data/legal/`                   |
-| POST   | `/api/upload`     | Upload PDFs → convert to markdown → optional re-ingest     |
-| POST   | `/api/agent`      | Run the agent, fixed workflow, or the comparison           |
-| POST   | `/api/mcp/lookup` | Discover MCP servers and look up a contract by id          |
+Run from `backend/` with the virtual environment active:
 
-### Response contract (fixed)
+```powershell
+python -m legal_rag.interfaces.cli --help
+python -m legal_rag.interfaces.cli ingest
+python -m legal_rag.interfaces.cli agent "What is the late payment fee?" --strategy compare
+python -m legal_rag.interfaces.cli evaluate --k 3
+python -m legal_rag.interfaces.cli validate-judge
+python -m legal_rag.interfaces.cli race-agent
+python -m legal_rag.interfaces.cli race-orchestrator
+python -m legal_rag.interfaces.cli mcp-lookup MSA-2021-0142
+```
+
+Judge/race labels live under `backend/data/evaluation/`. Generated race reports go to its ignored `generated/` directory. These paths can be overridden with `LEGAL_RAG_EVALUATION_LABELS_PATH` and `LEGAL_RAG_EVALUATION_ARTIFACT_DIR`.
+
+## API response contract
 
 ```json
 {
-  "answer": "…",
-  "reasoning": "…",
-  "sources": [{"document": "msa.md", "chunk_id": "msa::003", "excerpt": "…"}],
-  "confidence": "high | medium | low",
+  "answer": "The direct response to the question.",
+  "reasoning": "Brief supporting evidence summary.",
+  "sources": [{"document": "msa.md", "chunk_id": "msa::003", "excerpt": "Supporting passage."}],
+  "confidence": "high",
   "out_of_scope": false
 }
 ```
 
-## Configuration
+The API retains evidence for audit and integration use. The chat displays only `answer`. Errors use problem+json and include request IDs. See Swagger for all HTTP routes, including ingestion, upload, inspection, agents, and MCP lookup.
 
-Every knob is a `pydantic-settings` field on `legal_rag.infrastructure.settings.Settings`
-and can be overridden via environment variables (`LEGAL_RAG_*` prefix). See
-[`backend/.env.example`](backend/.env.example) for the full list.
+## Deployment and maintenance
 
-## Tests
-
-```powershell
-Push-Location backend
-..\.venv\Scripts\python.exe -m pytest tests/ -v                    # everything
-..\.venv\Scripts\python.exe -m pytest tests/unit/                  # pure domain
-..\.venv\Scripts\python.exe -m pytest tests/integration/           # services + fakes
-..\.venv\Scripts\python.exe -m pytest tests/e2e/                   # HTTP
-..\.venv\Scripts\python.exe -m pytest -m "not slow"                # skip real infra
-Pop-Location
-```
-
-## Observability
-
-- **Structured JSON logs** on stdout (`LEGAL_RAG_LOG_FORMAT=text` for local dev).
-- Every HTTP request is assigned a `X-Request-ID` and every log line inside the request carries it in the `request_id` field.
-- Token usage per LLM call is logged at `DEBUG`.
-- Health endpoint reports the effective config for platform smoke tests.
-
-## Security notes
-
-- No secrets in code. `GOOGLE_API_KEY` and `LEGAL_RAG_API_KEY` come from env vars only.
-- API key auth on every endpoint when `LEGAL_RAG_API_KEY` is set.
-- Prompt injection is blocked at the query level (`domain/policies.py`) and inside retrieved documents (`sanitize_document_text`).
-- Contract drafting requests are refused with a fixed sentinel.
-
-## Extending
-
-New capability → new port in `application/ports.py`, new adapter in
-`infrastructure/`, wire in `composition.py`, expose in an interface.
-Full checklist in [AGENTS.md](AGENTS.md).
+- [Deployment](docs/deployment.md): persistence, configuration, access controls, and operations.
+- [Repository maintenance](docs/repository-maintenance.md): archive recovery and source-tree rules.
+- [Architecture](ARCHITECTURE.md) and [contribution rules](AGENTS.md).

@@ -85,9 +85,9 @@ Push-Location backend
 ..\.venv\Scripts\python.exe -m uvicorn legal_rag.interfaces.http.app:app --reload --port 8000
 
 # CLI
-..\.venv\Scripts\python.exe -m legal_rag ingest
-..\.venv\Scripts\python.exe -m legal_rag agent "What is the late payment fee?" --strategy compare
-..\.venv\Scripts\python.exe -m legal_rag race-orchestrator
+..\.venv\Scripts\python.exe -m legal_rag.interfaces.cli ingest
+..\.venv\Scripts\python.exe -m legal_rag.interfaces.cli agent "What is the late payment fee?" --strategy compare
+..\.venv\Scripts\python.exe -m legal_rag.interfaces.cli race-orchestrator
 
 # Tests
 ..\.venv\Scripts\python.exe -m pytest tests/ -v

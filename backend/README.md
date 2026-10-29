@@ -1,59 +1,22 @@
----
-title: LegalRAG
-emoji: ⚖️
-colorFrom: indigo
-colorTo: purple
-sdk: docker
-app_port: 8000
-pinned: false
-license: mit
----
+﻿# LegalRAG backend
 
-# LegalRAG — backend (Hugging Face Space)
+FastAPI, CLI, and MCP interfaces over the same dependency-injection container.
 
-Production-grade RAG pipeline for legal contracts. Answers are grounded in
-retrieved contract and amendment passages with source citations.
+- Source: `legal_rag/` (domain, application, infrastructure, interfaces).
+- Runtime dependencies: `requirements.txt`; development dependencies: `requirements-dev.txt`.
+- Configuration: copy `.env.example` to `.env` on first setup and choose an LLM provider.
+- Documents: `data/legal/`; vector index: `data/chroma/` (ignored).
+- Evaluation inputs: `data/evaluation/labels.json`; generated reports: `data/evaluation/generated/` (ignored).
 
-See [../README.md](../README.md) for the full project overview and
-[../ARCHITECTURE.md](../ARCHITECTURE.md) for the layer design.
+From this directory:
 
-## Space configuration
-
-Set these under **Settings → Variables and secrets** in the Space UI.
-
-**Required (secrets):**
-
-- `GOOGLE_API_KEY` — your Google AI Studio Gemini key ([get one free](https://aistudio.google.com/app/apikey)).
-- `LEGAL_RAG_API_KEY` — a long random string; every backend call must send it as `X-API-Key`.
-
-**Optional overrides:**
-
-- `LEGAL_RAG_LLM_PROVIDER` (default `google`; use `extractive` to disable the LLM)
-- `LEGAL_RAG_LOG_FORMAT=json`
-- `LEGAL_RAG_CORS_ORIGINS='["https://<your-vercel-project>.vercel.app"]'`
-
-## First boot
-
-On cold start the Space downloads:
-
-- `sentence-transformers/all-MiniLM-L6-v2` (~90 MB)
-- `cross-encoder/ms-marco-MiniLM-L-6-v2` (~90 MB)
-
-Both are cached in the Space's persistent `/data` mount, so subsequent starts
-are fast. Then run one ingest to populate Chroma:
-
-```
-POST https://<space>.hf.space/api/ingest  (with X-API-Key)
+```powershell
+python -m uvicorn legal_rag.interfaces.http.app:app --reload --port 8000
+python -m legal_rag.interfaces.cli --help
+python -m pytest -m "not slow"
+python -m ruff check legal_rag tests
 ```
 
-## Endpoints
+Install the development requirements before running tests. Install the runtime requirements when building a service image. The Dockerfile uses the runtime requirements and a non-root user.
 
-- `GET  /api/health`     configuration + prompt versions
-- `POST /api/ask`        answer a legal question
-- `POST /api/inspect`    answer + full retrieval trace
-- `POST /api/ingest`     rebuild the index
-- `POST /api/upload`     PDF → markdown → re-ingest
-- `POST /api/agent`      run the agent, fixed workflow, or comparison
-- `POST /api/mcp/lookup` MCP tool discovery + contract lookup
-- `GET  /metrics`        Prometheus metrics (no auth)
-- `GET  /api/docs`       OpenAPI Swagger UI
+See the [project README](../README.md), [architecture](../ARCHITECTURE.md), and [deployment guide](../docs/deployment.md).
