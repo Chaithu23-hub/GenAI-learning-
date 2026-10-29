@@ -1,6 +1,8 @@
 """HTTP e2e tests — FastAPI TestClient over a FakeContainer."""
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -78,6 +80,31 @@ class TestInspectEndpoint:
         assert r.status_code == 200
         body = r.json()
         assert set(body.keys()) == {"question", "retrieved", "answer"}
+
+
+class TestUploadEndpoint:
+    def test_pdf_upload_is_parsed_saved_and_ingested(self, client, container):
+        pdf = (
+            Path(__file__).resolve().parents[2] / "data" / "shared-corpus" / "contracts-pdf"
+            / "MSA-2026-014_Northwind_Master_Services_Agreement.pdf"
+        )
+        response = client.post(
+            "/api/upload",
+            files={"files": ("review-upload.pdf", pdf.read_bytes(), "application/pdf")},
+        )
+        assert response.status_code == 200
+        assert response.json()["chunks_ingested"] > 0
+        saved = container.settings.docs_dir / "review-upload.md"
+        assert saved.exists()
+        assert "1.5%" in saved.read_text(encoding="utf-8")
+        stored = container.vector_store.get_all()
+        assert any(meta.get("source_doc") == "MSA-2026-014" for meta in stored["metadatas"])
+
+    def test_non_pdf_upload_is_rejected(self, client):
+        response = client.post(
+            "/api/upload", files={"files": ("notes.txt", b"not a PDF", "text/plain")},
+        )
+        assert response.status_code == 400
 
 
 class TestAgentEndpoint:

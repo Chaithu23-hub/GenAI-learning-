@@ -147,6 +147,7 @@ The API retains evidence for audit and integration use. The chat displays only `
 
 ## Deployment and maintenance
 
+- [Backend review walkthrough](docs/backend-review-walkthrough.md) and [demo checklist](docs/demo-checklist.md): student/teacher walkthrough, commands, verified results and limitations.
 - [Deployment](docs/deployment.md): persistence, configuration, access controls, and operations.
 - [Repository maintenance](docs/repository-maintenance.md): archive recovery and source-tree rules.
 - [Architecture](ARCHITECTURE.md) and [contribution rules](AGENTS.md).

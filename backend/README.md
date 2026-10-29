@@ -23,3 +23,8 @@ python -m ruff check legal_rag tests
 Install the development requirements before running tests. Install the runtime requirements when building a service image. The Dockerfile uses the runtime requirements and a non-root user.
 
 See the [project README](../README.md), [architecture](../ARCHITECTURE.md), and [deployment guide](../docs/deployment.md).
+
+For the backend-focused student review, use the [walkthrough](../docs/backend-review-walkthrough.md)
+and [quick checklist](../docs/demo-checklist.md). The disposable-container check script is
+`powershell -NoProfile -ExecutionPolicy Bypass -File scripts/Test-Backend.ps1 -IncludeFormatParity`
+from the repository root.

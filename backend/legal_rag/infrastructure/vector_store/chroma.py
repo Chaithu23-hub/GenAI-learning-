@@ -31,6 +31,14 @@ class ChromaVectorStore:
         self._collection = None
         self._lock = Lock()
 
+    @staticmethod
+    def _where_filter(where: dict[str, Any] | None) -> dict[str, Any] | None:
+        # The port accepts a conjunction of metadata fields. Chroma requires
+        # multiple fields to be expressed through an explicit logical operator.
+        if where and len(where) > 1:
+            return {"$and": [{key: value} for key, value in where.items()]}
+        return where
+
     # ── lifecycle ───────────────────────────────────────────────────────
     def _get_collection(self):
         if self._collection is not None:
@@ -84,7 +92,7 @@ class ChromaVectorStore:
             return self._get_collection().query(
                 query_embeddings=[query_embedding],
                 n_results=k,
-                where=where,
+                where=self._where_filter(where),
                 include=["documents", "metadatas", "distances"],
             )
         except Exception as exc:  # noqa: BLE001
@@ -95,7 +103,9 @@ class ChromaVectorStore:
     ) -> list[dict[str, Any]]:
         collection = self._get_collection()
         try:
-            stored = collection.get(include=["documents", "metadatas"], where=where)
+            stored = collection.get(
+                include=["documents", "metadatas"], where=self._where_filter(where),
+            )
         except Exception as exc:  # noqa: BLE001
             raise VectorStoreError(f"keyword_search failed: {exc}") from exc
 
@@ -157,6 +167,8 @@ class ChromaVectorStore:
 
     def get_all(self, *, where: dict[str, Any] | None = None) -> dict[str, list[Any]]:
         try:
-            return self._get_collection().get(include=["documents", "metadatas"], where=where)
+            return self._get_collection().get(
+                include=["documents", "metadatas"], where=self._where_filter(where),
+            )
         except Exception as exc:  # noqa: BLE001
             raise VectorStoreError(f"get_all failed: {exc}") from exc
