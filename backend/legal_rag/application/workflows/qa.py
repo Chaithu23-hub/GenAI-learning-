@@ -8,6 +8,7 @@ from legal_rag.application.ports import Conversation
 from legal_rag.application.workflows.generation import Generator
 from legal_rag.application.workflows.retrieval import RetrievalService
 from legal_rag.domain.policies import is_greeting, screen_query
+from legal_rag.domain.query import normalize_document_query
 from legal_rag.infrastructure.observability import get_logger, get_metrics
 
 log = get_logger(__name__)
@@ -23,6 +24,7 @@ class QaService:
         guardrail_answer: str,
         no_drafting_answer: str,
         greeting_answer: str,
+        out_of_scope_answer: str,
         conversation: Conversation | None = None,
     ):
         self._retrieval = retrieval
@@ -30,6 +32,7 @@ class QaService:
         self._guardrail_answer = guardrail_answer
         self._no_drafting_answer = no_drafting_answer
         self._greeting_answer = greeting_answer
+        self._out_of_scope_answer = out_of_scope_answer
         self._conversation = conversation
 
     def answer(
@@ -38,6 +41,7 @@ class QaService:
         *,
         document_type: str | None = None,
     ) -> dict[str, Any]:
+        query = normalize_document_query(query)
         if is_greeting(query):
             log.info("greeting handled", extra={"query": query})
             _metrics.greetings.inc()
@@ -74,13 +78,13 @@ class QaService:
         if self._conversation is not None and document_type is None:
             reply = self._conversation.reply_if_general(query)
             if reply:
-                _metrics.requests.inc(outcome="general")
+                _metrics.requests.inc(outcome="out_of_scope")
                 return {
-                    "answer": reply,
-                    "reasoning": "General conversation; no document claims were requested.",
+                    "answer": self._out_of_scope_answer,
+                    "reasoning": "The question is outside document QA; general knowledge answers are disabled.",
                     "sources": [],
-                    "confidence": "medium",
-                    "out_of_scope": False,
+                    "confidence": "low",
+                    "out_of_scope": True,
                 }
         where = self._resolve_where(query, document_type)
         started = time.perf_counter()
@@ -95,6 +99,7 @@ class QaService:
     def inspect(
         self, query: str, *, document_type: str | None = None
     ) -> dict[str, Any]:
+        query = normalize_document_query(query)
         where = self._resolve_where(query, document_type)
         return {
             "question": query,

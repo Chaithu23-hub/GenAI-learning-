@@ -12,7 +12,6 @@
       </div>
     </div>
     <div class="topbar-actions">
-      <span class="status-pill"><span class="status-dot"></span> Local knowledge base</span>
       @if (qa.hasHistory()) {
         <button type="button" class="docs-link" (click)="newChat()"
                 title="Clear the current conversation">
@@ -26,7 +25,6 @@
   <main class="workspace">
     <section class="workspace-heading" [class.has-history]="history.length > 0">
       <div class="eyebrow">LEGAL RESEARCH ASSISTANT</div>
-      <h1>Ask the documents.<br /><em>Keep the answer grounded.</em></h1>
       @if (history.length === 0) {
         <p class="intro-copy">Search your contracts and amendments with answers tied back to the exact passages that support them.</p>
       }

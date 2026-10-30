@@ -143,6 +143,7 @@ class Container:
             guardrail_answer=self._settings.guardrail_answer,
             no_drafting_answer=self._settings.no_drafting_answer,
             greeting_answer=self._settings.greeting_answer,
+            out_of_scope_answer=self._settings.out_of_scope_answer,
             conversation=self.conversation,
         )
 

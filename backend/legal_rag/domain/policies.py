@@ -160,13 +160,9 @@ _LEGAL_NUM_RE = re.compile(
 
 
 def normalize_legal_numbers(text: str) -> str:
-    """Ensure parenthesized legal numbers like 'seventy-two (72) hours' also include plain '72 hours'."""
+    """Render legal duration notation as plain numbers in answer prose."""
     def repl(m: re.Match) -> str:
-        word, digits, unit = m.group(1), m.group(2), m.group(3)
-        plain = f"{digits} {unit}"
-        if plain.lower() in text.lower():
-            return m.group(0)
-        return f"{plain} ({word} ({digits}) {unit})"
+        return f"{m.group(2)} {m.group(3)}"
 
     return _LEGAL_NUM_RE.sub(repl, text)
 

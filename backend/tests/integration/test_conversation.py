@@ -25,6 +25,7 @@ def service(conversation):
         retrieval=Retrieval(), generator=DocumentGenerator(),
         guardrail_answer="Blocked", no_drafting_answer="No drafting",
         greeting_answer="Hi! How can I help?", conversation=conversation,
+        out_of_scope_answer="Not in the provided documents.",
     )
 
 
@@ -40,7 +41,8 @@ def test_general_question_does_not_search_contracts():
     qa = service(FakeConversation("Paris is the capital of France."))
     answer = qa.answer("What is the capital of France?")
     assert answer["sources"] == []
-    assert not answer["out_of_scope"]
+    assert answer["out_of_scope"]
+    assert answer["answer"] == "Not in the provided documents."
     assert not qa._generator.calls
 
 
@@ -48,6 +50,14 @@ def test_document_question_keeps_grounded_path():
     qa = service(FakeConversation())
     assert qa.answer("What is the late payment fee?")["answer"] == "Document answer"
     assert qa._generator.calls
+
+
+def test_spelling_is_normalized_before_routing_and_generation():
+    conversation = FakeConversation()
+    qa = service(conversation)
+    qa.answer("what are the avaialble admendments")
+    assert conversation.calls == ["what are the available amendments"]
+    assert qa._generator.calls == ["what are the available amendments"]
 
 
 def test_guardrails_run_before_conversation():
