@@ -1,6 +1,6 @@
 # Shared Contract Corpus — Soft Suave AI Engineering League
 
-**Everyone ingests these five documents. Everyone evaluates against the same 32 cases.**
+**Six logical documents, available in three formats, evaluated against 32 golden cases.**
 
 Until now each of you has been running on a different corpus, which means no two sets of results have been comparable — a 100% pass rate on three one-page PDFs and a 60% pass rate on five full agreements tell us nothing about which system is better. This corpus fixes that.
 
@@ -22,16 +22,14 @@ shared-corpus/
 │     SCH-2026-014_Northwind_Schedules                   ← Schedules A, B, B-2, C, D (TABLES)
 │     MSA-2026-022_Vertex_Master_Services_Agreement      ← second counterparty
 │     NDA-2026-007_Mutual_Non_Disclosure_Agreement       ← third party, different doc type
-├── eval/
-│     golden_set.json                                    ← 32 cases with ground truth
-└── loaders/
-      document_loader.py                                 ← reference multi-format loader
-      verify_corpus.py                                   ← proves your loader reads all 3 the same
+└── eval/
+      golden_set.json                                    ← 32 cases with ground truth
 ```
 
-All three formats are verified to yield the same facts and the same metadata —
-`verify_corpus.py` checks 20 ground-truth values, including every table value,
-across all three. It passes on the files as shipped.
+The production loader lives in `legal_rag/infrastructure/documents/shared_corpus_loader.py`.
+The format-parity regression test checks 20 ground-truth values and document
+metadata across all three formats. The former reference loader and standalone
+verifier were removed to avoid maintaining a duplicate parsing implementation.
 
 ---
 
@@ -52,15 +50,14 @@ across all three. It passes on the files as shipped.
 pip install pdfplumber python-docx
 ```
 
-`loaders/document_loader.py` is a working reference implementation. Read it, then
-adapt it — don't just import it. It exists to enforce three things that are easy
-to get wrong and expensive to debug:
+`SharedCorpusDocumentSource` uses the production loader for ingestion. It enforces
+three requirements:
 
 **1. Tables must survive as text.** Schedule B (fees and service levels),
 Schedule B-2 (breach notification deadlines) and Schedule C (holiday calendar)
 are tables. A loader that silently drops them makes GS-011, GS-013, GS-015,
 GS-018 and GS-019 unanswerable — and you will spend a day blaming your chunker
-for a loader bug. The reference loader flags this explicitly as a warning.
+for a loader bug. The production loader rejects a schedule with no extracted tables.
 
 **2. A table row must carry its own header.** Each row is emitted as
 `Date: 20 October 2026 | Holiday: Deepavali` rather than a bare `20 October 2026 | Deepavali`,
@@ -74,14 +71,15 @@ Status. Parse it.
 
 Then check your work:
 
-```bash
-cd loaders && python verify_corpus.py
+```powershell
+# From the repository root; uses a disposable test container.
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/Test-Backend.ps1 -IncludeFormatParity
 ```
 
-It loads every document in all three formats and asserts that 20 specific
-ground-truth values — and the extracted metadata — agree across them. Exit code
-0 means your three formats are interchangeable. Non-zero means one of them is
-losing content, and that is a bug to fix **before** you trust any eval number.
+The format-parity test loads every document in all three formats and checks
+20 ground-truth values and the extracted document metadata. A passing check
+establishes the tested facts, not every possible property of the conversion.
+Failures must be investigated before comparing evaluation scores.
 
 Two known, acceptable differences: PDF reports a slightly higher table count
 (a table spanning a page break is found twice) and character counts vary by
@@ -188,7 +186,7 @@ The **out_of_scope** and **amendment_supersession** rows are the ones that matte
 
 ## Converting to other formats
 
-If you need a format not shipped here, convert from the Markdown and re-run `verify_corpus.py` — **the Markdown is the source of truth** for ground-truth answers. If a conversion drops a table (Schedules B, B-2 and C are tables), several cases become unanswerable and that is a conversion bug, not a retrieval one.
+If you need a format not shipped here, convert from the Markdown and rerun the format-parity check above — **the Markdown is the source of truth** for ground-truth answers. If a conversion drops a table (Schedules B, B-2 and C are tables), several cases become unanswerable and that is a conversion bug, not a retrieval one.
 
 ---
 

@@ -102,3 +102,12 @@ docker-compose.override.yml
 /trace.json
 /eval_cases_week*.json
 /backend/pytest_full.txt
+
+# Keep supporting Markdown documentation local.
+*.md
+!README.md
+!AGENTS.md
+!ARCHITECTURE.md
+!SKILL.md
+!/.agents/skills/**/*.md
+!/backend/data/shared-corpus/contracts/*.md

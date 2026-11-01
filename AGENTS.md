@@ -51,7 +51,7 @@ backend/legal_rag/
 │   ├── observability/ # logging (JSON + request id)
 │   ├── vector_store/  # chroma.py
 │   ├── embeddings/    # sentence_transformer + cross_encoder
-│   ├── llm/           # openai_compatible.py
+│   ├── llm/           # groq.py (OpenAI-compatible SDK transport)
 │   ├── documents/     # markdown + pdf loaders
 │   ├── prompts/       # versioned prompt templates
 │   ├── chunking/      # section chunker
@@ -105,5 +105,5 @@ Pop-Location
 - Do not read environment variables outside `Settings`.
 - Do not return dicts from routers where a Pydantic model exists.
 - Do not add a "convenience" module-level function that hides a service.
-- Do not commit secrets. `GOOGLE_API_KEY`, `LEGAL_RAG_API_KEY` go in `.env` (git-ignored).
+- Do not commit secrets. `GROQ_API_KEY`, `LEGAL_RAG_API_KEY` go in `.env` (git-ignored).
 - Do not use `print()` in library code.

@@ -9,7 +9,7 @@ nothing outside `interfaces/` may import a framework (FastAPI, Typer, MCP).
 ┌────────────────────────────────────────────────────────────────────────────┐
 │  interfaces/          HTTP · CLI · MCP servers  (delivery, framework code) │
 ├────────────────────────────────────────────────────────────────────────────┤
-│  infrastructure/      Chroma · SentenceTransformers · OpenAI · MCP client  │
+│  infrastructure/      Chroma · SentenceTransformers · Groq · MCP client    │
 │                       pydantic-settings · structlog                        │
 ├────────────────────────────────────────────────────────────────────────────┤
 │  application/         Services (use cases) + Ports (Protocols) + DTOs      │
@@ -40,7 +40,7 @@ backend/
 │   │   └── workflows/              # Multi-step use cases
 │   │       ├── ingestion.py
 │   │       ├── retrieval.py
-│   │       ├── generation.py       # ExtractiveGenerator, LLMGenerator
+│   │       ├── generation.py       # LLMGenerator: Groq answers, evidence checks and correction
 │   │       ├── qa.py               # QaService (guardrail → filter → retrieve → generate)
 │   │       ├── race.py             # AgentRace, MultiAgentRace, MeteredLegalAgent
 │   │       ├── judge.py            # JudgeService + deterministic assertions
@@ -57,9 +57,9 @@ backend/
 │   │   ├── embeddings/
 │   │   │   ├── sentence_transformer_embedder.py
 │   │   │   └── cross_encoder_reranker.py
-│   │   ├── llm/openai_compatible.py
+│   │   ├── llm/groq.py              # Groq via OpenAI-compatible SDK transport
 │   │   ├── documents/
-│   │   │   ├── markdown_loader.py
+│   │   │   ├── shared_corpus_loader.py # Markdown, DOCX and corpus PDFs
 │   │   │   └── pdf_loader.py
 │   │   ├── prompts/                # Versioned prompt templates
 │   │   │   ├── qa_system.py
@@ -95,7 +95,7 @@ never imported by services.
 Benefits:
 - Tests replace ports with in-memory fakes — no monkeypatching, no `@lru_cache`
   contamination, no Chroma files.
-- Swapping Chroma for Weaviate or SentenceTransformers for OpenAI embeddings is one
+- Swapping the vector store or embedding provider is one
   new adapter, no service changes.
 
 ### Composition root
@@ -143,8 +143,19 @@ MCP entry points live under `legal_rag.interfaces.mcp_servers`.
 Required evaluation labels are in `backend/data/evaluation/labels.json` and are
 included in the backend image. Settings controls that input path and the ignored
 `backend/data/evaluation/generated/` report directory. Historical reports and
-unused learning material are preserved outside the production tree; see
-[repository maintenance](docs/repository-maintenance.md).
+unused learning material are preserved outside the production tree. Supporting
+maintenance and review notes remain local under the ignored `docs/` directory.
+
+### Document answers
+
+All document questions, including numbered-clause requests, use hybrid retrieval
+and the configured Groq model. Retrieved metadata accompanies the model context.
+The backend checks source identity, verbatim excerpts, recognized quotations,
+clause references and physical page claims before returning the answer. Invalid
+answers receive one correction attempt and then raise `SchemaValidationError`.
+Provider failures propagate through the infrastructure error taxonomy; there is
+no offline answer generator or excerpt fallback. Fixed greetings and input
+refusals remain part of QA routing.
 
 ## Request lifecycle — `POST /api/ask`
 

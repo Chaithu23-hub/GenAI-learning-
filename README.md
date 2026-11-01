@@ -1,6 +1,6 @@
 # LegalRAG
 
-An Angular chat workspace and FastAPI service for searching legal contracts and amendments. Contract answers use retrieved passages and retain evidence in the API response; the chat displays the answer. General conversation uses the configured LLM.
+An Angular chat workspace and FastAPI service for searching legal contracts and amendments. Groq writes answers from retrieved passages, and the backend validates citations and quotations before returning them. The chat displays the answer; the API retains supporting evidence. Questions outside document QA receive a fixed refusal.
 
 ## Project structure
 
@@ -26,14 +26,14 @@ frontend/
   public/                  Static assets
   Dockerfile               Angular build and nginx runtime
   nginx.conf               Same-origin API proxy and SPA routing
-docs/                      Deployment and maintenance documentation
+.agents/skills/            Repository skills
 AGENTS.md                  Contribution rules
 ARCHITECTURE.md             Layer design
 docker-compose.yml         Local full-stack deployment
 Makefile                   Development shortcuts
 ```
 
-Historical learning notes and generated reports are archived; see [repository maintenance](docs/repository-maintenance.md). Existing agents, evaluation workflows, CLI commands, MCP servers, and tests remain part of the application.
+Historical learning notes and generated reports are kept separately. Agents, evaluation workflows, CLI commands, MCP servers, and tests remain part of the application. Supporting review and deployment notes under `docs/` are local files and are not versioned.
 
 ## Run with Docker
 
@@ -41,7 +41,7 @@ Prerequisites: Docker with Compose. From the repository root:
 
 ```powershell
 Copy-Item backend/.env.example backend/.env  # First setup only; do not overwrite an existing file.
-# Edit backend/.env and configure the selected provider.
+# Edit backend/.env and configure GROQ_API_KEY.
 docker compose up -d --build
 # Populate the index on first setup, or after changing the corpus:
 docker compose exec backend python -m legal_rag.interfaces.cli ingest
@@ -56,16 +56,13 @@ Compose reads backend configuration from `backend/.env`. The root `.env` is not 
 
 ## LLM configuration
 
-Keep credentials in the ignored `backend/.env`. Choose one provider:
+Keep `GROQ_API_KEY` in the ignored `backend/.env`. Groq is the answer provider:
 
 | Provider | Settings |
 |---|---|
 | Groq | `LEGAL_RAG_LLM_PROVIDER=groq`, `GROQ_API_KEY`, `LEGAL_RAG_GROQ_MODEL` |
-| Gemini | `LEGAL_RAG_LLM_PROVIDER=google`, `GOOGLE_API_KEY`, `LEGAL_RAG_GOOGLE_MODEL` |
-| OpenAI | `LEGAL_RAG_LLM_PROVIDER=openai`, `OPENAI_API_KEY`, `LEGAL_RAG_OPENAI_MODEL`, `LEGAL_RAG_OPENAI_REASONING_EFFORT` |
-| Offline | `LEGAL_RAG_LLM_PROVIDER=extractive` (retrieved excerpts, no general knowledge generation) |
 
-The selected provider uses its own credentials. Leave `LEGAL_RAG_LLM_BASE_URL` unset to use its default endpoint. All runtime settings are defined in [Settings](backend/legal_rag/infrastructure/settings.py); examples are in [backend/.env.example](backend/.env.example).
+Document answers require a working Groq model; provider failures return errors, and answers that still fail evidence validation after one correction attempt return HTTP 422. Leave `LEGAL_RAG_LLM_BASE_URL` unset to use Groq's endpoint. The `openai` Python package supplies Groq's compatible API transport; it does not require an OpenAI API key. All runtime settings are defined in [Settings](backend/legal_rag/infrastructure/settings.py); examples are in [backend/.env.example](backend/.env.example).
 
 After changing backend configuration:
 
@@ -122,7 +119,7 @@ python -m legal_rag.interfaces.cli --help
 python -m legal_rag.interfaces.cli ingest
 python -m legal_rag.interfaces.cli agent "What is the late payment fee?" --strategy compare
 python -m legal_rag.interfaces.cli evaluate --k 3
-python -m legal_rag.interfaces.cli.evaluate_shared_corpus --provider extractive
+python -m legal_rag.interfaces.cli.evaluate_shared_corpus --provider groq
 python -m legal_rag.interfaces.cli validate-judge
 python -m legal_rag.interfaces.cli race-agent
 python -m legal_rag.interfaces.cli race-orchestrator
@@ -147,7 +144,10 @@ The API retains evidence for audit and integration use. The chat displays only `
 
 ## Deployment and maintenance
 
-- [Backend review walkthrough](docs/backend-review-walkthrough.md) and [demo checklist](docs/demo-checklist.md): student/teacher walkthrough, commands, verified results and limitations.
-- [Deployment](docs/deployment.md): persistence, configuration, access controls, and operations.
-- [Repository maintenance](docs/repository-maintenance.md): archive recovery and source-tree rules.
-- [Architecture](ARCHITECTURE.md) and [contribution rules](AGENTS.md).
+- Read [architecture](ARCHITECTURE.md) and [contribution rules](AGENTS.md) before modifying the backend. Repository skills live under `.agents/skills/`.
+- Keep provider credentials on the backend. `LEGAL_RAG_API_KEY` is a shared API gate; it does not provide per-user identity or tenant isolation.
+- The Compose data mount preserves documents and indexes. Back up this data; ingestion upserts do not delete obsolete chunks.
+- Health reports configuration, not model access or index readiness. Verify a known question and its sources after deployment.
+- For public deployment, use TLS and authentication, restrict administrative endpoints, and configure the frontend origin.
+
+Markdown in Git is limited to README files, contribution/architecture instructions, skill resources, and the contract corpus. Other supporting Markdown stays local through `.gitignore`.

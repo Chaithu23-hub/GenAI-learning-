@@ -15,4 +15,4 @@ The build script generates `src/environments/environment.generated.ts` from `LEG
 
 ChromeHeadless tests need Chrome or a Chromium-compatible executable set through `CHROME_BIN`. CI runs both the production build and these tests.
 
-See the [deployment guide](../docs/deployment.md).
+See the [project README](../README.md) for deployment and configuration notes.
