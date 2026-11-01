@@ -8,6 +8,7 @@ import pytest
 from legal_rag.composition import Container
 from legal_rag.infrastructure.settings import Settings
 from tests.fakes.embedder import HashEmbedder
+from tests.fakes.fake_llm import ContextLLMClient
 from tests.fakes.reranker import ScoringReranker
 from tests.fakes.vector_store import InMemoryVectorStore
 
@@ -58,7 +59,7 @@ def settings(tmp_path: Path, corpus_dir: Path) -> Settings:
         docs_dir=corpus_dir,
         chroma_dir=tmp_path / "chroma",
         mcp_config_path=tmp_path / "mcp.json",
-        llm_provider="extractive",
+        llm_provider="groq",
         api_key=None,
     )
 
@@ -71,6 +72,7 @@ class FakeContainer(Container):
         self._vector_store_fake = InMemoryVectorStore()
         self._embedder_fake = HashEmbedder()
         self._reranker_fake = ScoringReranker()
+        self._llm_fake = ContextLLMClient(settings.out_of_scope_answer)
 
     @property
     def vector_store(self):  # type: ignore[override]
@@ -86,7 +88,7 @@ class FakeContainer(Container):
 
     @property
     def llm_client(self):  # type: ignore[override]
-        return None
+        return self._llm_fake
 
 
 @pytest.fixture()

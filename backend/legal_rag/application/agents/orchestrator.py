@@ -13,7 +13,7 @@ from legal_rag.application.ports import VectorStore
 from legal_rag.application.workflows.generation import (
     RETRIEVE_TOOL,
     SYSTEM_PROMPT,
-    ExtractiveGenerator,
+    Generator,
     chunks_payload,
 )
 from legal_rag.application.workflows.retrieval import RetrievalService
@@ -119,12 +119,12 @@ class Orchestrator:
         *,
         retrieval: RetrievalService,
         vector_store: VectorStore,
-        extractive_generator: ExtractiveGenerator,
+        generator: Generator,
         settings: OrchestratorSettings,
     ):
         self._retrieval = retrieval
         self._vector_store = vector_store
-        self._extractive = extractive_generator
+        self._generator = generator
         self._settings = settings
 
     def plan(self, query: str) -> dict[str, Any]:
@@ -163,7 +163,7 @@ class Orchestrator:
                               "and was excluded from answer generation."),
                 "sources": [], "confidence": "high", "out_of_scope": True,
             }, chunks_payload(chunks)
-        return self._extractive.generate(query, where=where, chunks=chunks), chunks_payload(chunks)
+        return self._generator.generate(query, where=where, chunks=chunks), chunks_payload(chunks)
 
     def defined_terms_worker(
         self, request: dict[str, Any], *, fail: bool = False

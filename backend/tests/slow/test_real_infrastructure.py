@@ -6,6 +6,7 @@ under tmp_path. Skip in normal CI: `pytest -m "not slow"`.
 from __future__ import annotations
 
 import logging
+from functools import cached_property
 from pathlib import Path
 
 import pytest
@@ -13,8 +14,15 @@ import pytest
 from legal_rag.composition import Container
 from legal_rag.infrastructure.documents.shared_corpus_loader import load_document
 from legal_rag.infrastructure.settings import Settings
+from tests.fakes.fake_llm import ContextLLMClient
 
 pytestmark = pytest.mark.slow
+
+
+class ModelFakeContainer(Container):
+    @cached_property
+    def llm_client(self):
+        return ContextLLMClient(self.settings.out_of_scope_answer)
 
 
 @pytest.fixture()
@@ -33,10 +41,10 @@ def real_container(tmp_path: Path) -> Container:
         docs_dir=docs,
         chroma_dir=tmp_path / "chroma",
         mcp_config_path=tmp_path / "mcp.json",
-        llm_provider="extractive",
+        llm_provider="groq",
         api_key=None,
     )
-    return Container(settings)
+    return ModelFakeContainer(settings)
 
 
 @pytest.fixture()
@@ -46,10 +54,10 @@ def real_legal_container(tmp_path: Path) -> Container:
         docs_dir=docs,
         chroma_dir=tmp_path / "legal-chroma",
         mcp_config_path=tmp_path / "mcp.json",
-        llm_provider="extractive",
+        llm_provider="groq",
         api_key=None,
     )
-    return Container(settings)
+    return ModelFakeContainer(settings)
 
 
 def test_real_chroma_ingest_and_retrieve(real_container):
@@ -60,7 +68,7 @@ def test_real_chroma_ingest_and_retrieve(real_container):
     assert any("payment" in c.text.lower() for c in chunks)
 
 
-def test_real_end_to_end_extractive_answer(real_container):
+def test_real_retrieval_with_fake_llm_answer(real_container):
     real_container.ingestion_service.ingest()
     result = real_container.qa_service.answer("What is the late payment interest rate?")
     assert not result["out_of_scope"]
@@ -113,12 +121,14 @@ def test_shared_corpus_loader_supports_all_formats_with_parity():
         {doc.metadata["source_doc"]: doc for doc in map(load_document, sorted(folder.iterdir()))}
         for folder in format_dirs
     ]
+    assert all(document.pages for document in loaded[2].values())
+    assert all(not document.pages for documents in loaded[:2] for document in documents.values())
 
     assert all(set(docs) == set(loaded[0]) for docs in loaded[1:])
     required_facts = {
-        "MSA-2026-014": ("1.5%", "Chennai", "72"),
+        "MSA-2026-014": ("1.5%", "Chennai", "72", "13 January 2028", "reasonable degree of care"),
         "AMD-2026-014-01": ("forty-five (45) days",),
-        "AMD-2026-014-02": ("fifteen (15) Business Days", "5,000,000"),
+        "AMD-2026-014-02": ("fifteen (15) Business Days", "5,000,000", "seven (7) years"),
         "SCH-2026-014": (
             "20 October 2026", "Deepavali", "15 Business Days", "81,100", "42,000", "99.9%",
         ),

@@ -1,8 +1,9 @@
 import json
 import logging
 
+import pytest
+
 from legal_rag.application.workflows.generation import (
-    ExtractiveGenerator,
     LLMGenerator,
 )
 from tests.fakes.fake_llm import FakeLLMClient
@@ -33,16 +34,13 @@ def test_termination_answer_cannot_cite_a_different_section(container, caplog):
         "confidence": "high",
         "out_of_scope": False,
     }
-    llm = FakeLLMClient(responses=[{"content": json.dumps(wrong_answer)}])
+    corrected = {**wrong_answer, "answer": "Section 5 requires 30 days written notice."}
+    llm = FakeLLMClient(responses=[{"content": json.dumps(wrong_answer)}, {"content": json.dumps(corrected)}])
     generator = LLMGenerator(
         retrieval=container.retrieval_service,
         vector_store=container.vector_store,
         llm=llm,
         settings=_gen_settings(container),
-        fallback=ExtractiveGenerator(
-            retrieval=container.retrieval_service,
-            settings=_gen_settings(container),
-        ),
     )
 
     result = generator.generate(query)
@@ -60,7 +58,7 @@ def test_termination_answer_cannot_cite_a_different_section(container, caplog):
     assert trace.prompt_version == "v4"
     # Wider retrieval may include other clauses; the corrected termination
     # passage and its evidence must still be present in the direct reply.
-    assert termination_chunk.text in result["answer"]
+    assert "30 days" in result["answer"]
     assert any(source["chunk_id"] == termination_chunk.chunk_id for source in result["sources"])
     assert "3" in trace.spans[1]["candidate_clause_refs"]
     assert trace.spans[1]["validation_errors"]
@@ -86,22 +84,17 @@ def test_termination_answer_cannot_cite_a_different_section(container, caplog):
     )
 
 
-def test_rate_limited_generation_emits_trace_before_fallback(container, caplog):
+def test_rate_limited_generation_emits_trace_and_raises(container, caplog):
     caplog.set_level("INFO")
     generator = LLMGenerator(
         retrieval=container.retrieval_service,
         vector_store=container.vector_store,
         llm=RateLimitedLLM(),
         settings=_gen_settings(container),
-        fallback=ExtractiveGenerator(
-            retrieval=container.retrieval_service,
-            settings=_gen_settings(container),
-        ),
     )
 
-    result = generator.generate("termination notice")
-
-    assert result["sources"]
+    with pytest.raises(RuntimeError, match="429"):
+        generator.generate("termination notice")
     trace = next(
         record for record in caplog.records if record.getMessage() == "qa trace"
     )

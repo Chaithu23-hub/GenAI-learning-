@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 
 
-class FakeOpenAISDK:
+class FakeChatSDK:
     def __init__(self):
         self.calls = []
         self.chat = SimpleNamespace(completions=self)

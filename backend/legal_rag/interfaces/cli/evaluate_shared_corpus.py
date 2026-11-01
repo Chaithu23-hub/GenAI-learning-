@@ -1,7 +1,6 @@
 """Run the shared 32-case golden set against the selected corpus format.
 
-By default uses the LLM provider configured in backend/.env (google / openai / groq).
-Pass --provider extractive to force the keyword-extractive fallback path.
+Uses Groq with the credentials and model configured in backend/.env.
 """
 from __future__ import annotations
 
@@ -101,7 +100,7 @@ def run(format_name: str, output_path: Path, force_provider: str | None = None) 
         raise ValueError(f"expected 32 golden cases, found {len(cases)}")
 
     configure_logging(level="WARNING")
-    # Build Settings from .env so google_api_key is picked up automatically.
+    # Build Settings from .env so the Groq API key is picked up automatically.
     # Override only the paths and — optionally — the provider.
     with TemporaryDirectory(prefix="legal-rag-shared-corpus-", ignore_cleanup_errors=True) as temp:
         settings_kwargs: dict[str, Any] = {
@@ -127,10 +126,7 @@ def run(format_name: str, output_path: Path, force_provider: str | None = None) 
             rows.append(score)
             time.sleep(2.0)
         # Capture provider name BEFORE releasing the container (fixes use-after-delete bug).
-        if container.llm_client is not None:
-            provider_name = container.settings.llm_provider or "google"
-        else:
-            provider_name = "extractive"
+        provider_name = container.settings.llm_provider
 
     class_counts: dict[str, dict[str, int]] = {}
     for row in rows:
@@ -228,12 +224,11 @@ def main() -> None:
     )
     parser.add_argument(
         "--provider",
-        choices=["google", "openai", "groq", "extractive"],
+        choices=["groq"],
         default=None,
         help=(
             "Override the LLM provider from .env. "
-            "Omit to use whatever is set in backend/.env (default: google). "
-            "Pass 'extractive' to force the keyword-only path."
+            "Groq is the supported provider; its model and API key come from backend/.env."
         ),
     )
     args = parser.parse_args()

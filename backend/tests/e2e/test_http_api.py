@@ -6,7 +6,9 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
+from legal_rag.infrastructure.errors import PermanentLLMError, TransientLLMError
 from legal_rag.interfaces.http.app import create_app
+from tests.fakes.fake_llm import FakeLLMClient
 
 
 @pytest.fixture()
@@ -37,6 +39,17 @@ class TestHealth:
 
 
 class TestAskEndpoint:
+    def test_missing_document_preserves_response_contract(self, client, container):
+        response = client.post("/api/ask", json={
+            "question": "Quote clause 99.99 of MSA-2026-014 and identify its page number.",
+        })
+        assert response.status_code == 200
+        payload = response.json()
+        assert set(payload) == {"answer", "reasoning", "sources", "confidence", "out_of_scope"}
+        assert payload["answer"] == container.settings.out_of_scope_answer
+        assert payload["out_of_scope"] is True
+        assert payload["sources"] == []
+
     def test_ask_valid_returns_answer(self, client):
         r = client.post("/api/ask", json={"question": "What is the late payment fee?"})
         assert r.status_code == 200
@@ -148,7 +161,7 @@ class TestApiKeyAuth:
             docs_dir=container.settings.docs_dir,
             chroma_dir=container.settings.chroma_dir,
             mcp_config_path=container.settings.mcp_config_path,
-            llm_provider="extractive",
+            llm_provider="groq",
             api_key="secret-abc",
         )
         # Build a FakeContainer over the secured settings
@@ -168,6 +181,32 @@ class TestApiKeyAuth:
 
 
 class TestErrorMapping:
+    @pytest.mark.parametrize("error,status", [
+        (TransientLLMError("Provider temporarily unavailable"), 503),
+        (PermanentLLMError("Provider configuration invalid"), 500),
+    ])
+    def test_generation_failure_returns_problem_not_excerpts(self, container, error, status):
+        class FailedLLM(FakeLLMClient):
+            def chat(self, **kwargs):
+                raise error
+
+        container._llm_fake = FailedLLM()
+        app = create_app(container.settings)
+        app.state.container = container
+        response = TestClient(app).post("/api/ask", json={"question": "Quote Section 3."})
+        assert response.status_code == status
+        assert response.json()["status"] == status
+        assert "answer" not in response.json()
+
+    def test_invalid_generated_answer_returns_validation_problem(self, container):
+        container._llm_fake = FakeLLMClient(responses=[{"content": "invalid"}, {"content": "invalid"}])
+        app = create_app(container.settings)
+        app.state.container = container
+        response = TestClient(app).post("/api/ask", json={"question": "Quote Section 3."})
+        assert response.status_code == 422
+        assert response.json()["title"] == "Schema validation failed"
+        assert "answer" not in response.json()
+
     def test_404_shape(self, client):
         r = client.get("/api/nope")
         assert r.status_code == 404

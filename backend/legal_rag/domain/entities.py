@@ -18,6 +18,7 @@ class Document:
     text: str
     document_type: str
     metadata: dict[str, Any] = field(default_factory=dict)
+    pages: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -48,6 +49,7 @@ class RetrievedChunk:
     text: str
     distance: float
     score: float = 0.0
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

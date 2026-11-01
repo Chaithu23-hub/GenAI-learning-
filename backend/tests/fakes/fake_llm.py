@@ -1,6 +1,7 @@
 """Fake LLM client used by service tests."""
 from __future__ import annotations
 
+import json
 from typing import Any
 
 
@@ -12,11 +13,9 @@ class FakeLLMClient:
         *,
         responses: list[dict[str, Any]] | None = None,
         model: str = "fake-model",
-        models: list[str] | None = None,
     ):
         self._responses = list(responses or [])
         self._model = model
-        self._models = models if models is not None else [model]
         self.calls: list[dict[str, Any]] = []
 
     @property
@@ -45,5 +44,26 @@ class FakeLLMClient:
         )
         return response
 
-    def list_models(self) -> list[str]:
-        return list(self._models)
+
+class ContextLLMClient(FakeLLMClient):
+    """Test-only model double that cites the supplied context without network I/O."""
+
+    def __init__(self, out_of_scope_answer: str):
+        super().__init__()
+        self._out_of_scope_answer = out_of_scope_answer
+
+    def chat(self, *, messages, tools=None, temperature=0.0):
+        self.calls.append({"messages": list(messages), "tools": tools, "temperature": temperature})
+        content = messages[1]["content"]
+        marker = "Retrieved document chunks (cite ONLY these chunk_ids in sources):\n"
+        if marker not in content:
+            return {"content": '{"route":"documents","answer":""}', "tool_calls": []}
+        chunks, _ = json.JSONDecoder().raw_decode(content.split(marker, 1)[1])
+        payload = {
+            "answer": "The retrieved passages provide the contract terms." if chunks else self._out_of_scope_answer,
+            "reasoning": "Test model response from supplied context.",
+            "sources": [{key: c[key] for key in ("document", "chunk_id", "excerpt")} for c in chunks],
+            "confidence": "medium" if chunks else "low",
+            "out_of_scope": not chunks,
+        }
+        return {"content": json.dumps(payload), "tool_calls": []}

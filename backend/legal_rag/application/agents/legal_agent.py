@@ -237,7 +237,7 @@ class FixedWorkflow:
                 "Resolve the defined terms used by the clause.",
                 {"version": "amended" if has_amendment else "original"},
             )
-        agent._step(state, "answer", "Generate the grounded extractive answer.")
+        agent._step(state, "answer", "Generate the grounded LLM answer.")
         # Preserve the budget stop_reason if the answer step was rejected because
         # a budget fired (e.g. small max_steps); otherwise mark completed.
         if "answer" in state.observations:

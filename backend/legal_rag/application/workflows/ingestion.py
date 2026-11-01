@@ -49,6 +49,18 @@ class IngestionService:
             for chunk in chunks:
                 metadata = dict(document.metadata)
                 metadata["clause_ref"] = chunk.heading or "Preamble"
+                # Assign a physical PDF page only when the whole indexed passage
+                # maps uniquely to that page. Cross-page or ambiguous chunks stay
+                # unnumbered; Markdown/DOCX have no stable physical pagination.
+                normalized = " ".join(chunk.text.split())
+                page_matches = [
+                    number for number, text in enumerate(document.pages, start=1)
+                    if normalized and normalized in " ".join(text.split())
+                ]
+                if document.pages:
+                    metadata.pop("page_number", None)
+                    if len(page_matches) == 1:
+                        metadata["page_number"] = page_matches[0]
                 indexed.append(IndexedChunk(
                     id=f"{metadata['source_doc']}::{chunk.index:03d}",
                     text=chunk.text,

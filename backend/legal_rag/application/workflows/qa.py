@@ -7,6 +7,7 @@ from typing import Any
 from legal_rag.application.ports import Conversation
 from legal_rag.application.workflows.generation import Generator
 from legal_rag.application.workflows.retrieval import RetrievalService
+from legal_rag.domain.clauses import DOCUMENT_ID_RE, parse_clause_request
 from legal_rag.domain.policies import is_greeting, screen_query
 from legal_rag.domain.query import normalize_document_query
 from legal_rag.infrastructure.observability import get_logger, get_metrics
@@ -75,7 +76,8 @@ class QaService:
                 "confidence": "high",
                 "out_of_scope": True,
             }
-        if self._conversation is not None and document_type is None:
+        if (self._conversation is not None and document_type is None
+                and parse_clause_request(query) is None and not DOCUMENT_ID_RE.search(query)):
             reply = self._conversation.reply_if_general(query)
             if reply:
                 _metrics.requests.inc(outcome="out_of_scope")

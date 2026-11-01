@@ -41,24 +41,16 @@ class Settings(BaseSettings):
     hybrid_enabled: bool = Field(default=True)
     rrf_k: int = Field(default=60, ge=1)
     min_relevant_score: float = Field(default=-6.5)
-    high_confidence_score: float = Field(default=3.0)
 
     # ── Models ───────────────────────────────────────────────────────────
     embedding_model: str = Field(default="sentence-transformers/all-MiniLM-L6-v2")
     rerank_model: str = Field(default="cross-encoder/ms-marco-MiniLM-L-6-v2")
 
     # ── LLM backend ──────────────────────────────────────────────────────
-    llm_provider: Literal["google", "openai", "groq", "extractive"] = Field(default="google")
-    google_api_key: SecretStr | None = Field(default=None, alias="GOOGLE_API_KEY")
-    google_model: str = Field(default="gemini-1.5-flash")
-    openai_api_key: SecretStr | None = Field(default=None, alias="OPENAI_API_KEY")
-    openai_model: str = Field(default="gpt-6-luna")
+    llm_provider: Literal["groq"] = Field(default="groq")
     groq_api_key: SecretStr | None = Field(default=None, alias="GROQ_API_KEY")
     groq_model: str = Field(default="openai/gpt-oss-20b")
-    openai_reasoning_effort: Literal["none", "low", "medium", "high"] = Field(default="none")
-    llm_base_url: str = Field(
-        default="https://generativelanguage.googleapis.com/v1beta/openai/"
-    )
+    llm_base_url: str = Field(default="https://api.groq.com/openai/v1")
     llm_temperature: float = Field(default=0.0, ge=0.0, le=2.0)
     llm_timeout_seconds: int = Field(default=30, ge=1, le=300)
     llm_max_retries: int = Field(default=3, ge=0, le=10)
@@ -122,37 +114,21 @@ class Settings(BaseSettings):
 
     # ── Convenience ──────────────────────────────────────────────────────
     @property
-    def google_api_key_value(self) -> str:
-        return self.google_api_key.get_secret_value() if self.google_api_key else ""
-
-    @property
     def api_key_value(self) -> str:
         return self.api_key.get_secret_value() if self.api_key else ""
 
     @property
     def llm_api_key(self) -> str:
-        """Credential for the selected provider."""
-        if self.llm_provider == "openai":
-            return self.openai_api_key.get_secret_value() if self.openai_api_key else ""
-        if self.llm_provider == "groq":
-            return self.groq_api_key.get_secret_value() if self.groq_api_key else ""
-        return self.google_api_key_value
+        """Credential for Groq."""
+        return self.groq_api_key.get_secret_value() if self.groq_api_key else ""
 
     @property
     def llm_model(self) -> str:
-        """Model for the selected provider."""
-        if self.llm_provider == "openai":
-            return self.openai_model
-        if self.llm_provider == "groq":
-            return self.groq_model
-        return self.google_model
+        """Configured Groq model."""
+        return self.groq_model
 
     @property
     def effective_llm_base_url(self) -> str:
-        if self.llm_provider == "groq" and "llm_base_url" not in self.model_fields_set:
-            return "https://api.groq.com/openai/v1"
-        if self.llm_provider == "openai" and "llm_base_url" not in self.model_fields_set:
-            return "https://api.openai.com/v1"
         return self.llm_base_url
 
 

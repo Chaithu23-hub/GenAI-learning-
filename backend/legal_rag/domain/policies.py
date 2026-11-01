@@ -159,12 +159,22 @@ _LEGAL_NUM_RE = re.compile(
 )
 
 
+QUOTATION_RE = re.compile(r'"([^"]+)"|“([^”]+)”')
+
+
 def normalize_legal_numbers(text: str) -> str:
-    """Render legal duration notation as plain numbers in answer prose."""
+    """Render legal duration notation as plain numbers outside exact quotations."""
     def repl(m: re.Match) -> str:
         return f"{m.group(2)} {m.group(3)}"
 
-    return _LEGAL_NUM_RE.sub(repl, text)
+    parts: list[str] = []
+    end = 0
+    for quotation in QUOTATION_RE.finditer(text):
+        parts.append(_LEGAL_NUM_RE.sub(repl, text[end:quotation.start()]))
+        parts.append(quotation.group())
+        end = quotation.end()
+    parts.append(_LEGAL_NUM_RE.sub(repl, text[end:]))
+    return "".join(parts)
 
 
 def apply_completeness_adjustment(payload: dict[str, Any], question: str) -> dict[str, Any]:

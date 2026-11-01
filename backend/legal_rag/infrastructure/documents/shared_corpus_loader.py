@@ -37,6 +37,7 @@ class LoadedDocument:
     text: str
     metadata: dict[str, Any]
     table_count: int
+    pages: tuple[str, ...] = ()
 
     def to_entity(self) -> Document:
         document_type = (
@@ -47,6 +48,7 @@ class LoadedDocument:
             text=self.text,
             document_type=document_type,
             metadata=self.metadata,
+            pages=self.pages,
         )
 
 
@@ -117,31 +119,36 @@ def _read_docx(path: Path) -> tuple[str, int]:
     return "\n".join(parts), table_count
 
 
-def _read_pdf(path: Path) -> tuple[str, int]:
+def _read_pdf(path: Path) -> tuple[str, int, tuple[str, ...]]:
     try:
         import pdfplumber
     except ImportError as exc:
         raise DocumentSourceError("pdfplumber is required to load .pdf files") from exc
 
     parts: list[str] = []
+    pages: list[str] = []
     table_count = 0
     with pdfplumber.open(str(path)) as pdf:
         for page in pdf.pages:
+            page_parts: list[str] = []
             tables = page.extract_tables() or []
             body = page
             if tables:
                 for table in page.find_tables():
                     body = body.outside_bbox(table.bbox)
-            parts.append(body.extract_text() or "")
+            page_parts.append(body.extract_text() or "")
             for table in tables:
                 rows = [
                     [cell.strip().replace("\n", " ") if cell else "" for cell in row]
                     for row in table if row
                 ]
                 if len(rows) >= 2:
-                    parts.append(_flatten_table(rows[0], rows[1:]))
+                    page_parts.append(_flatten_table(rows[0], rows[1:]))
                     table_count += 1
-    return "\n".join(parts), table_count
+            page_text = "\n".join(page_parts)
+            pages.append(page_text)
+            parts.append(page_text)
+    return "\n".join(parts), table_count, tuple(pages)
 
 
 def _extract_metadata(text: str, path: Path) -> dict[str, Any]:
@@ -212,6 +219,8 @@ def _extract_metadata(text: str, path: Path) -> dict[str, Any]:
         "status": status,
         "is_controlling": "CURRENT" in status.upper() or "CONTROLLING" in status.upper(),
         "amends": amends_doc,
+        "document_name": title,
+        "document_version": grab("Document Version") or "unknown",
     }
     metadata["source_doc"] = metadata["source_doc"] or "unknown"
     metadata["counterparty"] = metadata["counterparty"] or "Unknown"
@@ -230,7 +239,11 @@ def load_document(path: str | Path) -> LoadedDocument:
     suffix = source_path.suffix.lower()
     if suffix not in readers:
         raise DocumentSourceError(f"unsupported document format: {suffix}")
-    text, table_count = readers[suffix](source_path)
+    pages: tuple[str, ...] = ()
+    if suffix == ".pdf":
+        text, table_count, pages = _read_pdf(source_path)
+    else:
+        text, table_count = readers[suffix](source_path)
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n{3,}", "\n\n", text).strip()
     metadata = _extract_metadata(text, source_path)
@@ -238,7 +251,7 @@ def load_document(path: str | Path) -> LoadedDocument:
         raise DocumentSourceError(
             "schedule document produced no tables; refusing ingestion because schedule facts would be lost"
         )
-    return LoadedDocument(source_path, text, metadata, table_count)
+    return LoadedDocument(source_path, text, metadata, table_count, pages)
 
 
 class SharedCorpusDocumentSource:
@@ -270,6 +283,3 @@ class SharedCorpusDocumentSource:
         target = self._docs_dir / name
         target.write_text(text, encoding="utf-8")
         return target
-
-
-MarkdownDocumentSource = SharedCorpusDocumentSource

@@ -8,7 +8,6 @@ from legal_rag.application.agents.legal_agent import AgentBudgets
 from legal_rag.application.agents.orchestrator import OrchestratorSettings
 from legal_rag.application.workflows import (
     EvaluationService,
-    ExtractiveGenerator,
     IngestionService,
     JudgeService,
     LLMGenerator,
@@ -24,7 +23,8 @@ from legal_rag.application.workflows.retrieval import RetrievalSettings
 from legal_rag.infrastructure.chunking.section_chunker import SectionChunker
 from legal_rag.infrastructure.documents.shared_corpus_loader import SharedCorpusDocumentSource
 from legal_rag.infrastructure.embeddings import CrossEncoderReranker, SentenceTransformerEmbedder
-from legal_rag.infrastructure.llm import OpenAICompatibleClient, select_llm_model
+from legal_rag.infrastructure.errors import PermanentLLMError
+from legal_rag.infrastructure.llm import GroqClient
 from legal_rag.infrastructure.llm.conversation import LLMConversation
 from legal_rag.infrastructure.settings import Settings, get_settings
 from legal_rag.infrastructure.vector_store import ChromaVectorStore
@@ -54,15 +54,14 @@ class Container:
         return CrossEncoderReranker(self._settings.rerank_model)
 
     @cached_property
-    def llm_client(self) -> OpenAICompatibleClient | None:
+    def llm_client(self) -> GroqClient:
         s = self._settings
-        if s.llm_provider == "extractive" or not s.llm_api_key:
-            return None
-        return OpenAICompatibleClient(
+        if not s.llm_api_key:
+            raise PermanentLLMError(f"An API key is required for the {s.llm_provider} LLM provider.")
+        return GroqClient(
             base_url=s.effective_llm_base_url,
             api_key=s.llm_api_key,
             model=s.llm_model,
-            reasoning_effort=s.openai_reasoning_effort if s.llm_provider == "openai" else None,
             timeout=s.llm_timeout_seconds,
             max_retries=s.llm_max_retries,
         )
@@ -99,41 +98,23 @@ class Container:
     def _generation_settings(self) -> GenerationSettings:
         return GenerationSettings(
             min_relevant_score=self._settings.min_relevant_score,
-            high_confidence_score=self._settings.high_confidence_score,
             out_of_scope_answer=self._settings.out_of_scope_answer,
             llm_temperature=self._settings.llm_temperature,
         )
 
     @cached_property
-    def extractive_generator(self) -> ExtractiveGenerator:
-        return ExtractiveGenerator(
-            retrieval=self.retrieval_service, settings=self._generation_settings,
-        )
-
-    @cached_property
     def generator(self) -> Generator:
-        if self.llm_client is None:
-            return self.extractive_generator
-        # Probe for available model; fall back to extractive if endpoint is unreachable.
-        # OpenAI model lists include embeddings and other non-chat models. Keep
-        # the explicitly configured model and let chat report access errors.
-        detected = (
-            self.llm_client.model if self._settings.llm_provider in {"openai", "groq"}
-            else select_llm_model(self.llm_client)
-        )
-        if detected is None:
-            return self.extractive_generator
+        # Use the configured model. Provider/access failures propagate to the interface.
         return LLMGenerator(
             retrieval=self.retrieval_service,
             vector_store=self.vector_store,
             llm=self.llm_client,
             settings=self._generation_settings,
-            fallback=self.extractive_generator,
         )
 
     @cached_property
-    def conversation(self) -> LLMConversation | None:
-        return LLMConversation(self.llm_client) if self.llm_client is not None else None
+    def conversation(self) -> LLMConversation:
+        return LLMConversation(self.llm_client)
 
     @cached_property
     def qa_service(self) -> QaService:
@@ -178,7 +159,7 @@ class Container:
         return Orchestrator(
             retrieval=self.retrieval_service,
             vector_store=self.vector_store,
-            extractive_generator=self.extractive_generator,
+            generator=self.generator,
             settings=OrchestratorSettings(
                 worker_retries=self._settings.orchestrator_worker_retries,
                 chars_per_token=self._settings.chars_per_token,

@@ -66,7 +66,7 @@ class Reranker(Protocol):
 
 @runtime_checkable
 class LLMClient(Protocol):
-    """Minimal OpenAI-shaped chat + tool client."""
+    """Normalized chat and tool client, independent of the provider SDK."""
 
     def chat(
         self,
@@ -83,10 +83,6 @@ class LLMClient(Protocol):
               "usage": {"prompt_tokens": int, "completion_tokens": int, "total_tokens": int},
             }
         """
-
-    def list_models(self) -> list[str]:
-        """Return the available model ids, or an empty list if unknown."""
-
 
 class Conversation(Protocol):
     def reply_if_general(self, query: str) -> str | None:

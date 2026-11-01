@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from legal_rag.application.ports import Embedder, Reranker, VectorStore
+from legal_rag.domain.clauses import DOCUMENT_ID_RE
 from legal_rag.domain.entities import RetrievedChunk
 from legal_rag.infrastructure.observability.logging import get_logger
 from legal_rag.infrastructure.retrieval import reciprocal_rank_fusion
@@ -46,6 +47,13 @@ class RetrievalService:
         where: dict[str, Any] | None = None,
         hybrid: bool | None = None,
     ) -> list[RetrievedChunk]:
+        # A document ID is a constraint even when a caller bypasses QaService.
+        documents = {match.group().upper() for match in DOCUMENT_ID_RE.finditer(query)}
+        if len(documents) == 1:
+            document = next(iter(documents))
+            if where and where.get("source_doc", document) != document:
+                return []
+            where = {**(where or {}), "source_doc": document}
         k = k or self._settings.top_k_candidates
         n = n or self._settings.top_n_answers
         hybrid = self._settings.hybrid_enabled if hybrid is None else hybrid
@@ -60,6 +68,7 @@ class RetrievalService:
                 heading=meta["heading"],
                 text=text,
                 distance=dist,
+                metadata=dict(meta),
             )
             for chunk_id, text, meta, dist in zip(
                 raw["ids"][0],
@@ -83,6 +92,7 @@ class RetrievalService:
                     heading=hit["metadata"]["heading"],
                     text=hit["document"],
                     distance=1.0,
+                    metadata=dict(hit["metadata"]),
                 ))
 
         rrf_scores = reciprocal_rank_fusion(*ranked_lists, rrf_k=self._settings.rrf_k)
@@ -131,9 +141,9 @@ class RetrievalService:
         matching = {value for name, value in counterparties.items() if name in q}
         if len(matching) == 1:
             where["counterparty"] = next(iter(matching))
-        source_doc = re.search(r"\b[A-Z]{2,4}-\d{4}-\d{3}(?:-\d{2})?\b", query)
-        if source_doc:
-            where["source_doc"] = source_doc.group(0)
+        source_docs = {m.group().upper() for m in DOCUMENT_ID_RE.finditer(query)}
+        if len(source_docs) == 1:
+            where["source_doc"] = next(iter(source_docs))
         effective_date = re.search(r"\b20\d{2}-\d{2}-\d{2}\b", query)
         if effective_date:
             where["effective_date"] = effective_date.group(0)

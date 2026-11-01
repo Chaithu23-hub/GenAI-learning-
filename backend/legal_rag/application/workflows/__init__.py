@@ -2,7 +2,6 @@ from .evaluation import EVALUATION_CASES, EvaluationCase, EvaluationService
 from .generation import (
     RETRIEVE_TOOL,
     SYSTEM_PROMPT,
-    ExtractiveGenerator,
     GenerationSettings,
     Generator,
     LLMGenerator,
@@ -27,7 +26,7 @@ from .retrieval import RetrievalService, RetrievalSettings
 
 __all__ = [
     "EVALUATION_CASES", "EvaluationCase", "EvaluationService",
-    "ExtractiveGenerator", "GenerationSettings", "Generator", "LLMGenerator",
+    "GenerationSettings", "Generator", "LLMGenerator",
     "RETRIEVE_TOOL", "SYSTEM_PROMPT", "chunks_payload",
     "IngestionService", "IngestionSettings",
     "DETERMINISTIC_ASSERTION_COUNT", "JUDGED_CRITERION_COUNT",

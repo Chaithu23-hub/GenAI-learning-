@@ -2,7 +2,6 @@
 import re
 from difflib import SequenceMatcher, get_close_matches
 
-
 _TERMS = (
     "available", "amendment", "amendments", "agreement", "agreements",
     "contract", "contracts", "termination", "confidentiality", "liability",
