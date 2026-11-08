@@ -27,6 +27,11 @@ class TestPromptTemplate:
 class TestRegistry:
     def test_all_expected_prompts_present(self):
         expected = {
+            "qa.evidence_review",
+            "conversation.route",
+            "conversation.greeting",
+            "unsupported.reply",
+            "qa.out_of_scope",
             "qa.system",
             "orchestrator.planner",
             "orchestrator.defined_terms",
@@ -38,7 +43,7 @@ class TestRegistry:
 
     def test_snapshot_returns_pinned_versions(self):
         snap = snapshot()
-        assert snap["qa.system"] == "v4"
+        assert snap["qa.system"] == "v5"
         assert snap["judge.system"] == "v1"
 
     def test_get_unknown_raises(self):

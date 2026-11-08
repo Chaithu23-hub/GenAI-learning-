@@ -5,8 +5,9 @@ from __future__ import annotations
 import pytest
 
 from legal_rag.application.agents.legal_agent import AgentBudgets
-from legal_rag.application.agents.orchestrator import _governing_effective_date
+from legal_rag.application.agents.orchestrator import Orchestrator, OrchestratorSettings
 from legal_rag.application.workflows.judge import effective_dates_are_parseable
+from tests.fakes.vector_store import InMemoryVectorStore
 
 
 class TestFixedWorkflowTinyBudget:
@@ -49,18 +50,47 @@ class TestEffectiveDateStrict:
         assert effective_dates_are_parseable({"answer": "Effective Jan 14, 2021."})
 
 
-class TestGoverningEffectiveDateNotCached:
-    def test_corpus_change_is_reflected(self, tmp_path):
-        docs = tmp_path / "docs"
-        docs.mkdir()
-        (docs / "a.md").write_text("effective as of 2020-01-01\n", encoding="utf-8")
-        first = _governing_effective_date(docs)
-        assert first == "2020-01-01"
+class TestGoverningEffectiveDateUsesScopedIndex:
+    def test_scoped_index_metadata_updates_are_reflected_without_filesystem(self):
+        from pathlib import Path
+        from types import SimpleNamespace
 
-        # Add a newer date; the function must see it.
-        (docs / "b.md").write_text("effective as of 2025-06-01\n", encoding="utf-8")
-        second = _governing_effective_date(docs)
-        assert second == "2025-06-01"
+        store = InMemoryVectorStore()
+        store._ids.extend(["msa::001", "other::001"])
+        store._documents.extend(["text", "text"])
+        store._metadatas.extend(
+            [
+                {
+                    "document": "msa.md",
+                    "source_doc": "MSA-2026-014",
+                    "effective_date": "2020-01-01",
+                },
+                {
+                    "document": "other.md",
+                    "source_doc": "MSA-2026-015",
+                    "effective_date": "1990-01-01",
+                },
+            ]
+        )
+        store._embeddings.extend([[0.0], [0.0]])
+        retrieval = SimpleNamespace(
+            detect_metadata_filter=lambda query: (
+                {"source_doc": "MSA-2026-014"} if "MSA-2026-014" in query else None
+            )
+        )
+        orchestrator = Orchestrator(
+            retrieval=retrieval,
+            vector_store=store,
+            generator=None,
+            settings=OrchestratorSettings(0, 4, 0.0, "refused", "unsupported", Path("unused")),
+        )
+
+        query = "What does Effective Date mean for MSA-2026-014?"
+        assert orchestrator.plan(query)["effective_date"] == "2020-01-01"
+
+        store._metadatas[0]["effective_date"] = "2025-06-01"
+        assert orchestrator.plan(query)["effective_date"] == "2025-06-01"
+        assert orchestrator.plan("What is the effective date?")["effective_date"] == ""
 
 
 class TestQaOutcomeLabels:

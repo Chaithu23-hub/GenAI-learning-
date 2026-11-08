@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from pathlib import Path
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Literal, Protocol, runtime_checkable
 
 from legal_rag.domain.entities import Chunk, Document, IndexedChunk
 
@@ -89,9 +89,23 @@ class LLMClient(Protocol):
         """
 
 
+ConversationIntent = Literal["social", "documents", "unsupported"]
+
+
 class Conversation(Protocol):
-    def reply_if_general(self, query: str) -> str | None:
-        """Answer general conversation; return None when document retrieval is needed."""
+    def classify(self, query: str) -> ConversationIntent:
+        """Infer conversational intent with the LLM; uncertainty must retain document QA."""
+
+    def reply(self, query: str) -> str:
+        """Generate a fresh conversational reply without retrieving documents."""
+
+
+UnsupportedReason = Literal["outside_document_qa", "insufficient_evidence"]
+
+
+class UnsupportedResponses(Protocol):
+    def reply(self, reason: UnsupportedReason) -> str:
+        """Generate a fresh refusal from a controlled reason, without document context."""
 
 
 # ─── Documents ────────────────────────────────────────────────────────────
@@ -104,6 +118,9 @@ class DocumentSource(Protocol):
 
     def write_document(self, name: str, text: str) -> Path:
         """Persist a new source document; return its path."""
+
+    def write_documents(self, documents: list[tuple[str, str]]) -> list[Path]:
+        """Create an upload batch exclusively; roll back new files on failure."""
 
 
 class PDFTextExtractor(Protocol):
@@ -131,6 +148,19 @@ class Chunker(Protocol):
 class MCPHostPort(Protocol):
     async def discover(self) -> dict[str, list[str]]: ...
     async def call(self, server: str, tool: str, arguments: dict[str, Any]) -> dict[str, Any]: ...
+
+
+class ContractLookup(Protocol):
+    def lookup_contract(self, contract_id: str) -> dict[str, Any]:
+        """Perform a bounded contract lookup through the configured MCP transport."""
+
+
+class EvaluationFiles(Protocol):
+    def read_labels(self) -> bytes:
+        """Read the configured evaluation fixture without exposing filesystem details."""
+
+    def write_artifact(self, name: str, text: str) -> None:
+        """Persist a local evaluation artifact under its configured directory."""
 
 
 # ─── Clock ────────────────────────────────────────────────────────────────

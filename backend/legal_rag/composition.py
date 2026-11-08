@@ -27,9 +27,13 @@ from legal_rag.infrastructure.documents.pdf_loader import IsolatedPDFTextExtract
 from legal_rag.infrastructure.documents.shared_corpus_loader import SharedCorpusDocumentSource
 from legal_rag.infrastructure.embeddings import CrossEncoderReranker, SentenceTransformerEmbedder
 from legal_rag.infrastructure.errors import PermanentLLMError
+from legal_rag.infrastructure.evaluation_files import FilesystemEvaluationFiles
 from legal_rag.infrastructure.execution import BoundedWorkExecutor
 from legal_rag.infrastructure.llm import GroqClient
 from legal_rag.infrastructure.llm.conversation import LLMConversation
+from legal_rag.infrastructure.llm.evidence_review import EvidenceReviewClient
+from legal_rag.infrastructure.llm.unsupported import LLMUnsupportedResponses
+from legal_rag.infrastructure.mcp.stdio_host import StdioContractLookup
 from legal_rag.infrastructure.settings import Settings, get_settings
 from legal_rag.infrastructure.vector_store import ChromaVectorStore
 
@@ -135,13 +139,21 @@ class Container:
         return LLMGenerator(
             retrieval=self.retrieval_service,
             vector_store=self.vector_store,
-            llm=self.llm_client,
+            llm=EvidenceReviewClient(self.llm_client),
             settings=self._generation_settings,
         )
 
     @cached_property
     def conversation(self) -> LLMConversation:
-        return LLMConversation(self.llm_client)
+        return LLMConversation(
+            self.llm_client, greeting_temperature=self._settings.greeting_temperature
+        )
+
+    @cached_property
+    def unsupported_responses(self) -> LLMUnsupportedResponses:
+        return LLMUnsupportedResponses(
+            self.llm_client, temperature=self._settings.unsupported_response_temperature
+        )
 
     @cached_property
     def qa_service(self) -> QaService:
@@ -152,6 +164,7 @@ class Container:
             no_drafting_answer=self._settings.no_drafting_answer,
             out_of_scope_answer=self._settings.out_of_scope_answer,
             conversation=self.conversation,
+            unsupported_responses=self.unsupported_responses,
         )
 
     @cached_property
@@ -201,12 +214,19 @@ class Container:
         )
 
     @cached_property
+    def evaluation_files(self) -> FilesystemEvaluationFiles:
+        return FilesystemEvaluationFiles(
+            self._settings.evaluation_labels_path, self._settings.evaluation_artifact_dir
+        )
+
+    @cached_property
     def judge_service(self) -> JudgeService:
         labels_path = self._settings.evaluation_labels_path
         return JudgeService(
             vector_store=self.vector_store,
             llm=self.llm_client,
             settings=JudgeSettings(labels_path=labels_path),
+            evaluation_files=self.evaluation_files,
         )
 
     @cached_property
@@ -233,6 +253,7 @@ class Container:
             cost_per_token_usd=self._settings.agent_cost_per_token_usd,
             chars_per_token=self._settings.chars_per_token,
             artifact_dir=artifact_dir,
+            evaluation_files=self.evaluation_files,
         )
 
     @cached_property
@@ -246,4 +267,8 @@ class Container:
 
     @cached_property
     def mcp_lookup_service(self) -> MCPLookupService:
-        return MCPLookupService(mcp_config_path=self._settings.mcp_config_path)
+        return MCPLookupService(
+            lookup=StdioContractLookup(
+                self._settings.mcp_config_path, timeout_seconds=self._settings.mcp_timeout_seconds
+            )
+        )

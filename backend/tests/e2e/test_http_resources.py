@@ -143,6 +143,55 @@ def test_existing_document_cannot_be_overwritten(container):
     ) == original
 
 
+@pytest.mark.parametrize("second", ["master_services_agreement.pdf", "new.pdf"])
+def test_failed_upload_batch_does_not_leave_partial_documents(container, second):
+    container.pdf_extractor = FakePDFTextExtractor(text="Synthetic document")
+    original_names = set(container.settings.docs_dir.iterdir())
+    original_index = container.vector_store.get_all()
+    response = make_client(container).post(
+        "/api/upload",
+        headers={"X-API-Key": "test-admin-key"},
+        files=[
+            ("files", ("new.pdf", b"pdf", "application/pdf")),
+            ("files", (second, b"pdf", "application/pdf")),
+        ],
+    )
+    assert response.status_code == 409
+    assert set(container.settings.docs_dir.iterdir()) == original_names
+    assert container.vector_store.get_all() == original_index
+
+
+def test_upload_batch_rolls_back_after_later_write_failure(container, monkeypatch):
+    from pathlib import Path
+
+    container.pdf_extractor = FakePDFTextExtractor(text="Synthetic document")
+    original_open = Path.open
+
+    def fail_second(path, *args, **kwargs):
+        if path.name == "second.md" and args and args[0] == "x":
+            raise OSError("Synthetic disk failure")
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", fail_second)
+    response = make_client(container).post(
+        "/api/upload?auto_ingest=false",
+        headers={"X-API-Key": "test-admin-key"},
+        files=[
+            ("files", ("first.pdf", b"pdf", "application/pdf")),
+            ("files", ("second.pdf", b"pdf", "application/pdf")),
+        ],
+    )
+    assert response.status_code == 404
+    assert not (container.settings.docs_dir / "first.md").exists()
+
+
+def test_auth_problem_preserves_content_type_and_challenge(container):
+    response = make_client(container).post("/api/ingest")
+    assert response.status_code == 401
+    assert response.headers["content-type"].startswith("application/problem+json")
+    assert response.headers["www-authenticate"] == "ApiKey"
+
+
 def test_http_timeout_retains_capacity_and_liveness(container):
     entered, release = Event(), Event()
 

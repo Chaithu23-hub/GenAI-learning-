@@ -9,8 +9,18 @@ from legal_rag.domain.entities import RetrievedChunk
 
 DOCUMENT_ID_RE = re.compile(r"\b[A-Z]{2,4}-\d{4}-\d{3}(?:-\d{2})?\b", re.IGNORECASE)
 _NUMBER = r"\d+(?:\.\d+)*(?:\([a-zA-Z0-9]+\))*"
+_RANGE = re.compile(
+    rf"(?P<start>{_NUMBER})\s*(?P<separator>-|\u2013|\u2014|\bto\b)\s*(?P<end>{_NUMBER})",
+    re.IGNORECASE,
+)
+_INVALID_RANGE_REFERENCE = "__invalid_clause_range__"
+_CHAINED_RANGE = re.compile(
+    rf"{_NUMBER}\s*(?:-|\u2013|\u2014|\bto\b)\s*{_NUMBER}"
+    rf"\s*(?:-|\u2013|\u2014|\bto\b)\s*{_NUMBER}",
+    re.IGNORECASE,
+)
 _QUERY_RE = re.compile(
-    rf"\b(?:clauses?|sections?|articles?)\s+({_NUMBER}(?:(?:\s*,\s*|\s+and\s+|\s*&\s*){_NUMBER})*)",
+    rf"\b(?:clauses?|sections?|articles?)\s+({_NUMBER}(?:(?:\s*(?:-|\u2013|\u2014|\bto\b)\s*|\s*,\s*|\s+and\s+|\s*&\s*){_NUMBER})*)",
     re.IGNORECASE,
 )
 # Only a definition at a line boundary counts. A cross-reference in prose does not.
@@ -25,21 +35,55 @@ _DEFINITION_RE = re.compile(
 class ClauseRequest:
     numbers: tuple[str, ...]
     documents: tuple[str, ...]
+    valid: bool = True
 
 
 def parse_clause_request(query: str) -> ClauseRequest | None:
-    numbers = tuple(
-        dict.fromkeys(
-            number.lower()
-            for match in _QUERY_RE.finditer(query)
-            for number in re.findall(_NUMBER, match.group(1))
-        )
-    )
-    if not numbers:
+    matches = list(_QUERY_RE.finditer(query))
+    if not matches:
         return None
+    numbers: list[str] = []
+    valid = True
+    for match in matches:
+        expression = match.group(1)
+        if _CHAINED_RANGE.search(expression):
+            valid = False
+        cursor = 0
+        for range_match in _RANGE.finditer(expression):
+            # Add standalone references before this range.
+            numbers.extend(
+                value.lower()
+                for value in re.findall(_NUMBER, expression[cursor : range_match.start()])
+            )
+            start, end = range_match.group("start"), range_match.group("end")
+            start_parts, end_parts = start.split("."), end.split(".")
+            if (
+                "(" in start
+                or "(" in end
+                or len(start_parts) != len(end_parts)
+                or start_parts[:-1] != end_parts[:-1]
+                or int(end_parts[-1]) < int(start_parts[-1])
+                or int(end_parts[-1]) - int(start_parts[-1]) > 99
+            ):
+                valid = False
+            else:
+                numbers.extend(
+                    ".".join([*start_parts[:-1], str(value)])
+                    for value in range(int(start_parts[-1]), int(end_parts[-1]) + 1)
+                )
+            cursor = range_match.end()
+        numbers.extend(value.lower() for value in re.findall(_NUMBER, expression[cursor:]))
+    numbers = list(dict.fromkeys(numbers))
+    if len(numbers) > 100:
+        valid = False
+    if not valid:
+        # Existing answer validators require every parsed reference to resolve
+        # against evidence. This sentinel makes unsupported input fail closed.
+        numbers.append(_INVALID_RANGE_REFERENCE)
     return ClauseRequest(
-        numbers,
+        tuple(numbers),
         tuple(dict.fromkeys(match.group().upper() for match in DOCUMENT_ID_RE.finditer(query))),
+        valid,
     )
 
 

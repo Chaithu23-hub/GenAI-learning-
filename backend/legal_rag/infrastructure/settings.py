@@ -57,8 +57,11 @@ class Settings(BaseSettings):
     groq_model: str = Field(default="openai/gpt-oss-20b")
     llm_base_url: str = Field(default="https://api.groq.com/openai/v1")
     llm_temperature: float = Field(default=0.0, ge=0.0, le=2.0)
+    greeting_temperature: float = Field(default=0.8, gt=0.0, le=2.0)
+    unsupported_response_temperature: float = Field(default=0.7, gt=0.0, le=2.0)
     llm_timeout_seconds: int = Field(default=30, ge=1, le=300)
     llm_max_retries: int = Field(default=3, ge=0, le=10)
+    mcp_timeout_seconds: float = Field(default=30.0, gt=0.0, le=300.0)
 
     # ── Agent budgets ────────────────────────────────────────────────────
     agent_max_steps: int = Field(default=4, ge=1, le=50)

@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import json
 import re
-from collections import defaultdict
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from legal_rag.application.ports import LLMClient, VectorStore
+from legal_rag.application.ports import EvaluationFiles, LLMClient, VectorStore
+from legal_rag.domain.clauses import parse_clause_request
 from legal_rag.infrastructure.prompts import JUDGE_SYSTEM_PROMPT, JUDGE_USER_TEMPLATE
 
 # ─── Deterministic assertions ─────────────────────────────────────────────
@@ -36,7 +37,14 @@ def _source_text(answer: dict[str, Any], retrieved_sources: list[Any]) -> str:
 
 def clause_references_exist(answer: dict[str, Any], retrieved_sources: list[Any]) -> bool:
     text = _source_text(answer, retrieved_sources)
-    return all(ref in text for ref in _CLAUSE_REFERENCE.findall(answer.get("answer", "")))
+    answer_text = answer.get("answer", "")
+    request = parse_clause_request(answer_text)
+    if request and not request.valid:
+        return False
+    references = set(_CLAUSE_REFERENCE.findall(answer_text))
+    if request:
+        references.update(request.numbers)
+    return all(re.search(rf"(?<![\w.]){re.escape(ref)}(?!\w|\.\d)", text) for ref in references)
 
 
 def effective_dates_are_parseable(answer: dict[str, Any]) -> bool:
@@ -136,7 +144,6 @@ def _content_words(text: str) -> set[str]:
 @dataclass
 class JudgeSettings:
     labels_path: Path
-    v1_disagreement_ids: frozenset[int] = frozenset({10, 21})
 
 
 class JudgeService:
@@ -149,10 +156,12 @@ class JudgeService:
         vector_store: VectorStore,
         llm: LLMClient | None,
         settings: JudgeSettings,
+        evaluation_files: EvaluationFiles | None = None,
     ):
         self._vector_store = vector_store
         self._llm = llm
         self._settings = settings
+        self._evaluation_files = evaluation_files
 
     # ── Race judge (offline, deterministic) ───────────────────────────
     def judge_answer(self, question: str, answer: dict[str, Any]) -> dict[str, Any]:
@@ -165,12 +174,26 @@ class JudgeService:
         return {"passed": all(checks.values()), "checks": checks}
 
     def _verify_all_sources(self, answer: dict[str, Any]) -> bool:
+        stored = self._vector_store.get_all()
+        records = {
+            chunk_id: (text, metadata or {})
+            for chunk_id, text, metadata in zip(
+                stored.get("ids", []),
+                stored.get("documents", []),
+                stored.get("metadatas", []),
+                strict=False,
+            )
+        }
         for source in answer.get("sources", []):
-            stored = self._vector_store.get_document_text(source["chunk_id"])
-            if stored is None:
+            record = records.get(source.get("chunk_id"))
+            if record is None:
                 return False
+            stored_text, metadata = record
             excerpt = source.get("excerpt", "").strip()
-            if excerpt and excerpt not in stored:
+            if not excerpt or excerpt not in stored_text:
+                return False
+            stored_document = metadata.get("document")
+            if not stored_document or source.get("document") != stored_document:
                 return False
         return True
 
@@ -257,65 +280,29 @@ class JudgeService:
 
     # ── Week 6 judge-validation report ────────────────────────────────
     def load_labels(self) -> list[dict[str, Any]]:
-        payload = json.loads(self._settings.labels_path.read_text(encoding="utf-8"))
+        if self._evaluation_files is None:
+            raise RuntimeError("evaluation files port is required to load judge labels")
+        payload = json.loads(self._evaluation_files.read_labels())
         labels = payload["labels"]
         if len(labels) < 25:
             raise ValueError("judge validation requires at least 25 hand-labeled cases")
         return labels
 
-    def _judge_v1(self, label: dict[str, Any]) -> bool:
-        if label["id"] in self._settings.v1_disagreement_ids:
-            return True
-        return label["human_label"]
-
-    def _judge_v2(self, label: dict[str, Any]) -> bool:
-        return label["human_label"]
-
     @staticmethod
-    def _agreement(labels: list[dict[str, Any]], judge) -> float:
-        return sum(judge(label) == label["human_label"] for label in labels) / len(labels)
-
-    @staticmethod
-    def _pass_rate_by_mode(labels: list[dict[str, Any]]) -> dict[str, float]:
-        grouped = defaultdict(list)
+    def _human_label_distribution(labels: list[dict[str, Any]]) -> dict[str, dict[str, int]]:
+        grouped: dict[str, Counter[str]] = defaultdict(Counter)
         for label in labels:
-            grouped[label["mode"]].append(label["human_label"])
-        return {mode: sum(v) / len(v) for mode, v in sorted(grouped.items())}
+            value = label.get("human_label")
+            label_value = str(value).lower() if isinstance(value, bool) else "unknown"
+            grouped[str(label.get("mode", "unknown"))][label_value] += 1
+        return {mode: dict(sorted(counts.items())) for mode, counts in sorted(grouped.items())}
 
     def build_report(self) -> dict[str, Any]:
         labels = self.load_labels()
-        before = self._agreement(labels, self._judge_v1)
-        after = self._agreement(labels, self._judge_v2)
         return {
             "cases": len(labels),
-            "pass_rate_by_mode": self._pass_rate_by_mode(labels),
-            "agreement_before": before,
-            "agreement_after": after,
-            "assertion_count": DETERMINISTIC_ASSERTION_COUNT,
-            "judged_criterion_count": JUDGED_CRITERION_COUNT,
-            "deterministic_assertions": [
-                "every cited clause reference exists in retrieved text",
-                "effective dates are parseable",
-                "notice-period figures are numeric",
-            ],
-            "regression_cases": [24, 25],
-            "prediction": (
-                "The iteration would reduce over-crediting shallow term mentions "
-                "and incomplete amendment summaries."
-            ),
-            "prediction_result": (
-                "Correct: cases 10 and 21 were the two v1 disagreements and both were corrected."
-            ),
-            "disagreements": [
-                {
-                    "case_id": 10,
-                    "human_was_right": True,
-                    "reason": "A term mention without an explanation is not useful.",
-                },
-                {
-                    "case_id": 21,
-                    "human_was_right": True,
-                    "reason": "Naming amendments without their distinct effects is incomplete.",
-                },
-            ],
+            "status": "not_evaluated",
+            "human_label_distribution_by_mode": self._human_label_distribution(labels),
+            "agreement_before": None,
+            "agreement_after": None,
         }

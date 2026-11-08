@@ -1,4 +1,4 @@
-"""Greetings use the configured LLM adapter, without retrieving legal documents."""
+"""Social replies use model classification and fresh generated wording."""
 
 import json
 
@@ -16,7 +16,7 @@ from tests.fakes.fake_llm import FakeLLMClient
 
 class NoRetrieval:
     def __getattr__(self, name):
-        raise AssertionError(f"Greeting unexpectedly called retrieval/generation: {name}")
+        raise AssertionError(f"Social reply unexpectedly called retrieval/generation: {name}")
 
 
 def service(llm):
@@ -31,42 +31,62 @@ def service(llm):
 
 
 @pytest.mark.parametrize(
-    "query", ["Hello", "Hi!", "Hey there", "Good morning!", "GOOD AFTERNOON", "Good evening"]
+    "query", ["Hello", "Hi!", "Hii", "Helllo", "Heeelllooo", "Heyyy", "Good morning!"]
 )
-def test_greeting_returns_llm_answer_without_retrieval(query):
+def test_model_classifies_informal_social_variants_and_reply_skips_retrieval(query):
     expected = "A distinctive model-generated welcome."
     llm = FakeLLMClient(
-        responses=[{"content": json.dumps({"route": "general", "answer": expected})}]
+        responses=[{"content": '{"route":"social"}'}, {"content": json.dumps({"answer": expected})}]
     )
     result = service(llm).answer(query)
     assert result["answer"] == expected
     assert result["sources"] == []
-    assert result["confidence"] == "high"
     assert result["out_of_scope"] is False
-    assert len(llm.calls) == 1
-    assert llm.calls[0]["messages"][-1] == {"role": "user", "content": query}
-    assert llm.calls[0]["tools"] is None
+    assert len(llm.calls) == 2
+    assert [call["messages"][-1]["content"] for call in llm.calls] == [query, query]
+    assert [call["temperature"] for call in llm.calls] == [0.0, 0.8]
 
 
-def test_repeated_greetings_each_call_llm_instead_of_reusing_static_text():
+def test_non_english_social_route_is_trusted_as_model_decision():
+    query = "Hola, ¿cómo estás?"
     llm = FakeLLMClient(
         responses=[
-            {"content": json.dumps({"route": "general", "answer": reply})}
-            for reply in ("First model welcome", "Second model welcome")
+            {"content": '{"route":"social"}'},
+            {"content": '{"answer":"¡Hola! ¿En qué puedo ayudarte?"}'},
         ]
     )
-    qa = service(llm)
-    assert qa.answer("Hi")["answer"] == "First model welcome"
-    assert qa.answer("Hi")["answer"] == "Second model welcome"
+    assert service(llm).answer(query)["answer"] == "¡Hola! ¿En qué puedo ayudarte?"
     assert len(llm.calls) == 2
 
 
-@pytest.mark.parametrize(
-    "content",
-    ["not json", '{"route":"general","answer":""}', '{"route":"documents","answer":""}', "{}"],
-)
-def test_invalid_llm_greeting_raises_without_static_or_document_fallback(content):
-    llm = FakeLLMClient(responses=[{"content": content}])
+def test_repeated_greetings_each_classify_and_generate_fresh_reply():
+    llm = FakeLLMClient(
+        responses=[
+            {"content": '{"route":"social"}'},
+            {"content": '{"answer":"First welcome"}'},
+            {"content": '{"route":"social"}'},
+            {"content": '{"answer":"Second welcome"}'},
+        ]
+    )
+    qa = service(llm)
+    assert qa.answer("Hello")["answer"] == "First welcome"
+    assert qa.answer("Hello")["answer"] == "Second welcome"
+    assert [call["temperature"] for call in llm.calls] == [0.0, 0.8, 0.0, 0.8]
+
+
+def test_sampling_setting_applies_only_to_reply():
+    llm = FakeLLMClient(
+        responses=[{"content": '{"route":"social"}'}, {"content": '{"answer":"Welcome"}'}]
+    )
+    conversation = LLMConversation(llm, greeting_temperature=0.9)
+    assert conversation.classify("Hii") == "social"
+    assert conversation.reply("Hii") == "Welcome"
+    assert [call["temperature"] for call in llm.calls] == [0.0, 0.9]
+
+
+@pytest.mark.parametrize("content", ["not json", '{"answer":""}', "{}"])
+def test_invalid_llm_social_reply_raises_without_fallback(content):
+    llm = FakeLLMClient(responses=[{"content": '{"route":"social"}'}, {"content": content}])
     with pytest.raises(InvalidConversationResponseError):
         service(llm).answer("Hello")
 

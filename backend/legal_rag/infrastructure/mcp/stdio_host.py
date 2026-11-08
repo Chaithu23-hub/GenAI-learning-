@@ -40,16 +40,27 @@ class StdioMCPHost:
             raise MCPTransportError("mcp package not installed") from exc
 
         await self._stack.__aenter__()
+        try:
+            await self._connect_servers(ClientSession, StdioServerParameters, stdio_client)
+        except BaseException:
+            # Python does not call __aexit__ when __aenter__ itself fails.
+            try:
+                await self._stack.__aexit__(*sys.exc_info())
+            finally:
+                self.sessions.clear()
+                self.discovered.clear()
+            raise
+        return self
+
+    async def _connect_servers(self, session_type, parameters_type, transport):
         for server in self.config["servers"]:
-            params = StdioServerParameters(
+            params = parameters_type(
                 command=sys.executable,
                 args=server["args"],
                 cwd=str(self.config_path.parent),
             )
-            read_stream, write_stream = await self._stack.enter_async_context(stdio_client(params))
-            session = await self._stack.enter_async_context(
-                ClientSession(read_stream, write_stream)
-            )
+            read_stream, write_stream = await self._stack.enter_async_context(transport(params))
+            session = await self._stack.enter_async_context(session_type(read_stream, write_stream))
             await session.initialize()
             tools = await session.list_tools()
             self.sessions[server["name"]] = session
@@ -58,7 +69,6 @@ class StdioMCPHost:
                 "mcp server discovered",
                 extra={"server": server["name"], "tools": self.discovered[server["name"]]},
             )
-        return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
         return await self._stack.__aexit__(exc_type, exc_value, traceback)
@@ -83,8 +93,17 @@ class StdioMCPHost:
 # ─── Convenience blocking helpers used by CLI + FastAPI (sync path) ─────
 
 
-def run_lookup(config_path: Path, contract_id: str) -> dict[str, Any]:
+def run_lookup(
+    config_path: Path, contract_id: str, *, timeout_seconds: float = 30.0
+) -> dict[str, Any]:
     async def _lookup() -> dict[str, Any]:
+        try:
+            async with asyncio.timeout(timeout_seconds):
+                return await _request()
+        except TimeoutError:
+            raise MCPTransportError("MCP lookup exceeded its configured deadline.") from None
+
+    async def _request() -> dict[str, Any]:
         async with StdioMCPHost(config_path) as host:
             tools = host.discovered.get("contract-repository", [])
             tool_name = next(
@@ -100,3 +119,14 @@ def run_lookup(config_path: Path, contract_id: str) -> dict[str, Any]:
             return {"discovered": await host.discover(), "trace": trace}
 
     return asyncio.run(_lookup())
+
+
+class StdioContractLookup:
+    """Synchronous lookup port with one deadline across startup, discovery and call."""
+
+    def __init__(self, config_path: Path, *, timeout_seconds: float = 30.0):
+        self._config_path = config_path
+        self._timeout_seconds = timeout_seconds
+
+    def lookup_contract(self, contract_id: str) -> dict[str, Any]:
+        return run_lookup(self._config_path, contract_id, timeout_seconds=self._timeout_seconds)

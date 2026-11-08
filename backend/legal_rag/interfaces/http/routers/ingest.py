@@ -69,8 +69,9 @@ async def upload_pdf(
     def process_upload():
         # Validate every PDF before changing the corpus. Only one mutation runs at a time.
         parsed = [(stem, container.pdf_extractor.extract(data)) for stem, data in documents]
-        for stem, text in parsed:
-            container.upload_document_source.write_document(f"{stem}.md", f"# {stem}\n\n{text}\n")
+        container.upload_document_source.write_documents(
+            [(f"{stem}.md", f"# {stem}\n\n{text}\n") for stem, text in parsed]
+        )
         return ingestion.ingest() if (auto_ingest and parsed) else 0
 
     chunks_ingested = await container.work_executor.run(process_upload, exclusive=True)

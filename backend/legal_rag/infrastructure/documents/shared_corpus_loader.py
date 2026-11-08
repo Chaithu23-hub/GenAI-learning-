@@ -293,16 +293,32 @@ class SharedCorpusDocumentSource:
         yield from documents
 
     def write_document(self, name: str, text: str) -> Path:
-        if Path(name).name != name:
+        return self.write_documents([(name, text)])[0]
+
+    def write_documents(self, documents: list[tuple[str, str]]) -> list[Path]:
+        names = [name for name, _ in documents]
+        if any(Path(name).name != name or name in {"", ".", ".."} for name in names):
             raise DocumentSourceError("document name must be a filename")
-        self._docs_dir.mkdir(parents=True, exist_ok=True)
-        target = self._docs_dir / name
+        if len({name.casefold() for name in names}) != len(names):
+            raise DocumentConflictError("Upload batch contains duplicate document names.")
+        targets = [self._docs_dir / name for name in names]
+        created: list[Path] = []
         try:
-            # Exclusive creation prevents uploaded names from replacing trusted corpus files.
-            with target.open("x", encoding="utf-8") as stream:
-                stream.write(text)
+            self._docs_dir.mkdir(parents=True, exist_ok=True)
+            if any(target.exists() for target in targets):
+                raise DocumentConflictError("A document with this filename already exists.")
+            try:
+                for target, (_, text) in zip(targets, documents, strict=True):
+                    # Exclusive creation remains necessary after preflight (concurrent writers).
+                    with target.open("x", encoding="utf-8") as stream:
+                        created.append(target)
+                        stream.write(text)
+            except BaseException:
+                for target in reversed(created):
+                    target.unlink(missing_ok=True)
+                raise
         except FileExistsError as exc:
             raise DocumentConflictError("A document with this filename already exists.") from exc
         except OSError as exc:
             raise DocumentSourceError("Unable to write uploaded document.") from exc
-        return target
+        return targets

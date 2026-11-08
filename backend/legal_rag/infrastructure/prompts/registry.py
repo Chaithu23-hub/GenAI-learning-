@@ -7,6 +7,8 @@ one place. Old versions stay for rollback + A/B evaluation.
 
 from __future__ import annotations
 
+from legal_rag.infrastructure.prompts.conversation import CONVERSATION_PROMPT, GREETING_PROMPT_V1
+from legal_rag.infrastructure.prompts.evidence_review import EVIDENCE_REVIEW_PROMPT_V1
 from legal_rag.infrastructure.prompts.judge_prompts import (
     JUDGE_SYSTEM_PROMPT_V1,
     JUDGE_USER_TEMPLATE_V1,
@@ -22,6 +24,11 @@ from legal_rag.infrastructure.prompts.qa_system import (
     QA_SYSTEM_PROMPT_V1,
     QA_SYSTEM_PROMPT_V2,
     QA_SYSTEM_PROMPT_V3,
+    QA_SYSTEM_PROMPT_V4,
+)
+from legal_rag.infrastructure.prompts.unsupported import (
+    GROUNDING_REFUSAL_POLICY_V1,
+    UNSUPPORTED_RESPONSE_PROMPT_V1,
 )
 
 PROMPT_VERSIONS: dict[str, dict[str, PromptTemplate]] = {
@@ -29,12 +36,18 @@ PROMPT_VERSIONS: dict[str, dict[str, PromptTemplate]] = {
         "v1": QA_SYSTEM_PROMPT_V1,
         "v2": QA_SYSTEM_PROMPT_V2,
         "v3": QA_SYSTEM_PROMPT_V3,
-        "v4": QA_SYSTEM_PROMPT,
+        "v4": QA_SYSTEM_PROMPT_V4,
+        "v5": QA_SYSTEM_PROMPT,
     },
 }
 
 # `name` -> currently-active PromptTemplate.
 ACTIVE_PROMPTS: dict[str, PromptTemplate] = {
+    EVIDENCE_REVIEW_PROMPT_V1.name: EVIDENCE_REVIEW_PROMPT_V1,
+    CONVERSATION_PROMPT.name: CONVERSATION_PROMPT,
+    GREETING_PROMPT_V1.name: GREETING_PROMPT_V1,
+    GROUNDING_REFUSAL_POLICY_V1.name: GROUNDING_REFUSAL_POLICY_V1,
+    UNSUPPORTED_RESPONSE_PROMPT_V1.name: UNSUPPORTED_RESPONSE_PROMPT_V1,
     QA_SYSTEM_PROMPT.name: QA_SYSTEM_PROMPT,
     ORCHESTRATOR_PROMPT_V1.name: ORCHESTRATOR_PROMPT_V1,
     DEFINED_TERMS_PROMPT_V1.name: DEFINED_TERMS_PROMPT_V1,

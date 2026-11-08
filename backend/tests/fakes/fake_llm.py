@@ -5,8 +5,6 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from legal_rag.domain.policies import is_greeting
-
 
 class FakeLLMClient:
     """Scripted responses; records every call for assertion."""
@@ -58,15 +56,29 @@ class ContextLLMClient(FakeLLMClient):
     def chat(self, *, messages, tools=None, temperature=0.0):
         self.calls.append({"messages": list(messages), "tools": tools, "temperature": temperature})
         content = messages[1]["content"]
+        try:
+            review = json.loads(content)
+        except (ValueError, TypeError):
+            review = None
+        if isinstance(review, dict) and "candidate_answer" in review and "evidence" in review:
+            return {"content": '{"conditions":[]}', "tool_calls": []}
+        if (
+            "conversation.route" in messages[0]["content"]
+            or "Choose documents" in messages[0]["content"]
+        ):
+            return {"content": '{"route":"documents"}', "tool_calls": []}
+        if content in ("outside_document_qa", "insufficient_evidence"):
+            return {
+                "content": json.dumps(
+                    {
+                        "reason": content,
+                        "answer": "I need more supporting document evidence to answer.",
+                    }
+                ),
+                "tool_calls": [],
+            }
         marker = "Retrieved document chunks (cite ONLY these chunk_ids in sources):\n"
         if marker not in content:
-            if is_greeting(content):
-                return {
-                    "content": json.dumps(
-                        {"route": "general", "answer": "Welcome from the test language model."}
-                    ),
-                    "tool_calls": [],
-                }
             return {"content": '{"route":"documents","answer":""}', "tool_calls": []}
         chunks, _ = json.JSONDecoder().raw_decode(content.split(marker, 1)[1])
         payload = {

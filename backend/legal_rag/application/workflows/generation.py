@@ -220,7 +220,14 @@ class LLMGenerator:
                 f"Answer using only these chunks. You may call retrieve_chunks for more."
             )
             messages: list[dict[str, Any]] = [
-                {"role": "system", "content": SYSTEM_PROMPT},
+                {
+                    "role": "system",
+                    "content": SYSTEM_PROMPT
+                    + "\n\n"
+                    + get_prompt("qa.out_of_scope").render(
+                        answer_json=json.dumps(self._settings.out_of_scope_answer)
+                    ),
+                },
                 {"role": "user", "content": user_content},
             ]
 
@@ -349,6 +356,8 @@ class LLMGenerator:
                 errors.append(f"excerpt for {chunk_id} does not match the stored chunk text")
             cited_chunks.append(chunk)
         references = parse_clause_request(payload["answer"])
+        if references and not references.valid:
+            errors.append("answer contains a clause range that cannot be verified safely")
         cited_sections = set(references.numbers if references else ())
         supported_sections = {
             number

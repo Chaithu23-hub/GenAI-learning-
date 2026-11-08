@@ -2,8 +2,15 @@
 
 from __future__ import annotations
 
-from legal_rag.application.workflows.race import classify_failure
+from pathlib import Path
+
+import pytest
+
+from legal_rag.application.agents.orchestrator import Orchestrator, OrchestratorSettings
+from legal_rag.application.workflows.judge import JudgeService, JudgeSettings
+from legal_rag.application.workflows.race import MultiAgentRace, classify_failure
 from legal_rag.domain.policies import evaluate_trajectory
+from tests.fakes.vector_store import InMemoryVectorStore
 
 
 class TestFinding1GuardrailNotDroppedInSynthesize:
@@ -116,6 +123,241 @@ class TestFinding7DefinedTermsWorkerHandlesMissingMetadata:
         # Should not raise
         result = container.orchestrator.defined_terms_worker(request)
         assert result["status"] == 200
+
+    @staticmethod
+    def _orchestrator(store):
+        from types import SimpleNamespace
+
+        return Orchestrator(
+            retrieval=SimpleNamespace(detect_metadata_filter=lambda query: None),
+            vector_store=store,
+            generator=None,
+            settings=OrchestratorSettings(0, 4, 0.0, "refused", "unsupported", Path(".")),
+        )
+
+    def test_definitions_are_limited_to_clause_worker_sources(self):
+        vs = InMemoryVectorStore()
+        vs._ids.append("other-agreement::001")
+        vs._documents.append('("Effective Date") means January 1.')
+        vs._metadatas.append({"document": "other-agreement.md"})
+        vs._embeddings.append([0.0] * 128)
+        result = self._orchestrator(vs).defined_terms_worker(
+            {
+                "terms": ["Effective Date"],
+                "version": "amended",
+                "sources": [],
+            }
+        )
+        assert result["definitions"] == []
+        assert result["not_found"] == ["Effective Date"]
+
+    def test_conflicting_scoped_definitions_are_not_selected_arbitrarily(self):
+        sources = [
+            {
+                "chunk_id": "c1",
+                "document": "msa.md",
+                "excerpt": '("Effective Date") means January 1.',
+            },
+            {
+                "chunk_id": "c2",
+                "document": "msa.md",
+                "excerpt": '("Effective Date") means February 1.',
+            },
+        ]
+        result = self._orchestrator(InMemoryVectorStore()).defined_terms_worker(
+            {"terms": ["Effective Date"], "version": "amended", "sources": sources}
+        )
+        assert result["definitions"] == []
+        assert result["not_found"] == ["Effective Date"]
+
+    def test_run_hands_only_validated_clause_sources_to_definition_worker(self, monkeypatch):
+        orch = self._orchestrator(InMemoryVectorStore())
+        validated_sources = [
+            {"chunk_id": "requested::001", "document": "requested.md", "excerpt": "Clause text."}
+        ]
+        raw_chunks = validated_sources + [
+            {
+                "chunk_id": "unrelated::001",
+                "document": "other-agreement.md",
+                "excerpt": '("Effective Date") means January 1.',
+            }
+        ]
+        monkeypatch.setattr(
+            orch,
+            "clause_worker",
+            lambda brief: (
+                {
+                    "answer": "Clause text.",
+                    "reasoning": "grounded",
+                    "sources": validated_sources,
+                    "confidence": "medium",
+                    "out_of_scope": False,
+                },
+                raw_chunks,
+            ),
+        )
+        observed = {}
+        original_worker = orch.defined_terms_worker
+
+        def capture(request, *, fail=False):
+            observed.update(request)
+            return original_worker(request, fail=fail)
+
+        monkeypatch.setattr(orch, "defined_terms_worker", capture)
+        orch.run('What does "Effective Date" mean?')
+        assert observed["sources"] == validated_sources
+
+
+class TestJudgeRequiresExactStoredEvidence:
+    @staticmethod
+    def _seed():
+        vs = InMemoryVectorStore()
+        vs._ids.append("known::001")
+        vs._documents.append("Payment is due within 30 days.")
+        vs._metadatas.append({"document": "master_services_agreement.md"})
+        vs._embeddings.append([0.0] * 128)
+        return JudgeService(
+            vector_store=vs,
+            llm=None,
+            settings=JudgeSettings(Path("unused-labels.json")),
+        )
+
+    def _answer(self, document, excerpt):
+        return {
+            "answer": "Effective Date is January 1.",
+            "sources": [{"chunk_id": "known::001", "document": document, "excerpt": excerpt}],
+        }
+
+    def test_empty_excerpt_is_unverified(self):
+        judge = self._seed()
+        assert not judge._verify_all_sources(self._answer("master_services_agreement.md", " "))
+
+    def test_forged_document_identity_is_unverified(self):
+        judge = self._seed()
+        assert not judge._verify_all_sources(self._answer("forged.md", "Payment is due"))
+
+    def test_exact_excerpt_and_stored_document_identity_are_verified(self):
+        judge = self._seed()
+        assert judge._verify_all_sources(
+            self._answer("master_services_agreement.md", "Payment is due")
+        )
+
+
+class TestJudgeValidationReportDoesNotInventPredictions:
+    def test_loading_labels_requires_port(self):
+        judge = JudgeService(
+            vector_store=InMemoryVectorStore(),
+            llm=None,
+            settings=JudgeSettings(Path("unused-labels.json")),
+        )
+        with pytest.raises(RuntimeError, match="evaluation files port is required"):
+            judge.load_labels()
+
+    def test_report_only_displays_human_label_distribution_from_port(self):
+        import json
+
+        class EvaluationFilesFake:
+            labels = [
+                {
+                    "id": index,
+                    "question": f"Question {index}",
+                    "mode": "qa",
+                    "human_label": index % 2 == 0,
+                }
+                for index in range(25)
+            ]
+
+            def read_labels(self):
+                return json.dumps({"labels": self.labels}).encode()
+
+            def write_artifact(self, name, text):
+                raise AssertionError("judge report should not write artifacts")
+
+        files = EvaluationFilesFake()
+        judge = JudgeService(
+            vector_store=InMemoryVectorStore(),
+            llm=None,
+            settings=JudgeSettings(Path("unused-labels.json")),
+            evaluation_files=files,
+        )
+        report = judge.build_report()
+        assert report["status"] == "not_evaluated"
+        assert report["agreement_before"] is None
+        assert report["agreement_after"] is None
+        assert report["human_label_distribution_by_mode"] == {"qa": {"true": 13, "false": 12}}
+        assert "disagreements" not in report
+        assert "prediction" not in report
+
+        files.labels[0]["human_label"] = False
+        updated = judge.build_report()
+        assert updated["human_label_distribution_by_mode"]["qa"]["true"] == 12
+        assert updated["agreement_before"] is None
+        assert updated["agreement_after"] is None
+
+
+class TestRaceEvaluationFilePort:
+    def test_artifacts_are_written_through_port(self):
+        class EvaluationFilesFake:
+            def __init__(self):
+                self.writes = []
+
+            def read_labels(self):
+                return b'{"labels": []}'
+
+            def write_artifact(self, name, text):
+                self.writes.append((name, text))
+
+        files = EvaluationFilesFake()
+        race = MultiAgentRace(
+            agent_factory=None,
+            orchestrator=None,
+            retrieval=None,
+            judge=None,
+            labels_path=Path("labels.json"),
+            cost_per_token_usd=0.0,
+            chars_per_token=4,
+            artifact_dir=Path("artifacts"),
+            evaluation_files=files,
+        )
+        report = {
+            "hop_shares": [{"hop": "plan", "share": 0.5}],
+            "multiplier": 1.0,
+            "orchestrator": {"total_tokens": 2},
+            "single_agent": {"total_tokens": 2},
+        }
+        race.run = lambda: report
+        race._race_table = lambda _: "table"
+        race._handoffs_log = lambda _: "handoffs"
+        race._failure_case = lambda _: "failure"
+
+        assert race.write_artifacts() is report
+        assert files.writes == [
+            ("race_table.md", "table"),
+            ("handoffs.log", "handoffs"),
+            (
+                "multiplier.txt",
+                "Context re-send multiplier: 1.0x (2 / 2 tokens); dominant hand-off: plan, 50% of tokens.\n",
+            ),
+            ("failure_case.md", "failure"),
+        ]
+
+    def test_missing_port_fails_before_race_work_or_filesystem_access(self):
+        class RetrievalFake:
+            def retrieve(self, query):
+                raise AssertionError("race should fail before retrieval")
+
+        race = MultiAgentRace(
+            agent_factory=None,
+            orchestrator=None,
+            retrieval=RetrievalFake(),
+            judge=None,
+            labels_path=Path("labels.json"),
+            cost_per_token_usd=0.0,
+            chars_per_token=4,
+            artifact_dir=Path("artifacts"),
+        )
+        with pytest.raises(RuntimeError, match="evaluation files port is required"):
+            race.run()
 
 
 class TestFinding8MultiplierGuardsAgainstZero:

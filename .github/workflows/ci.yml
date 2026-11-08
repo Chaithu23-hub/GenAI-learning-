@@ -78,6 +78,8 @@ jobs:
         run: python scripts/ci/frontend_checks.py --check install
       - name: Angular build
         run: python scripts/ci/frontend_checks.py --check build
+      - name: Audit production dependencies
+        run: python scripts/ci/frontend_checks.py --check audit
       - name: Angular tests
         run: python scripts/ci/frontend_checks.py --check test
 

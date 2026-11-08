@@ -1,6 +1,6 @@
 # LegalRAG
 
-An Angular chat workspace and FastAPI service for searching legal contracts and amendments. Groq writes answers from retrieved passages, and the backend validates citations and quotations before returning them. The chat displays the answer; the API retains supporting evidence. Greetings receive an LLM-generated conversational reply without document retrieval. Other questions outside document QA receive a fixed refusal.
+An Angular chat workspace and FastAPI service for searching legal contracts and amendments. Groq writes answers from retrieved passages, and the backend validates citations and quotations before returning them. The chat displays the answer; the API retains supporting evidence. An LLM classifies conversational intent, including casually misspelled greetings, and generates a fresh reply without document retrieval. Document QA generates fresh LLM refusals for unrelated questions and questions with insufficient supporting evidence.
 
 ## Project structure
 
@@ -83,6 +83,10 @@ Keep `GROQ_API_KEY` in the ignored `backend/.env`. Groq is the answer provider:
 
 Document answers require a working Groq model; provider failures return errors, and answers that still fail evidence validation after one correction attempt return HTTP 422. Leave `LEGAL_RAG_LLM_BASE_URL` unset to use Groq's endpoint. The `openai` Python package supplies Groq's compatible API transport; it does not require an OpenAI API key. All runtime settings are defined in [Settings](backend/legal_rag/infrastructure/settings.py); examples are in [backend/.env.example](backend/.env.example).
 
+Conversational routing uses the LLM rather than a greeting spelling list. Classification runs at temperature zero, followed by a separate generated reply at `LEGAL_RAG_GREETING_TEMPERATURE` (default `0.8`). Input guardrails run first; explicit document scopes retain grounded QA. Invalid classification falls back to document QA, while invalid conversational output returns an error. Every request makes fresh model calls; wording may occasionally repeat without conversation-history tracking.
+
+For substantive document answers, an additional LLM call selects cited chunk IDs containing omitted applicability conditions. The code appends the original excerpt for each selected ID as a document-labeled quotation; the model cannot supply new condition text. The original answer and sources remain unchanged. The generator validates the final citations and quotations before returning the answer. The extra model call adds latency and token usage; both calls are included in generation usage totals.
+
 After changing backend configuration:
 
 ```powershell
@@ -92,7 +96,7 @@ docker compose restart frontend
 
 ## Local development
 
-Python 3.13 and Node.js 20 are used in CI and Docker.
+Python 3.13 and Node.js 22 are used in CI and Docker. The frontend uses Angular 21.2 and TypeScript 5.9; local Node.js must be at least 22.12.
 
 ```powershell
 python -m venv .venv
@@ -150,6 +154,8 @@ python -m legal_rag.interfaces.cli mcp-lookup MSA-2021-0142
 
 Judge/race labels live under `backend/data/evaluation/`. Generated race reports go to its ignored `generated/` directory. These paths can be overridden with `LEGAL_RAG_EVALUATION_LABELS_PATH` and `LEGAL_RAG_EVALUATION_ARTIFACT_DIR`.
 
+`validate-judge` summarizes the human labels and reports `not_evaluated` with null agreement values. The fixture has no saved model predictions, so it cannot establish judge agreement or before/after improvement. Race commands report their actual runs separately. Evaluation file access is provided through the container's evaluation I/O port. MCP lookups have a total deadline controlled by `LEGAL_RAG_MCP_TIMEOUT_SECONDS` (default 30 seconds).
+
 ## API response contract
 
 ```json
@@ -164,6 +170,8 @@ Judge/race labels live under `backend/data/evaluation/`. Generated race reports 
 
 The API retains evidence for audit and integration use. The chat displays only `answer`. Errors use problem+json and include request IDs. See Swagger for all HTTP routes, including ingestion, upload, inspection, agents, and MCP lookup.
 
+For `/api/ask` and `/api/inspect`, unsupported questions receive an LLM-generated refusal with `out_of_scope: true`, `sources: []`, and `confidence: "low"`. The refusal model receives only the reason, without the question or document passages. Each request generates new wording; phrasing can occasionally repeat because no conversation history is stored. Set `LEGAL_RAG_UNSUPPORTED_RESPONSE_TEMPERATURE` (default `0.7`, greater than `0` and at most `2`) independently of grounded answer generation. Conservative output checks require limitation wording and reject obvious citations, quotations, links and numeric claims; they are not a general factual verifier. Provider failures return errors, and invalid refusal output returns HTTP 502 after one correction attempt. Input guardrail blocks remain fixed safe responses; direct generator and agent contracts retain their internal out-of-scope sentinel.
+
 ## Deployment and maintenance
 
 - Read [architecture](ARCHITECTURE.md) and [contribution rules](AGENTS.md) before modifying the backend. Repository skills live under `.agents/skills/`.
@@ -171,6 +179,7 @@ The API retains evidence for audit and integration use. The chat displays only `
 - Keep provider credentials and `LEGAL_RAG_ADMIN_API_KEY` on the backend. Only the reader `LEGAL_RAG_API_KEY` may enter the public frontend build; rebuild the frontend after rotating it.
 - The Compose data mount preserves documents and indexes. Successful re-ingestion removes obsolete chunks for sources in that batch. Removing a file does not automatically revoke its indexed source. Chroma upsert and stale-chunk cleanup are separate operations; preserve backups and avoid concurrent index writers during replacement.
 - Health reports configuration, not model access or index readiness. Verify a known question and its sources after deployment.
+- CI audits frontend production dependencies. At the 2026-11-08 review, the Angular 21 upgrade removed production advisories and all high/critical entries in the full npm audit; 21 moderate development-toolchain entries remained in the CLI/build dependencies. These packages are excluded from the nginx runtime image; development-server exposure requires separate review.
 - For public deployment, use TLS and authentication, restrict administrative endpoints, and configure the frontend origin.
 
 Markdown in Git is limited to README files, contribution/architecture instructions, skill resources, and the contract corpus. Other supporting Markdown stays local through `.gitignore`.

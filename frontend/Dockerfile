@@ -1,10 +1,10 @@
 # ─── Frontend Dockerfile ───────────────────────────────────────────────────────
 # Stage 1: Build the Angular app
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 COPY package.json package-lock.json* ./
-RUN --mount=type=cache,id=legal-rag-npm-node20,target=/root/.npm,sharing=locked \
+RUN --mount=type=cache,id=legal-rag-npm-node22,target=/root/.npm,sharing=locked \
     npm ci --prefer-offline
 
 COPY . .

@@ -31,9 +31,13 @@ from legal_rag.infrastructure.observability.logging import current_request_id, g
 log = get_logger("legal_rag.http.errors")
 
 
-def _problem(status: int, title: str, detail: str) -> JSONResponse:
+def _problem(
+    status: int, title: str, detail: str, headers: dict[str, str] | None = None
+) -> JSONResponse:
     return JSONResponse(
         status_code=status,
+        media_type="application/problem+json",
+        headers=headers,
         content={
             "type": "about:blank",
             "title": title,
@@ -122,6 +126,7 @@ def register_exception_handlers(app: FastAPI) -> None:
             exc.status_code,
             exc.detail if isinstance(exc.detail, str) else "HTTP error",
             str(exc.detail),
+            headers=exc.headers,
         )
 
     @app.exception_handler(Exception)

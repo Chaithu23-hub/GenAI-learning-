@@ -58,7 +58,7 @@ def test_termination_answer_cannot_cite_a_different_section(container, caplog):
     assert trace is not None, [
         (record.getMessage(), getattr(record, "error", None)) for record in caplog.records
     ]
-    assert trace.prompt_version == "v4"
+    assert trace.prompt_version == "v5"
     # Wider retrieval may include other clauses; the corrected termination
     # passage and its evidence must still be present in the direct reply.
     assert "30 days" in result["answer"]

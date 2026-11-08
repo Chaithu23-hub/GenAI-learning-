@@ -15,6 +15,33 @@ def test_rates_and_dates_are_not_clause_requests():
     assert parse_clause_request("Interest is 1.5% on 2026-10-31") is None
 
 
+@pytest.mark.parametrize("separator", ["-", "–", " to "])
+def test_clause_ranges_expand_to_each_sibling_reference(separator):
+    request = parse_clause_request(f"Quote sections 3.4{separator}3.6")
+    assert request.numbers == ("3.4", "3.5", "3.6")
+    assert request.valid
+
+
+@pytest.mark.parametrize("range_text", ["3.4-4.1", "3.4-3.1000", "3.6-3.4"])
+def test_invalid_or_unbounded_clause_ranges_are_marked_invalid(range_text):
+    request = parse_clause_request(f"Quote sections {range_text}")
+    assert request is not None
+    assert not request.valid
+
+
+def test_chained_clause_ranges_fail_closed():
+    request = parse_clause_request("Quote sections 3.4-3.6-3.8")
+    assert request is not None
+    assert not request.valid
+
+
+def test_em_dash_clause_range_expands_to_each_sibling_reference():
+    request = parse_clause_request("Quote sections 3.4\u20143.6")
+    assert request is not None
+    assert request.numbers == ("3.4", "3.5", "3.6")
+    assert request.valid
+
+
 @pytest.mark.parametrize("number", ["3", "3.40", "99.99"])
 def test_similar_numbers_and_prose_mentions_are_not_definitions(number):
     chunk = RetrievedChunk(

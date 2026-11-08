@@ -40,7 +40,6 @@ _TERM_PATTERNS = (
     re.compile(r"\bdefin(?:ition of|e)\s+([\w\s-]+?)(?:\?|$)", re.IGNORECASE),
 )
 _DEFINED_TERM = re.compile(r'\("([A-Z][^"]+)"\)')
-_EFFECTIVE_DATE = re.compile(r"effective as of ((?:19|20)\d{2}-\d{2}-\d{2})", re.IGNORECASE)
 
 
 class WorkerError(Exception):
@@ -95,22 +94,6 @@ def extract_terms(query: str) -> list[str]:
     return []
 
 
-def _governing_effective_date(docs_dir: str | Path) -> str:
-    """Latest 'effective as of' date found in the corpus.
-
-    Not cached: corpus files can be added, replaced, or removed at any time
-    (re-ingestion, tests using tmp dirs). Cost is a handful of small file reads
-    — acceptable given how rarely the orchestrator is on the hot path.
-    """
-    path = Path(docs_dir)
-    if not path.exists():
-        return ""
-    dates = [
-        d for p in path.glob("*.md") for d in _EFFECTIVE_DATE.findall(p.read_text(encoding="utf-8"))
-    ]
-    return max(dates, default="")
-
-
 @dataclass
 class OrchestratorSettings:
     worker_retries: int
@@ -137,11 +120,23 @@ class Orchestrator:
 
     def plan(self, query: str) -> dict[str, Any]:
         terms = extract_terms(query)
+        where = self._retrieval.detect_metadata_filter(query) or {}
+        effective_date = ""
+        if "source_doc" in where or "counterparty" in where:
+            stored = self._vector_store.get_all(where=where)
+            dates = {
+                date
+                for metadata in stored.get("metadatas", [])
+                if (date := str((metadata or {}).get("effective_date", "")))
+                and re.fullmatch(r"(?:19|20)\d{2}-\d{2}-\d{2}", date)
+            }
+            if len(dates) == 1:
+                effective_date = next(iter(dates))
         return {
             "subtasks": ["clause", "defined_terms"] if terms else ["clause"],
             "terms": terms,
             "governing_version": "amended",
-            "effective_date": _governing_effective_date(str(self._settings.docs_dir)),
+            "effective_date": effective_date,
         }
 
     def clause_worker(self, brief: dict[str, Any]) -> tuple[dict[str, Any], list[dict[str, Any]]]:
@@ -182,31 +177,28 @@ class Orchestrator:
     ) -> dict[str, Any]:
         if fail:
             raise WorkerError("defined_terms_worker")
-        stored = self._vector_store.get_all()
         definitions, not_found = [], []
         for term in request["terms"]:
-            hit = None
-            for chunk_id, text, meta in zip(
-                stored["ids"], stored["documents"], stored["metadatas"], strict=False
-            ):
-                doc_type = (meta or {}).get("document_type", "contract")
-                if request["version"] == "original" and doc_type == "amendment":
+            hits: dict[tuple[str, str], dict[str, str]] = {}
+            for source in request.get("sources", []):
+                chunk_id = source.get("chunk_id")
+                document = source.get("document")
+                text = source.get("excerpt")
+                if not chunk_id or not document or not text:
                     continue
                 for sentence in re.split(r"(?<=[.;])\s+", text):
                     if any(
                         found.lower() == term.lower() for found in _DEFINED_TERM.findall(sentence)
                     ):
-                        hit = {
+                        excerpt = sentence.strip()
+                        hits[(document, excerpt)] = {
                             "term": term,
-                            "document": (meta or {}).get("document", "unknown"),
+                            "document": document,
                             "chunk_id": chunk_id,
-                            "excerpt": sentence.strip(),
+                            "excerpt": excerpt,
                         }
-                        break
-                if hit:
-                    break
-            if hit:
-                definitions.append(hit)
+            if len(hits) == 1:
+                definitions.append(next(iter(hits.values())))
             else:
                 not_found.append(term)
         return {
@@ -299,7 +291,11 @@ class Orchestrator:
 
         result = clause
         if "defined_terms" in task_plan["subtasks"]:
-            request = {"terms": task_plan["terms"], "version": task_plan["governing_version"]}
+            request = {
+                "terms": task_plan["terms"],
+                "version": task_plan["governing_version"],
+                "sources": clause.get("sources", []),
+            }
             definitions: dict[str, Any] = {"status": 500}
             for attempt in range(1, self._settings.worker_retries + 2):
                 try:

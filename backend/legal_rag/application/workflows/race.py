@@ -19,6 +19,7 @@ from legal_rag.application.agents.orchestrator import (
     HandoffLog,
     Orchestrator,
 )
+from legal_rag.application.ports import EvaluationFiles
 from legal_rag.application.workflows.generation import RETRIEVE_TOOL, SYSTEM_PROMPT
 from legal_rag.application.workflows.judge import JudgeService
 from legal_rag.application.workflows.retrieval import RetrievalService
@@ -313,6 +314,7 @@ class MultiAgentRace:
         cost_per_token_usd: float,
         chars_per_token: int,
         artifact_dir: Path,
+        evaluation_files: EvaluationFiles | None = None,
     ):
         self._agent_factory = agent_factory
         self._orchestrator = orchestrator
@@ -322,12 +324,19 @@ class MultiAgentRace:
         self._cost_per_token_usd = cost_per_token_usd
         self._chars_per_token = chars_per_token
         self._artifact_dir = artifact_dir
+        self._evaluation_files = evaluation_files
+
+    def _require_evaluation_files(self) -> EvaluationFiles:
+        if self._evaluation_files is None:
+            raise RuntimeError("evaluation files port is required for multi-agent race I/O")
+        return self._evaluation_files
 
     def load_eval_cases(self) -> list[dict[str, Any]]:
         labels = {label["id"]: label for label in self._judge.load_labels()}
         return [labels[case_id] for case_id in EVAL_CASE_IDS]
 
     def run(self) -> dict[str, Any]:
+        evaluation_files = self._require_evaluation_files()
         self._retrieval.retrieve("warm-up")
         rows = []
         for case in self.load_eval_cases():
@@ -366,7 +375,7 @@ class MultiAgentRace:
         )
         shares = hop_shares([r["multi"] for r in rows])
         return {
-            "labels_sha256": sha256(self._labels_path.read_bytes()).hexdigest(),
+            "labels_sha256": sha256(evaluation_files.read_labels()).hexdigest(),
             "case_ids": list(EVAL_CASE_IDS),
             "rows": rows,
             "single_agent": single_summary,
@@ -393,27 +402,18 @@ class MultiAgentRace:
     # ── Artifact writers ─────────────────────────────────────────────
     def write_artifacts(self) -> dict[str, Any]:
         race = self.run()
-        self._artifact_dir.mkdir(parents=True, exist_ok=True)
         dominant = race["hop_shares"][0]
-        (self._artifact_dir / "race_table.md").write_text(
-            self._race_table(race),
-            encoding="utf-8",
-        )
-        (self._artifact_dir / "handoffs.log").write_text(
-            self._handoffs_log(race),
-            encoding="utf-8",
-        )
-        (self._artifact_dir / "multiplier.txt").write_text(
+        files = self._require_evaluation_files()
+        files.write_artifact("race_table.md", self._race_table(race))
+        files.write_artifact("handoffs.log", self._handoffs_log(race))
+        files.write_artifact(
+            "multiplier.txt",
             f"Context re-send multiplier: {race['multiplier']:.1f}x "
             f"({race['orchestrator']['total_tokens']} / "
             f"{race['single_agent']['total_tokens']} tokens); "
             f"dominant hand-off: {dominant['hop']}, {dominant['share']:.0%} of tokens.\n",
-            encoding="utf-8",
         )
-        (self._artifact_dir / "failure_case.md").write_text(
-            self._failure_case(race),
-            encoding="utf-8",
-        )
+        files.write_artifact("failure_case.md", self._failure_case(race))
         return race
 
     def _race_table(self, race: dict[str, Any]) -> str:
