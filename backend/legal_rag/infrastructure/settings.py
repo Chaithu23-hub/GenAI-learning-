@@ -116,9 +116,6 @@ class Settings(BaseSettings):
             "I do not draft, modify, or invent contract terms."
         )
     )
-    greeting_answer: str = Field(
-        default=("Hi! I'm here and ready to help. How can I help you today?")
-    )
 
     # ── Validators ───────────────────────────────────────────────────────
     @field_validator("chunk_overlap_tokens")

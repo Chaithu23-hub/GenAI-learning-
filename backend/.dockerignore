@@ -22,6 +22,7 @@ tests/
 .env.*
 !.env.example
 data/chroma/
+data/legal/
 data/evaluation/generated/
 data/shared-corpus/contracts-docx/
 data/shared-corpus/contracts-pdf/

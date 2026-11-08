@@ -8,8 +8,10 @@ from fastapi.responses import JSONResponse
 
 from legal_rag.domain.exceptions import (
     AgentBudgetExceededError,
+    ConversationUnavailableError,
     DomainError,
     GuardrailBlockedError,
+    InvalidConversationResponseError,
     OutOfScopeError,
     SchemaValidationError,
 )
@@ -70,6 +72,14 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(OutOfScopeError)
     async def _oos(_: Request, exc: OutOfScopeError):
         return _problem(422, "Out of scope", str(exc))
+
+    @app.exception_handler(ConversationUnavailableError)
+    async def _conversation_unavailable(_: Request, exc: ConversationUnavailableError):
+        return _problem(500, "Conversation unavailable", str(exc))
+
+    @app.exception_handler(InvalidConversationResponseError)
+    async def _conversation_response(_: Request, exc: InvalidConversationResponseError):
+        return _problem(502, "Invalid conversation response", "; ".join(exc.errors))
 
     @app.exception_handler(SchemaValidationError)
     async def _schema(_: Request, exc: SchemaValidationError):

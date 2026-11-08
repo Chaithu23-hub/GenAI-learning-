@@ -186,8 +186,14 @@ The backend checks source identity, verbatim excerpts, recognized quotations,
 clause references and physical page claims before returning the answer. Invalid
 answers receive one correction attempt and then raise `SchemaValidationError`.
 Provider failures propagate through the infrastructure error taxonomy; there is
-no offline answer generator or excerpt fallback. Fixed greetings and input
-refusals remain part of QA routing.
+no offline answer generator or excerpt fallback. Greeting-only messages call the
+configured LLM conversation adapter once, with instructions to match the user's
+salutation without inventing legal facts or citations. They skip document
+retrieval and return no sources. Provider errors propagate; invalid model replies
+return HTTP 502; a missing conversation adapter returns HTTP 500. There is no
+static greeting fallback. A greeting followed by a contract question retains
+normal grounded QA. Input refusals remain
+part of QA routing. The obsolete static greeting_answer setting has been removed.
 
 ### Embedded Chroma security assessment
 

@@ -46,7 +46,7 @@ def screen_query(query: str) -> tuple[bool, str | None]:
 # ─── Small talk / greeting detection ──────────────────────────────────────
 
 _GREETING_RE = re.compile(
-    r"^\s*(?:hi|hello|hey|hola|yo|howdy|greetings"
+    r"^\s*(?:(?:hi|hello|hey)(?:\s+there)?|hola|yo|howdy|greetings"
     r"|good\s+(?:morning|afternoon|evening|day)"
     r"|how\s+are\s+you|how'?s\s+it\s+going|what'?s\s+up"
     r"|thanks?(?:\s+you)?|thank\s+you|thx|ty"

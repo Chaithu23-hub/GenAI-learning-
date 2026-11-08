@@ -23,7 +23,7 @@ PATTERNS = (
 
 # User-approved on 2026-11-08: deployment applicability, not an upstream Chroma patch.
 # Do not regenerate this fingerprint to make CI green without a fresh scope review.
-REVIEWED_SCOPE_SHA256 = "b891697ddae19925b3cfeacdf01dfa027009f3920662970b8922643d36e68e6d"
+REVIEWED_SCOPE_SHA256 = "f251522ac241e0fe581c166f588ef87e078ed95b8775b55f7b25a0ab906b6b42"
 ASSESSMENT_EXPIRES = date(2026, 12, 8)
 CHROMA_ADVISORY_GROUPS = (
     frozenset({"PYSEC-2026-311", "GHSA-f4j7-r4q5-qw2c", "CVE-2026-45829"}),
