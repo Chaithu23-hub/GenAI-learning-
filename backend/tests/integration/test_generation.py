@@ -33,6 +33,17 @@ def test_invalid_json_raises_after_one_correction(container):
     assert len(llm.calls) == 2
 
 
+def test_final_schema_error_does_not_echo_provider_output(container):
+    private_output = "SECRET_PROVIDER_PAYLOAD_9f31"
+    llm = FakeLLMClient(responses=[{"content": private_output}, {"content": private_output}])
+
+    with pytest.raises(SchemaValidationError) as exc_info:
+        generator(container, llm).generate("late payment")
+
+    assert len(llm.calls) == 2
+    assert private_output not in str(exc_info.value)
+
+
 def test_valid_llm_json_is_returned(container):
     chunk = container.retrieval_service.retrieve("late payment")[0]
     answer = {

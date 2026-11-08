@@ -8,10 +8,12 @@ RUN --mount=type=cache,id=legal-rag-npm-node22,target=/root/.npm,sharing=locked 
     npm ci --prefer-offline
 
 COPY . .
-# Browser configuration is public: only the reader key belongs in this build.
-ARG LEGAL_RAG_API_KEY=""
-ENV LEGAL_RAG_API_KEY=${LEGAL_RAG_API_KEY}
-RUN npm run build
+# This token is public in browser assets; never supply provider/admin credentials.
+# Name the build argument explicitly as public and scope the script's variable
+# to this command rather than retaining it in the builder image environment.
+ARG PUBLIC_READER_TOKEN=""
+RUN node -e "process.env.LEGAL_RAG_API_KEY = process.env.PUBLIC_READER_TOKEN; \
+    require('node:child_process').execFileSync('npm', ['run', 'build'], {stdio: 'inherit'})"
 
 # Stage 2: Serve with nginx
 FROM nginx:1.27-alpine AS runtime
