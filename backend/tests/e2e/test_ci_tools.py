@@ -230,6 +230,12 @@ def test_actionlint_install_retries_transient_download_and_extracts_linux_binary
     assert target.read_bytes() == b"test executable"
     assert len(calls) == 2
     assert delays == [1]
+    assert (
+        calls[0].full_url
+        == "https://api.github.com/repos/rhysd/actionlint/releases/assets/221573254"
+    )
+    assert calls[0].get_header("Accept") == "application/octet-stream"
+    assert calls[0].get_header("Authorization") is None
 
 
 @pytest.mark.parametrize("status,expected_calls", [(503, 3), (404, 1)])

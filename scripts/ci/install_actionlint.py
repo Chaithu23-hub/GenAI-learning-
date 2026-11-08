@@ -16,6 +16,8 @@ import zipfile
 from pathlib import Path
 
 VERSION = "1.7.7"
+# Immutable upstream release asset IDs; update with VERSION and the checksums.
+ASSET_IDS = {"Linux": 221573254, "Windows": 221573260}
 ASSETS = {
     "Linux": (
         "linux_amd64.tar.gz",
@@ -37,7 +39,11 @@ def download_archive(url: str) -> bytes:
     """Retry transient release-host failures; verification errors are never retried."""
     for attempt in range(1, 4):
         try:
-            with urllib.request.urlopen(url, timeout=60) as response:
+            request = urllib.request.Request(
+                url,
+                headers={"Accept": "application/octet-stream", "User-Agent": "LegalRAG-actionlint"},
+            )
+            with urllib.request.urlopen(request, timeout=60) as response:
                 return response.read(20 * 1024 * 1024)
         except urllib.error.HTTPError as exc:
             if exc.code not in {408, 429, 500, 502, 503, 504} or attempt == 3:
@@ -52,8 +58,10 @@ def download_archive(url: str) -> bytes:
 def install(destination: Path) -> Path:
     if platform.machine().lower() not in {"amd64", "x86_64"}:
         raise ValueError("actionlint installer supports x86-64 hosts")
-    asset, checksum = ASSETS[platform.system()]
-    url = f"https://github.com/rhysd/actionlint/releases/download/v{VERSION}/actionlint_{VERSION}_{asset}"
+    _asset, checksum = ASSETS[platform.system()]
+    # The browser download route can return persistent 504s; use the official
+    # immutable asset API without credentials and retain checksum verification.
+    url = f"https://api.github.com/repos/rhysd/actionlint/releases/assets/{ASSET_IDS[platform.system()]}"
     content = download_archive(url)
     verify_archive(content, checksum)
     binary = "actionlint.exe" if platform.system() == "Windows" else "actionlint"
