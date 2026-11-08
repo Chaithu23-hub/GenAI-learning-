@@ -9,6 +9,8 @@ import json
 import platform
 import sys
 import tarfile
+import time
+import urllib.error
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -31,13 +33,28 @@ def verify_archive(content: bytes, checksum: str) -> None:
         raise ValueError("actionlint archive checksum mismatch")
 
 
+def download_archive(url: str) -> bytes:
+    """Retry transient release-host failures; verification errors are never retried."""
+    for attempt in range(1, 4):
+        try:
+            with urllib.request.urlopen(url, timeout=60) as response:
+                return response.read(20 * 1024 * 1024)
+        except urllib.error.HTTPError as exc:
+            if exc.code not in {408, 429, 500, 502, 503, 504} or attempt == 3:
+                raise
+        except (urllib.error.URLError, TimeoutError):
+            if attempt == 3:
+                raise
+        time.sleep(attempt)
+    raise RuntimeError("actionlint download retries exhausted")
+
+
 def install(destination: Path) -> Path:
     if platform.machine().lower() not in {"amd64", "x86_64"}:
         raise ValueError("actionlint installer supports x86-64 hosts")
     asset, checksum = ASSETS[platform.system()]
     url = f"https://github.com/rhysd/actionlint/releases/download/v{VERSION}/actionlint_{VERSION}_{asset}"
-    with urllib.request.urlopen(url, timeout=60) as response:
-        content = response.read(20 * 1024 * 1024)
+    content = download_archive(url)
     verify_archive(content, checksum)
     binary = "actionlint.exe" if platform.system() == "Windows" else "actionlint"
     if binary.endswith(".exe"):

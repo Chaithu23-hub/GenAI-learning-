@@ -1,9 +1,14 @@
 """CI regression checks execute policy and evaluation tools with synthetic data."""
 
+import hashlib
 import importlib.util
+import io
 import json
 import subprocess
 import sys
+import tarfile
+import time
+import urllib.error
 from pathlib import Path
 
 import pytest
@@ -156,6 +161,60 @@ def test_frontend_diagnostics_do_not_forward_keys_or_console_messages():
 def test_actionlint_download_rejects_tampered_binary_archive():
     with pytest.raises(ValueError, match="checksum"):
         load_tool("install_actionlint").verify_archive(b"modified executable", "0" * 64)
+
+
+def test_actionlint_install_retries_transient_download_and_extracts_linux_binary(
+    monkeypatch, tmp_path
+):
+    tool = load_tool("install_actionlint")
+    content = io.BytesIO()
+    with tarfile.open(fileobj=content, mode="w:gz") as archive:
+        member = tarfile.TarInfo("actionlint")
+        member.size = len(b"test executable")
+        archive.addfile(member, io.BytesIO(b"test executable"))
+    payload = content.getvalue()
+    monkeypatch.setitem(
+        tool.ASSETS, "Linux", ("linux_amd64.tar.gz", hashlib.sha256(payload).hexdigest())
+    )
+    monkeypatch.setattr(tool.platform, "system", lambda: "Linux")
+    monkeypatch.setattr(tool.platform, "machine", lambda: "x86_64")
+    delays = []
+    monkeypatch.setattr(time, "sleep", delays.append)
+    calls = []
+
+    def download(url, **kwargs):
+        calls.append(url)
+        if len(calls) == 1:
+            raise urllib.error.HTTPError(url, 504, "Gateway timeout", {}, None)
+        return io.BytesIO(payload)
+
+    monkeypatch.setattr(tool.urllib.request, "urlopen", download)
+    target = tool.install(tmp_path)
+    assert target.name == "actionlint"
+    assert target.read_bytes() == b"test executable"
+    assert len(calls) == 2
+    assert delays == [1]
+
+
+@pytest.mark.parametrize("status,expected_calls", [(503, 3), (404, 1)])
+def test_actionlint_download_retries_are_bounded_and_skip_permanent_errors(
+    monkeypatch, tmp_path, status, expected_calls
+):
+    tool = load_tool("install_actionlint")
+    monkeypatch.setattr(tool.platform, "system", lambda: "Linux")
+    monkeypatch.setattr(tool.platform, "machine", lambda: "x86_64")
+    monkeypatch.setattr(time, "sleep", lambda _: None)
+    calls = []
+
+    def download(url, **kwargs):
+        calls.append(url)
+        raise urllib.error.HTTPError(url, status, "Download failure", {}, None)
+
+    monkeypatch.setattr(tool.urllib.request, "urlopen", download)
+    with pytest.raises(urllib.error.HTTPError):
+        tool.install(tmp_path)
+    assert len(calls) == expected_calls
+    assert not list(tmp_path.iterdir())
 
 
 def test_deployment_readiness_fails_closed_without_printing_docker_diagnostics(monkeypatch):
