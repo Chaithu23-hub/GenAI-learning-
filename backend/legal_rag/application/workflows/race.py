@@ -1,4 +1,5 @@
 """Agent-vs-fixed race and single-agent-vs-orchestrator multi-agent race."""
+
 from __future__ import annotations
 
 import json
@@ -103,12 +104,30 @@ class AgentRace:
             "questions": len(RACE_CASES),
             "branching_questions": sum(c.branches_on_prior_result for c in RACE_CASES),
             "table": [
-                {"system": "agent",
-                 **{k: agent_summary[k] for k in
-                    ("pass_rate", "p50_latency_seconds", "total_tokens", "cost_per_question_usd")}},
-                {"system": "fixed_workflow",
-                 **{k: fixed_summary[k] for k in
-                    ("pass_rate", "p50_latency_seconds", "total_tokens", "cost_per_question_usd")}},
+                {
+                    "system": "agent",
+                    **{
+                        k: agent_summary[k]
+                        for k in (
+                            "pass_rate",
+                            "p50_latency_seconds",
+                            "total_tokens",
+                            "cost_per_question_usd",
+                        )
+                    },
+                },
+                {
+                    "system": "fixed_workflow",
+                    **{
+                        k: fixed_summary[k]
+                        for k in (
+                            "pass_rate",
+                            "p50_latency_seconds",
+                            "total_tokens",
+                            "cost_per_question_usd",
+                        )
+                    },
+                },
             ],
             "agent": agent_summary,
             "fixed_workflow": fixed_summary,
@@ -128,10 +147,18 @@ class AgentRace:
 
     @staticmethod
     def _select_winner(a: dict[str, Any], f: dict[str, Any]) -> str:
-        a_key = (a["pass_rate"], -a["p50_latency_seconds"],
-                 -a["total_tokens"], -a["cost_per_question_usd"])
-        f_key = (f["pass_rate"], -f["p50_latency_seconds"],
-                 -f["total_tokens"], -f["cost_per_question_usd"])
+        a_key = (
+            a["pass_rate"],
+            -a["p50_latency_seconds"],
+            -a["total_tokens"],
+            -a["cost_per_question_usd"],
+        )
+        f_key = (
+            f["pass_rate"],
+            -f["p50_latency_seconds"],
+            -f["total_tokens"],
+            -f["cost_per_question_usd"],
+        )
         if a_key == f_key:
             return "tie"
         return "agent" if a_key > f_key else "fixed_workflow"
@@ -145,17 +172,23 @@ FAILURE_CASE_ID = 10
 
 SINGLE_AGENT_TOOLS: list[dict[str, Any]] = [
     RETRIEVE_TOOL,
-    {"type": "function", "function": {
-        "name": "check_amendments",
-        "description": "Compare original and amendment passages already retrieved.",
-        "parameters": {"type": "object", "properties": {}},
-    }},
+    {
+        "type": "function",
+        "function": {
+            "name": "check_amendments",
+            "description": "Compare original and amendment passages already retrieved.",
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
     GET_DEFINITIONS_TOOL,
-    {"type": "function", "function": {
-        "name": "answer",
-        "description": "Produce the grounded answer from the observations.",
-        "parameters": {"type": "object", "properties": {}},
-    }},
+    {
+        "type": "function",
+        "function": {
+            "name": "answer",
+            "description": "Produce the grounded answer from the observations.",
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
 ]
 
 
@@ -173,21 +206,28 @@ class MeteredLegalAgent(LegalAgent):
         report = super().run(query)
         report["handoffs"] = self.log.entries
         report["token_count"] = self.log.total_tokens
-        report["estimated_cost_usd"] = round(
-            self.log.total_tokens * self._cost_per_token_usd, 8
-        )
+        report["estimated_cost_usd"] = round(self.log.total_tokens * self._cost_per_token_usd, 8)
         return report
 
     def _step(self, state, tool_name, reason, arguments=None):
-        transcript = [SYSTEM_PROMPT, SINGLE_AGENT_TOOLS, state.query,
-                      list(state.observations.values())]
+        transcript = [
+            SYSTEM_PROMPT,
+            SINGLE_AGENT_TOOLS,
+            state.query,
+            list(state.observations.values()),
+        ]
         steps_before = len(state.steps)
         super()._step(state, tool_name, reason, arguments)
         if len(state.steps) > steps_before:
-            output = (state.observations[tool_name] if tool_name == "answer"
-                      else {"tool": tool_name, "arguments": arguments or {}})
+            output = (
+                state.observations[tool_name]
+                if tool_name == "answer"
+                else {"tool": tool_name, "arguments": arguments or {}}
+            )
             self.log.record(
-                f"single_agent turn -> {tool_name} (transcript re-read)", transcript, output,
+                f"single_agent turn -> {tool_name} (transcript re-read)",
+                transcript,
+                output,
             )
 
 
@@ -197,7 +237,8 @@ def _nearest_rank(values: list[float], percentile: float) -> float:
 
 
 def summarize_race(
-    reports: list[dict[str, Any]], verdicts: list[dict[str, Any]],
+    reports: list[dict[str, Any]],
+    verdicts: list[dict[str, Any]],
     cost_per_token_usd: float,
 ) -> dict[str, Any]:
     latencies = [r["elapsed_seconds"] for r in reports]
@@ -218,27 +259,34 @@ def hop_shares(reports: list[dict[str, Any]]) -> list[dict[str, Any]]:
             totals[entry["hop"]] += entry["tokens"]
     grand_total = sum(totals.values())
     return sorted(
-        ({"hop": hop, "tokens": tokens, "share": tokens / grand_total}
-         for hop, tokens in totals.items()),
-        key=lambda item: item["tokens"], reverse=True,
+        (
+            {"hop": hop, "tokens": tokens, "share": tokens / grand_total}
+            for hop, tokens in totals.items()
+        ),
+        key=lambda item: item["tokens"],
+        reverse=True,
     )
 
 
 def classify_failure(report: dict[str, Any], terms: list[str]) -> dict[str, Any]:
     attempts = [
-        e for e in report["handoffs"]
-        if e["hop"].startswith("orchestrator -> defined_terms_worker")
+        e for e in report["handoffs"] if e["hop"].startswith("orchestrator -> defined_terms_worker")
     ]
     answer = report["result"]["answer"]
     defined_sources = [
-        s for s in report["result"]["sources"]
+        s
+        for s in report["result"]["sources"]
         if any(term.lower() in s.get("excerpt", "").lower() for term in terms)
     ]
-    lied = any(
-        re.search(rf"{re.escape(term)}\"?\s+(?:means|is defined as|refers to)",
-                  answer, re.IGNORECASE)
-        for term in terms
-    ) and not defined_sources
+    lied = (
+        any(
+            re.search(
+                rf"{re.escape(term)}\"?\s+(?:means|is defined as|refers to)", answer, re.IGNORECASE
+            )
+            for term in terms
+        )
+        and not defined_sources
+    )
     degraded = "[Partial answer]" in report["result"]["reasoning"]
     behaviour = "lied" if lied else ("degraded" if degraded else "unknown")
     return {
@@ -285,27 +333,35 @@ class MultiAgentRace:
         for case in self.load_eval_cases():
             single = self._agent_factory().run(case["question"])
             multi = self._orchestrator.run(case["question"])
-            rows.append({
-                "case": case, "single": single, "multi": multi,
-                "single_judge": self._judge.judge_answer(case["question"], single["result"]),
-                "multi_judge": self._judge.judge_answer(case["question"], multi["result"]),
-            })
+            rows.append(
+                {
+                    "case": case,
+                    "single": single,
+                    "multi": multi,
+                    "single_judge": self._judge.judge_answer(case["question"], single["result"]),
+                    "multi_judge": self._judge.judge_answer(case["question"], multi["result"]),
+                }
+            )
 
         failure_case = next(row for row in rows if row["case"]["id"] == FAILURE_CASE_ID)
         failure = self._orchestrator.run(
-            failure_case["case"]["question"], fail_worker="defined_terms",
+            failure_case["case"]["question"],
+            fail_worker="defined_terms",
         )
         terms = next(
-            step["arguments"]["terms"] for step in failure["steps"]
+            step["arguments"]["terms"]
+            for step in failure["steps"]
             if step["action"] == "defined_terms_worker"
         )
 
         single_summary = summarize_race(
-            [r["single"] for r in rows], [r["single_judge"] for r in rows],
+            [r["single"] for r in rows],
+            [r["single_judge"] for r in rows],
             self._cost_per_token_usd,
         )
         multi_summary = summarize_race(
-            [r["multi"] for r in rows], [r["multi_judge"] for r in rows],
+            [r["multi"] for r in rows],
+            [r["multi_judge"] for r in rows],
             self._cost_per_token_usd,
         )
         shares = hop_shares([r["multi"] for r in rows])
@@ -317,7 +373,8 @@ class MultiAgentRace:
             "orchestrator": multi_summary,
             "multiplier": (
                 multi_summary["total_tokens"] / single_summary["total_tokens"]
-                if single_summary["total_tokens"] else float("inf")
+                if single_summary["total_tokens"]
+                else float("inf")
             ),
             "hop_shares": shares,
             "single_hop_shares": hop_shares([r["single"] for r in rows]),
@@ -339,10 +396,12 @@ class MultiAgentRace:
         self._artifact_dir.mkdir(parents=True, exist_ok=True)
         dominant = race["hop_shares"][0]
         (self._artifact_dir / "race_table.md").write_text(
-            self._race_table(race), encoding="utf-8",
+            self._race_table(race),
+            encoding="utf-8",
         )
         (self._artifact_dir / "handoffs.log").write_text(
-            self._handoffs_log(race), encoding="utf-8",
+            self._handoffs_log(race),
+            encoding="utf-8",
         )
         (self._artifact_dir / "multiplier.txt").write_text(
             f"Context re-send multiplier: {race['multiplier']:.1f}x "
@@ -352,7 +411,8 @@ class MultiAgentRace:
             encoding="utf-8",
         )
         (self._artifact_dir / "failure_case.md").write_text(
-            self._failure_case(race), encoding="utf-8",
+            self._failure_case(race),
+            encoding="utf-8",
         )
         return race
 
@@ -400,9 +460,13 @@ class MultiAgentRace:
             for row in race["rows"]
             for arm, key in (("single_agent", "single"), ("orchestrator", "multi"))
         ]
-        runs.append((
-            "orchestrator", f"{race['failure']['case']['id']:02d}-fault", race["failure"]["report"],
-        ))
+        runs.append(
+            (
+                "orchestrator",
+                f"{race['failure']['case']['id']:02d}-fault",
+                race["failure"]["report"],
+            )
+        )
         for arm, case, report in runs:
             for entry in report["handoffs"]:
                 lines.append(
@@ -418,30 +482,32 @@ class MultiAgentRace:
         one_line = {
             "degraded": (
                 f"retried {cls['attempts'] - 1}x, then degraded to a partial answer."
-                if cls["retried"] else
-                "degraded to a partial answer without retrying."
+                if cls["retried"]
+                else "degraded to a partial answer without retrying."
             ),
             "lied": "LIED: interpreted a defined term it never looked up.",
         }.get(cls["behaviour"], "did not match retry/degrade/lie; inspect evidence below.")
-        return "\n".join([
-            "# Worker failure case",
-            "",
-            f"Case: id {failure['case']['id']}: \"{failure['case']['question']}\" "
-            f"(human label: {failure['case']['human_label']})",
-            f"Injected: defined_terms_worker raises HTTP 500. Terms: {failure['terms']}.",
-            "",
-            f"**Actual behaviour: {one_line}**",
-            "",
-            f"- attempts: {cls['attempts']} (statuses {cls['statuses']}); "
-            f"retried={cls['retried']}, degraded={cls['degraded']}, lied={cls['lied']}",
-            f"- judge: {'PASS' if failure['judge']['passed'] else 'fail'} "
-            f"(checks {failure['judge']['checks']})",
-            f"- tokens: faulted {report['token_count']:,} vs clean {clean['token_count']:,}; "
-            f"latency {report['elapsed_seconds']:.3f}s vs {clean['elapsed_seconds']:.3f}s",
-            "",
-            "## Final answer (faulted run)",
-            "",
-            "```json",
-            json.dumps(report["result"], indent=2, ensure_ascii=False),
-            "```",
-        ])
+        return "\n".join(
+            [
+                "# Worker failure case",
+                "",
+                f'Case: id {failure["case"]["id"]}: "{failure["case"]["question"]}" '
+                f"(human label: {failure['case']['human_label']})",
+                f"Injected: defined_terms_worker raises HTTP 500. Terms: {failure['terms']}.",
+                "",
+                f"**Actual behaviour: {one_line}**",
+                "",
+                f"- attempts: {cls['attempts']} (statuses {cls['statuses']}); "
+                f"retried={cls['retried']}, degraded={cls['degraded']}, lied={cls['lied']}",
+                f"- judge: {'PASS' if failure['judge']['passed'] else 'fail'} "
+                f"(checks {failure['judge']['checks']})",
+                f"- tokens: faulted {report['token_count']:,} vs clean {clean['token_count']:,}; "
+                f"latency {report['elapsed_seconds']:.3f}s vs {clean['elapsed_seconds']:.3f}s",
+                "",
+                "## Final answer (faulted run)",
+                "",
+                "```json",
+                json.dumps(report["result"], indent=2, ensure_ascii=False),
+                "```",
+            ]
+        )

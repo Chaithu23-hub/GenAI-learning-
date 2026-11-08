@@ -22,8 +22,8 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY legal_rag/ ./legal_rag/
 COPY mcp_servers.json ./
 COPY pyproject.toml ./
-COPY data/evaluation/ ./data/evaluation/
-COPY data/shared-corpus/ ./data/shared-corpus/
+COPY data/evaluation/labels.json ./data/evaluation/labels.json
+COPY data/shared-corpus/contracts/ ./data/shared-corpus/contracts/
 
 # Data directories (Chroma persisted via bind mount in compose)
 RUN mkdir -p data/legal data/chroma
@@ -37,6 +37,6 @@ USER appuser
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/live')"
 
 CMD ["uvicorn", "legal_rag.interfaces.http.app:app", "--host", "0.0.0.0", "--port", "8000"]

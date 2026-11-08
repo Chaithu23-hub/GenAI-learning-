@@ -1,4 +1,3 @@
-
 from legal_rag.application.agents.legal_agent import AgentBudgets, LegalAgent
 
 
@@ -15,15 +14,23 @@ class TestLegalAgent:
         assert report["strategy"] == "fixed_workflow"
         assert report["completed"]
         assert set(report.keys()) >= {
-            "strategy", "result", "steps", "tool_calls", "elapsed_seconds",
+            "strategy",
+            "result",
+            "steps",
+            "tool_calls",
+            "elapsed_seconds",
         }
 
     def test_step_budget_stops_cleanly(self, container):
         agent = LegalAgent(
-            retrieval=container.retrieval_service, qa=container.qa_service,
+            retrieval=container.retrieval_service,
+            qa=container.qa_service,
             budgets=AgentBudgets(
-                max_steps=1, max_seconds=30.0, max_tokens=1_000_000,
-                max_cost_usd=1.0, cost_per_token_usd=1e-6,
+                max_steps=1,
+                max_seconds=30.0,
+                max_tokens=1_000_000,
+                max_cost_usd=1.0,
+                cost_per_token_usd=1e-6,
                 guardrail_answer=container.settings.guardrail_answer,
             ),
         )
@@ -33,10 +40,14 @@ class TestLegalAgent:
 
     def test_wall_clock_budget_stops_cleanly(self, container):
         agent = LegalAgent(
-            retrieval=container.retrieval_service, qa=container.qa_service,
+            retrieval=container.retrieval_service,
+            qa=container.qa_service,
             budgets=AgentBudgets(
-                max_steps=100, max_seconds=1e-9, max_tokens=1_000_000,
-                max_cost_usd=1.0, cost_per_token_usd=1e-6,
+                max_steps=100,
+                max_seconds=1e-9,
+                max_tokens=1_000_000,
+                max_cost_usd=1.0,
+                cost_per_token_usd=1e-6,
                 guardrail_answer=container.settings.guardrail_answer,
             ),
         )

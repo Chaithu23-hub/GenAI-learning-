@@ -1,4 +1,5 @@
 """Real Chroma regression: combined port filters must remain a conjunction."""
+
 import pytest
 
 from legal_rag.domain.entities import IndexedChunk
@@ -17,8 +18,12 @@ def test_counterparty_and_document_type_filter_together(tmp_path, operation):
     ]
     chunks = [
         IndexedChunk(
-            id=identifier, text="late payment interest", heading="Payment", chunk_index=0,
-            document=identifier, document_type=document_type,
+            id=identifier,
+            text="late payment interest",
+            heading="Payment",
+            chunk_index=0,
+            document=identifier,
+            document_type=document_type,
             metadata={"counterparty": counterparty},
         )
         for identifier, counterparty, document_type in rows

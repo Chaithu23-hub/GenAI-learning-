@@ -3,6 +3,7 @@
 Zero external deps. Prometheus/OpenTelemetry export can be swapped in later
 by writing a second adapter that satisfies the same `Metrics` surface.
 """
+
 from __future__ import annotations
 
 import threading
@@ -55,7 +56,17 @@ class Histogram:
     """Bucketed histogram, Prometheus-compatible cumulative buckets."""
 
     DEFAULT_BUCKETS = (
-        0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0,
+        0.005,
+        0.01,
+        0.025,
+        0.05,
+        0.1,
+        0.25,
+        0.5,
+        1.0,
+        2.5,
+        5.0,
+        10.0,
     )
 
     def __init__(self, name: str, help_text: str, buckets: tuple[float, ...] | None = None):
@@ -98,8 +109,7 @@ class Histogram:
             for i, upper in enumerate(self.buckets):
                 label_str_extra[-1] = ("le", "+Inf" if upper == float("inf") else str(upper))
                 lines.append(
-                    f"{self.name}_bucket{_fmt_labels(tuple(label_str_extra))} "
-                    f"{counts[key][i]}"
+                    f"{self.name}_bucket{_fmt_labels(tuple(label_str_extra))} {counts[key][i]}"
                 )
             lines.append(f"{self.name}_sum{_fmt_labels(key)} {sums[key]}")
             lines.append(f"{self.name}_count{_fmt_labels(key)} {observations[key]}")

@@ -26,16 +26,20 @@ def test_termination_answer_cannot_cite_a_different_section(container, caplog):
     wrong_answer = {
         "answer": "Section 3 permits either party to terminate with 30 days' notice.",
         "reasoning": "The contract permits termination.",
-        "sources": [{
-            "document": termination_chunk.document,
-            "chunk_id": termination_chunk.chunk_id,
-            "excerpt": termination_chunk.text,
-        }],
+        "sources": [
+            {
+                "document": termination_chunk.document,
+                "chunk_id": termination_chunk.chunk_id,
+                "excerpt": termination_chunk.text,
+            }
+        ],
         "confidence": "high",
         "out_of_scope": False,
     }
     corrected = {**wrong_answer, "answer": "Section 5 requires 30 days written notice."}
-    llm = FakeLLMClient(responses=[{"content": json.dumps(wrong_answer)}, {"content": json.dumps(corrected)}])
+    llm = FakeLLMClient(
+        responses=[{"content": json.dumps(wrong_answer)}, {"content": json.dumps(corrected)}]
+    )
     generator = LLMGenerator(
         retrieval=container.retrieval_service,
         vector_store=container.vector_store,
@@ -52,8 +56,7 @@ def test_termination_answer_cannot_cite_a_different_section(container, caplog):
         None,
     )
     assert trace is not None, [
-        (record.getMessage(), getattr(record, "error", None))
-        for record in caplog.records
+        (record.getMessage(), getattr(record, "error", None)) for record in caplog.records
     ]
     assert trace.prompt_version == "v4"
     # Wider retrieval may include other clauses; the corrected termination
@@ -69,18 +72,21 @@ def test_termination_answer_cannot_cite_a_different_section(container, caplog):
     assert trace.spans[1]["cost_usd"] is None
     logging.getLogger(__name__).info(
         "week11 controlled trace: %s",
-        json.dumps({
-            "case_id": 26,
-            "prompt_version": trace.prompt_version,
-            "retrieved_context_ids": trace.retrieved_context_ids,
-            "answer_clause_refs": trace.answer_clause_refs,
-            "candidate_clause_refs": [
-                span.get("candidate_clause_refs", []) for span in trace.spans
-            ],
-            "spans": trace.spans,
-            "total_latency_ms": trace.total_latency_ms,
-            "cost_basis": "fake LLM usage; provider cost unavailable",
-        }, sort_keys=True),
+        json.dumps(
+            {
+                "case_id": 26,
+                "prompt_version": trace.prompt_version,
+                "retrieved_context_ids": trace.retrieved_context_ids,
+                "answer_clause_refs": trace.answer_clause_refs,
+                "candidate_clause_refs": [
+                    span.get("candidate_clause_refs", []) for span in trace.spans
+                ],
+                "spans": trace.spans,
+                "total_latency_ms": trace.total_latency_ms,
+                "cost_basis": "fake LLM usage; provider cost unavailable",
+            },
+            sort_keys=True,
+        ),
     )
 
 
@@ -95,9 +101,7 @@ def test_rate_limited_generation_emits_trace_and_raises(container, caplog):
 
     with pytest.raises(RuntimeError, match="429"):
         generator.generate("termination notice")
-    trace = next(
-        record for record in caplog.records if record.getMessage() == "qa trace"
-    )
+    trace = next(record for record in caplog.records if record.getMessage() == "qa trace")
     assert trace.spans[-1]["error_type"] == "RuntimeError"
     assert trace.spans[-1]["input_tokens"] is None
     assert trace.retrieved_context_ids

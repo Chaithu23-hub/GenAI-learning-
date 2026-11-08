@@ -1,4 +1,5 @@
 """CLI (Typer). Uses the same composition container as the HTTP app."""
+
 from __future__ import annotations
 
 import json
@@ -55,8 +56,10 @@ def agent(
         report = c.new_fixed_workflow().run(question)
     elif strategy == "compare":
         report = compare_strategies(
-            question, agent_factory=c.new_legal_agent,
-            fixed_factory=c.new_fixed_workflow, runs=runs,
+            question,
+            agent_factory=c.new_legal_agent,
+            fixed_factory=c.new_fixed_workflow,
+            runs=runs,
         )
     else:
         typer.echo(f"Unknown strategy: {strategy}", err=True)
@@ -70,12 +73,14 @@ def agent_safety_check():
     c = _container()
     trajectory = c.new_legal_agent().run("What is the late payment fee?")
     before, after = compare_injection_defense()
-    _echo_json({
-        "trajectory": evaluate_trajectory(trajectory),
-        "trajectory_report": trajectory,
-        "injection_before": before,
-        "injection_after": after,
-    })
+    _echo_json(
+        {
+            "trajectory": evaluate_trajectory(trajectory),
+            "trajectory_report": trajectory,
+            "injection_before": before,
+            "injection_after": after,
+        }
+    )
 
 
 @app.command("validate-judge")
@@ -94,14 +99,16 @@ def race_agent():
 def race_orchestrator():
     """Race the single agent against the orchestrator on the labelled cases."""
     race = _container().multi_agent_race.write_artifacts()
-    _echo_json({
-        "cases": race["case_ids"],
-        "single_agent": race["single_agent"],
-        "orchestrator": race["orchestrator"],
-        "multiplier": round(race["multiplier"], 1),
-        "dominant_handoff": race["hop_shares"][0],
-        "failure_behaviour": race["failure"]["classification"],
-    })
+    _echo_json(
+        {
+            "cases": race["case_ids"],
+            "single_agent": race["single_agent"],
+            "orchestrator": race["orchestrator"],
+            "multiplier": round(race["multiplier"], 1),
+            "dominant_handoff": race["hop_shares"][0],
+            "failure_behaviour": race["failure"]["classification"],
+        }
+    )
 
 
 @app.command("mcp-lookup")

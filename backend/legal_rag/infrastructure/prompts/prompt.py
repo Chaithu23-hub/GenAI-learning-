@@ -1,4 +1,5 @@
 """Prompt template primitive: name + version + text + metadata."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -18,9 +19,7 @@ class PromptTemplate:
         try:
             return self.text.format(**variables)
         except KeyError as exc:
-            raise KeyError(
-                f"prompt '{self.name}@{self.version}' missing variable: {exc}"
-            ) from exc
+            raise KeyError(f"prompt '{self.name}@{self.version}' missing variable: {exc}") from exc
 
     @property
     def id(self) -> str:

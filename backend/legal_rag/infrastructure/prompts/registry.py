@@ -4,6 +4,7 @@ Adding a new prompt version means (1) creating the v2 template in the same
 module and (2) adding it to this registry so the version pin is visible in
 one place. Old versions stay for rollback + A/B evaluation.
 """
+
 from __future__ import annotations
 
 from legal_rag.infrastructure.prompts.judge_prompts import (

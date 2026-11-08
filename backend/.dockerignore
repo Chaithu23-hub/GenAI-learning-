@@ -23,6 +23,9 @@ tests/
 !.env.example
 data/chroma/
 data/evaluation/generated/
+data/shared-corpus/contracts-docx/
+data/shared-corpus/contracts-pdf/
+data/shared-corpus/eval/
 models/
 *.log
 *.md

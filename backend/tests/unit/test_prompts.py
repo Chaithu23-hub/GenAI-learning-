@@ -47,10 +47,12 @@ class TestRegistry:
 
     def test_qa_prompt_equals_string_constant(self):
         from legal_rag.infrastructure.prompts import SYSTEM_PROMPT
+
         assert QA_SYSTEM_PROMPT.text == SYSTEM_PROMPT
 
     def test_judge_prompts_are_contract_focused(self):
         from legal_rag.application.workflows.judge import JUDGE_SYSTEM_PROMPT
+
         text = (JUDGE_SYSTEM_PROMPT + " " + JUDGE_SYSTEM_PROMPT_V1.text).lower()
         assert "constitutional" not in text
         assert "contract" in text

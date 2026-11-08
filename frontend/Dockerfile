@@ -7,6 +7,9 @@ COPY package.json package-lock.json* ./
 RUN npm ci
 
 COPY . .
+# Browser configuration is public: only the reader key belongs in this build.
+ARG LEGAL_RAG_API_KEY=""
+ENV LEGAL_RAG_API_KEY=${LEGAL_RAG_API_KEY}
 RUN npm run build
 
 # Stage 2: Serve with nginx

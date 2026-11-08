@@ -1,4 +1,5 @@
 """QA orchestration — guardrails → filter → retrieve → generate."""
+
 from __future__ import annotations
 
 import time
@@ -59,9 +60,7 @@ class QaService:
             }
         allowed, reason = screen_query(query)
         if not allowed:
-            answer = (
-                self._guardrail_answer if reason == "injection" else self._no_drafting_answer
-            )
+            answer = self._guardrail_answer if reason == "injection" else self._no_drafting_answer
             log.info("guardrail blocked", extra={"reason": reason})
             _metrics.guardrail_blocks.inc(reason=reason or "unknown")
             _metrics.requests.inc(outcome="guardrail_blocked")
@@ -76,8 +75,12 @@ class QaService:
                 "confidence": "high",
                 "out_of_scope": True,
             }
-        if (self._conversation is not None and document_type is None
-                and parse_clause_request(query) is None and not DOCUMENT_ID_RE.search(query)):
+        if (
+            self._conversation is not None
+            and document_type is None
+            and parse_clause_request(query) is None
+            and not DOCUMENT_ID_RE.search(query)
+        ):
             reply = self._conversation.reply_if_general(query)
             if reply:
                 _metrics.requests.inc(outcome="out_of_scope")
@@ -92,15 +95,11 @@ class QaService:
         started = time.perf_counter()
         result = self._generator.generate(query, where=where)
         outcome = "out_of_scope" if result.get("out_of_scope") else "answered"
-        _metrics.request_duration.observe(
-            time.perf_counter() - started, outcome=outcome
-        )
+        _metrics.request_duration.observe(time.perf_counter() - started, outcome=outcome)
         _metrics.requests.inc(outcome=outcome)
         return result
 
-    def inspect(
-        self, query: str, *, document_type: str | None = None
-    ) -> dict[str, Any]:
+    def inspect(self, query: str, *, document_type: str | None = None) -> dict[str, Any]:
         query = normalize_document_query(query)
         where = self._resolve_where(query, document_type)
         return {
@@ -109,9 +108,7 @@ class QaService:
             "answer": self.answer(query, document_type=document_type),
         }
 
-    def _resolve_where(
-        self, query: str, document_type: str | None
-    ) -> dict[str, str] | None:
+    def _resolve_where(self, query: str, document_type: str | None) -> dict[str, str] | None:
         where = self._retrieval.detect_metadata_filter(query) or {}
         if document_type:
             where["document_type"] = document_type

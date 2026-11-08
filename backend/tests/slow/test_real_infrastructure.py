@@ -3,6 +3,7 @@
 Slow: downloads models on first run (~100 MB) and writes a Chroma directory
 under tmp_path. Skip in normal CI: `pytest -m "not slow"`.
 """
+
 from __future__ import annotations
 
 import logging
@@ -92,16 +93,14 @@ def test_real_shared_corpus_ingest_preserves_metadata_and_schedule_rows(real_leg
     }
     assert all(required <= set(meta) for meta in metadatas)
     assert all(all(meta[key] for key in required) for meta in metadatas)
-    assert any(
-        "20 October 2026" in text and "Deepavali" in text
-        for text in stored["documents"]
-    )
+    assert any("20 October 2026" in text and "Deepavali" in text for text in stored["documents"])
     vertex_filter = real_legal_container.retrieval_service.detect_metadata_filter(
         "What is Section 8.3 under the Vertex agreement?"
     )
     assert vertex_filter == {"counterparty": "Vertex Retail"}
     vertex_chunks = real_legal_container.retrieval_service.retrieve(
-        "What is Section 8.3 liability?", where=vertex_filter,
+        "What is Section 8.3 liability?",
+        where=vertex_filter,
     )
     assert vertex_chunks
     assert all(chunk.document == "MSA-2026-022" for chunk in vertex_chunks)
@@ -130,7 +129,12 @@ def test_shared_corpus_loader_supports_all_formats_with_parity():
         "AMD-2026-014-01": ("forty-five (45) days",),
         "AMD-2026-014-02": ("fifteen (15) Business Days", "5,000,000", "seven (7) years"),
         "SCH-2026-014": (
-            "20 October 2026", "Deepavali", "15 Business Days", "81,100", "42,000", "99.9%",
+            "20 October 2026",
+            "Deepavali",
+            "15 Business Days",
+            "81,100",
+            "42,000",
+            "99.9%",
         ),
         "MSA-2026-022": ("500,000", "SIAC", "twenty (20) days"),
         "NDA-2026-007": ("50,000", "England and Wales"),

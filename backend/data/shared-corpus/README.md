@@ -72,8 +72,10 @@ Status. Parse it.
 Then check your work:
 
 ```powershell
-# From the repository root; uses a disposable test container.
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/Test-Backend.ps1 -IncludeFormatParity
+# From repository root; uses installed local document dependencies.
+Push-Location backend
+..\.venv\Scripts\python.exe -m pytest tests/slow/test_real_infrastructure.py::test_shared_corpus_loader_supports_all_formats_with_parity -q
+Pop-Location
 ```
 
 The format-parity test loads every document in all three formats and checks

@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "skills": {
+    "authoring-github-workflows": {
+      "source": "dotnet/skills",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/authoring-github-workflows/SKILL.md",
+      "computedHash": "8a1ab212d59191e828ad00d02060c93cb642ff35dcb1761212a7cd2dcef212cb"
+    },
+    "code-review": {
+      "source": "getsentry/skills",
+      "sourceType": "github",
+      "skillPath": "skills/code-review/SKILL.md",
+      "computedHash": "26dfc1f30bda2b34a9329204bfe21905e6e41e2c8b74252bc7295b944ca745a9"
+    },
+    "code-simplifier": {
+      "source": "getsentry/skills",
+      "sourceType": "github",
+      "skillPath": "skills/code-simplifier/SKILL.md",
+      "computedHash": "2b379a3226c7223ca300845aec488d0ae7d6c8a24a78d234ca405fbeb9078ea6"
+    },
+    "codeql": {
+      "source": "trailofbits/skills",
+      "sourceType": "github",
+      "skillPath": "plugins/static-analysis/skills/codeql/SKILL.md",
+      "computedHash": "f45a721e180cae73db966b8d1dbd4e00c449eb2230b3029cdb12bec9af96a316"
+    },
+    "github-actions-builder": {
+      "source": "JayRHa/agent-skills",
+      "sourceType": "github",
+      "skillPath": "github-actions-builder/SKILL.md",
+      "computedHash": "52ad594d0d6b246804a955f9adf29d5b7e68c40f054dc349b2ed5aa6bc8c77db"
+    },
+    "github-actions-hardening": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/github-actions-hardening/SKILL.md",
+      "computedHash": "10e35ff70fcf42e09295ffad0ac3203e4d6b6f74557cc3fa1654112b89e0eea2"
+    },
+    "langchain-dependencies": {
+      "source": "langchain-ai/langchain-skills",
+      "sourceType": "github",
+      "skillPath": "config/skills/langchain-dependencies/SKILL.md",
+      "computedHash": "ac62cde366414ce2f928e43fe0e94dacc2969f5bf14f500650508f385d5ce0b5"
+    },
+    "langchain-rag": {
+      "source": "langchain-ai/langchain-skills",
+      "sourceType": "github",
+      "skillPath": "config/skills/langchain-rag/SKILL.md",
+      "computedHash": "cf1cdc8657527ddac4c4d256c73288ec88c9600e0f31d2393324103e9bd503a1"
+    },
+    "pdf": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/pdf/SKILL.md",
+      "computedHash": "e51040d7b181ea272c825781592b798b2e5dad8708e757ffb50ddd5b34958d3b"
+    },
+    "promptfoo-evals": {
+      "source": "promptfoo/promptfoo",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/promptfoo-evals/SKILL.md",
+      "computedHash": "61e0c83e28012308c39c0297cba0b82b13e7bdb2f59e93afdf72bed197890ebf"
+    },
+    "promptfoo-redteam-run": {
+      "source": "promptfoo/promptfoo",
+      "sourceType": "github",
+      "skillPath": "plugins/promptfoo/skills/promptfoo-redteam-run/SKILL.md",
+      "computedHash": "8095b101356159c4ba205c95d930962c689314aebfd1fb8a69acb281f531eab7"
+    },
+    "promptfoo-redteam-setup": {
+      "source": "promptfoo/promptfoo",
+      "sourceType": "github",
+      "skillPath": "plugins/promptfoo/skills/promptfoo-redteam-setup/SKILL.md",
+      "computedHash": "5481ef652d81f1c11c7423b5c05582c35feec33ede1a016012b02f98669ec1ad"
+    },
+    "security-audit": {
+      "source": "cloudflare/security-audit-skill",
+      "sourceType": "github",
+      "skillPath": "skills/security-audit/SKILL.md",
+      "computedHash": "e6b2e317de75da97e9de18d842982994803f3a67a4a6d8154a82323dc3de8528"
+    },
+    "task-model-router": {
+      "source": "Rattlhead/codex-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/task-model-router/SKILL.md",
+      "computedHash": "19c65ccd311e9056a056c32aaec3e4d8b65b8c877b4532d2cdb48e1d430f9dab"
+    },
+    "token-optimization": {
+      "source": "bm629/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/token-optimization/SKILL.md",
+      "computedHash": "90b151b6bd190bedb70834ff971292f4bfa95151ec3f2c9285f4a17e443f6e80"
+    }
+  }
+}

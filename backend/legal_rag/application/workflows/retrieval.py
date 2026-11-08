@@ -1,4 +1,5 @@
 """Retrieval service — dense + lexical → RRF → cross-encoder rerank."""
+
 from __future__ import annotations
 
 import re
@@ -85,15 +86,18 @@ class RetrievalService:
             lexical = self._vector_store.keyword_search(query, k=k, where=where)
             ranked_lists.append([hit["id"] for hit in lexical])
             for hit in lexical:
-                candidates_by_id.setdefault(hit["id"], RetrievedChunk(
-                    chunk_id=hit["id"],
-                    document=hit["metadata"]["document"],
-                    document_type=hit["metadata"]["document_type"],
-                    heading=hit["metadata"]["heading"],
-                    text=hit["document"],
-                    distance=1.0,
-                    metadata=dict(hit["metadata"]),
-                ))
+                candidates_by_id.setdefault(
+                    hit["id"],
+                    RetrievedChunk(
+                        chunk_id=hit["id"],
+                        document=hit["metadata"]["document"],
+                        document_type=hit["metadata"]["document_type"],
+                        heading=hit["metadata"]["heading"],
+                        text=hit["document"],
+                        distance=1.0,
+                        metadata=dict(hit["metadata"]),
+                    ),
+                )
 
         rrf_scores = reciprocal_rank_fusion(*ranked_lists, rrf_k=self._settings.rrf_k)
         candidates = sorted(
@@ -110,20 +114,19 @@ class RetrievalService:
         ]
         scores = self._reranker.score(query, score_inputs)
         for candidate, score in zip(candidates, scores, strict=True):
-            raw = float(score)
-            # Fix 3: boost amendments above the original MSA clauses they supersede.
-            # AMD-YYYY-NNN-NN: the suffix NN encodes amendment order (01→1, 02→2, …).
-            # Original MSAs, schedules, and NDAs get priority=0.
-            doc_id: str = candidate.document or ""
-            amendment_match = re.search(r"AMD-\d{4}-\d{3}-(\d{2})", doc_id)
-            priority = int(amendment_match.group(1)) if amendment_match else 0
-            candidate.score = raw + 0.3 * priority if raw > -4.0 else raw
+            # An amendment's identifier does not establish applicability to a
+            # particular clause, requested date, or historical document version.
+            candidate.score = float(score)
         candidates.sort(key=lambda c: c.score, reverse=True)
         top = candidates[:n]
-        log.debug("retrieved", extra={
-            "query": query[:80], "returned": len(top),
-            "top_score": top[0].score if top else None,
-        })
+        log.debug(
+            "retrieved",
+            extra={
+                "query": query[:80],
+                "returned": len(top),
+                "top_score": top[0].score if top else None,
+            },
+        )
         return top
 
     def detect_metadata_filter(self, query: str) -> dict[str, str] | None:
@@ -144,9 +147,16 @@ class RetrievalService:
         source_docs = {m.group().upper() for m in DOCUMENT_ID_RE.finditer(query)}
         if len(source_docs) == 1:
             where["source_doc"] = next(iter(source_docs))
-        effective_date = re.search(r"\b20\d{2}-\d{2}-\d{2}\b", query)
+        # Incidents, holidays and "as of" dates are not document effective dates.
+        # Temporal applicability requires the full amendment chain, not equality.
+        effective_date = re.search(
+            r"\beffective(?:\s+date)?\s*(?:(?:on|of|is|was)\s+|[:=]\s*)?"
+            r"(20\d{2}-\d{2}-\d{2})\b",
+            query,
+            re.IGNORECASE,
+        )
         if effective_date:
-            where["effective_date"] = effective_date.group(0)
+            where["effective_date"] = effective_date.group(1)
         if re.search(
             r"\bonly\s+(?:the\s+)?amendments?(?:\s+documents?)?\b|"
             r"\bamendments?\s+documents?\s+only\b",

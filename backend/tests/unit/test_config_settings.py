@@ -40,7 +40,13 @@ def test_groq_uses_its_own_key_and_model():
 
 
 def test_legacy_credentials_do_not_replace_a_missing_groq_key():
-    s = Settings(_env_file=None, GROQ_API_KEY=None,
-                 GOOGLE_API_KEY="unused-google-key", OPENAI_API_KEY="unused-openai-key")
+    s = Settings(
+        _env_file=None,
+        GROQ_API_KEY=None,
+        GOOGLE_API_KEY="unused-google-key",
+        OPENAI_API_KEY="unused-openai-key",
+    )
     assert s.llm_api_key == ""
-    assert not {"google_api_key", "openai_api_key", "google_model", "openai_model"}.intersection(Settings.model_fields)
+    assert not {"google_api_key", "openai_api_key", "google_model", "openai_model"}.intersection(
+        Settings.model_fields
+    )

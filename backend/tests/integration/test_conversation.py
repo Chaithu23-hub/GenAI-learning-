@@ -22,9 +22,12 @@ class Retrieval:
 
 def service(conversation):
     return QaService(
-        retrieval=Retrieval(), generator=DocumentGenerator(),
-        guardrail_answer="Blocked", no_drafting_answer="No drafting",
-        greeting_answer="Hi! How can I help?", conversation=conversation,
+        retrieval=Retrieval(),
+        generator=DocumentGenerator(),
+        guardrail_answer="Blocked",
+        no_drafting_answer="No drafting",
+        greeting_answer="Hi! How can I help?",
+        conversation=conversation,
         out_of_scope_answer="Not in the provided documents.",
     )
 
@@ -75,14 +78,17 @@ def test_explicit_document_filter_skips_general_routing():
     assert qa._generator.calls
 
 
-@pytest.mark.parametrize("content, expected", [
-    ('{"route":"general","answer":"Paris."}', "Paris."),
-    ('{"route":"documents","answer":"Invented fee"}', None),
-    ('{"route":"general","answer":""}', None),
-    ('{"route":"unknown","answer":"Guess"}', None),
-    ('not json', None),
-    ('[]', None),
-])
+@pytest.mark.parametrize(
+    "content, expected",
+    [
+        ('{"route":"general","answer":"Paris."}', "Paris."),
+        ('{"route":"documents","answer":"Invented fee"}', None),
+        ('{"route":"general","answer":""}', None),
+        ('{"route":"unknown","answer":"Guess"}', None),
+        ("not json", None),
+        ("[]", None),
+    ],
+)
 def test_routing_adapter_defaults_to_documents_when_uncertain(content, expected):
     llm = FakeLLMClient(responses=[{"content": content}])
     assert LLMConversation(llm).reply_if_general("Question") == expected

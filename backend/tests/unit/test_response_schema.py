@@ -8,8 +8,11 @@ from legal_rag.domain.response_schema import parse_json_response, validate_respo
 class TestValidateResponse:
     def _valid(self):
         return {
-            "answer": "some", "reasoning": "because", "sources": [],
-            "confidence": "medium", "out_of_scope": False,
+            "answer": "some",
+            "reasoning": "because",
+            "sources": [],
+            "confidence": "medium",
+            "out_of_scope": False,
         }
 
     def test_valid_payload_ok(self):
@@ -37,9 +40,7 @@ class TestValidateResponse:
         payload = self._valid()
         payload["out_of_scope"] = True
         payload["answer"] = "I don't know"
-        payload["sources"] = [
-            {"document": "d.md", "chunk_id": "x", "excerpt": "e"}
-        ]
+        payload["sources"] = [{"document": "d.md", "chunk_id": "x", "excerpt": "e"}]
         errors = validate_response(payload, out_of_scope_answer="I don't know")
         assert any("empty sources" in e for e in errors)
 
@@ -50,11 +51,11 @@ class TestParseJsonResponse:
         assert parse_json_response(json.dumps(payload)) == payload
 
     def test_wrapped_in_markdown_fence(self):
-        text = "```json\n{\"answer\": \"x\"}\n```"
+        text = '```json\n{"answer": "x"}\n```'
         assert parse_json_response(text) == {"answer": "x"}
 
     def test_json_embedded_in_prose(self):
-        text = "Sure! Here is the JSON:\n{\"answer\": \"x\"}\nThanks."
+        text = 'Sure! Here is the JSON:\n{"answer": "x"}\nThanks.'
         assert parse_json_response(text) == {"answer": "x"}
 
     def test_missing_json_raises(self):

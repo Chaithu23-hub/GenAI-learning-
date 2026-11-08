@@ -1,4 +1,5 @@
 """Judge system + user templates (v1)."""
+
 from legal_rag.infrastructure.prompts.prompt import PromptTemplate
 
 _SYS_TEXT = """You are an expert legal contract evaluator grading answers about contracts, amendments, and negotiated legal terms.

@@ -1,12 +1,30 @@
 """Conservative spelling normalization for document search vocabulary."""
+
 import re
 from difflib import SequenceMatcher, get_close_matches
 
 _TERMS = (
-    "available", "amendment", "amendments", "agreement", "agreements",
-    "contract", "contracts", "termination", "confidentiality", "liability",
-    "payment", "payments", "renewal", "obligation", "obligations",
-    "effective", "expiration", "expiry", "notice", "clause", "clauses",
+    "available",
+    "amendment",
+    "amendments",
+    "agreement",
+    "agreements",
+    "contract",
+    "contracts",
+    "termination",
+    "confidentiality",
+    "liability",
+    "payment",
+    "payments",
+    "renewal",
+    "obligation",
+    "obligations",
+    "effective",
+    "expiration",
+    "expiry",
+    "notice",
+    "clause",
+    "clauses",
 )
 
 
@@ -15,6 +33,7 @@ def normalize_document_query(query: str) -> str:
 
     Short words and tokens within identifiers are deliberately left alone.
     """
+
     def correct(match: re.Match[str]) -> str:
         word = match.group()
         if len(word) < 6 or word.lower() in _TERMS or word.isupper():

@@ -1,4 +1,5 @@
 """JSON logging on stdout with a request-id context var set by HTTP middleware."""
+
 from __future__ import annotations
 
 import json
@@ -11,10 +12,28 @@ from typing import Any
 _request_id_var: ContextVar[str | None] = ContextVar("request_id", default=None)
 
 _STANDARD = {
-    "name", "msg", "args", "levelname", "levelno", "pathname", "filename",
-    "module", "exc_info", "exc_text", "stack_info", "lineno", "funcName",
-    "created", "msecs", "relativeCreated", "thread", "threadName",
-    "processName", "process", "message", "asctime",
+    "name",
+    "msg",
+    "args",
+    "levelname",
+    "levelno",
+    "pathname",
+    "filename",
+    "module",
+    "exc_info",
+    "exc_text",
+    "stack_info",
+    "lineno",
+    "funcName",
+    "created",
+    "msecs",
+    "relativeCreated",
+    "thread",
+    "threadName",
+    "processName",
+    "process",
+    "message",
+    "asctime",
 }
 
 
@@ -49,8 +68,10 @@ class TextFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         rid = _request_id_var.get()
         prefix = f"[{rid}] " if rid else ""
-        base = f"{time.strftime('%H:%M:%S', time.gmtime(record.created))} " \
-               f"{record.levelname:<7} {record.name}: {prefix}{record.getMessage()}"
+        base = (
+            f"{time.strftime('%H:%M:%S', time.gmtime(record.created))} "
+            f"{record.levelname:<7} {record.name}: {prefix}{record.getMessage()}"
+        )
         if record.exc_info:
             base += "\n" + self.formatException(record.exc_info)
         return base

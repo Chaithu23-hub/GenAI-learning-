@@ -3,6 +3,7 @@
 Spawns each configured server as a subprocess, initialises the session,
 lists tools, and forwards tool calls. Async context manager.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -46,7 +47,9 @@ class StdioMCPHost:
                 cwd=str(self.config_path.parent),
             )
             read_stream, write_stream = await self._stack.enter_async_context(stdio_client(params))
-            session = await self._stack.enter_async_context(ClientSession(read_stream, write_stream))
+            session = await self._stack.enter_async_context(
+                ClientSession(read_stream, write_stream)
+            )
             await session.initialize()
             tools = await session.list_tools()
             self.sessions[server["name"]] = session
@@ -72,8 +75,7 @@ class StdioMCPHost:
             "server": server,
             "tool": tool,
             "content": [
-                item.model_dump() if hasattr(item, "model_dump") else item
-                for item in content_items
+                item.model_dump() if hasattr(item, "model_dump") else item for item in content_items
             ],
         }
 
@@ -81,17 +83,13 @@ class StdioMCPHost:
 # ─── Convenience blocking helpers used by CLI + FastAPI (sync path) ─────
 
 
-async def discover_config(config_path: Path) -> dict[str, list[str]]:
-    async with StdioMCPHost(config_path) as host:
-        return await host.discover()
-
-
 def run_lookup(config_path: Path, contract_id: str) -> dict[str, Any]:
     async def _lookup() -> dict[str, Any]:
         async with StdioMCPHost(config_path) as host:
             tools = host.discovered.get("contract-repository", [])
             tool_name = next(
-                (name for name in tools if name == "lookup_contract"), None,
+                (name for name in tools if name == "lookup_contract"),
+                None,
             )
             if tool_name is None:
                 raise MCPTransportError(

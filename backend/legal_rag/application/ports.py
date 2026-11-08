@@ -1,7 +1,8 @@
 """Port interfaces (Protocols). Services depend on these; adapters implement them."""
+
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
@@ -13,12 +14,12 @@ from legal_rag.domain.entities import Chunk, Document, IndexedChunk
 class DenseSearchResult(dict):
     """A dense-search hit set. Duck-typed shape:
 
-        {
-          "ids":        [[chunk_id, ...]],
-          "documents":  [[text, ...]],
-          "metadatas":  [[{document, document_type, heading, chunk_index}, ...]],
-          "distances":  [[float, ...]],
-        }
+    {
+      "ids":        [[chunk_id, ...]],
+      "documents":  [[text, ...]],
+      "metadatas":  [[{document, document_type, heading, chunk_index}, ...]],
+      "distances":  [[float, ...]],
+    }
     """
 
 
@@ -31,6 +32,9 @@ class VectorStore(Protocol):
     """Combined dense + lexical persistence adapter."""
 
     def upsert(self, indexed: Iterable[IndexedChunk], embeddings: list[list[float]]) -> None: ...
+
+    def delete_chunks(self, ids: list[str]) -> None:
+        """Remove obsolete chunks after successful replacement upsert; empty IDs are a no-op."""
 
     def dense_search(
         self, query_embedding: list[float], *, k: int, where: dict[str, Any] | None = None
@@ -77,12 +81,13 @@ class LLMClient(Protocol):
     ) -> dict[str, Any]:
         """Return a normalised response dict:
 
-            {
-              "content": str | None,
-              "tool_calls": [ {"id": str, "name": str, "arguments": str}, ... ],
-              "usage": {"prompt_tokens": int, "completion_tokens": int, "total_tokens": int},
-            }
+        {
+          "content": str | None,
+          "tool_calls": [ {"id": str, "name": str, "arguments": str}, ... ],
+          "usage": {"prompt_tokens": int, "completion_tokens": int, "total_tokens": int},
+        }
         """
+
 
 class Conversation(Protocol):
     def reply_if_general(self, query: str) -> str | None:
@@ -99,6 +104,19 @@ class DocumentSource(Protocol):
 
     def write_document(self, name: str, text: str) -> Path:
         """Persist a new source document; return its path."""
+
+
+class PDFTextExtractor(Protocol):
+    def extract(self, pdf_bytes: bytes) -> str:
+        """Extract text within configured input, output and process resource limits."""
+
+
+class WorkExecutor(Protocol):
+    async def run[T](self, operation: Callable[[], T], *, exclusive: bool = False) -> T:
+        """Run blocking work with bounded admission and a response deadline."""
+
+    def close(self) -> None:
+        """Stop accepting work and release execution resources after completion."""
 
 
 @runtime_checkable

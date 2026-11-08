@@ -107,3 +107,14 @@ Pop-Location
 - Do not add a "convenience" module-level function that hides a service.
 - Do not commit secrets. `GROQ_API_KEY`, `LEGAL_RAG_API_KEY` go in `.env` (git-ignored).
 - Do not use `print()` in library code.
+
+## Codex multi-agent workflow
+
+- Keep the installed Superpowers workflows for planning, TDD, debugging, and verification. Use their relevant skills rather than copying their procedures into agent prompts; Codex agents complement those workflows.
+- The main Codex agent owns task triage, coordination, integration, and final verification. Delegate a focused slice when another role or an isolated investigation materially helps; handle trivial lookups and small local fixes directly. Do not ask the user to choose an agent.
+- Codex chooses whether to delegate from these project instructions and agent descriptions; this is model-guided, not a deterministic task-rule engine. Do not promise that every matching request will spawn an agent.
+- Route codebase discovery to **Explorer**; FastAPI, service, and routine bug fixes to **Python Developer**; embeddings, chunking, hybrid retrieval, BM25, RRF, and reranking to **RAG Specialist**; test-only work to **Test Engineer**; security-sensitive changes involving prompt injection, authorization, tenant isolation, or confidential documents to **Security Reviewer**; and focused maintainability or architecture checks to **Code Reviewer**.
+- Start no more than two subagents concurrently and do not let subagents spawn further agents. Give each a bounded objective and only the relevant context. Avoid duplicate searches, broad codebase handoffs, repeated review cycles, and concurrent edits to the same files.
+- Use low reasoning for simple, bounded work, medium for ordinary tasks, and high only for genuinely complex or high-risk work. Avoid xhigh, max, and ultra unless a demonstrated need justifies the extra cost. Codex currently documents the concurrent-agent cap, but not a configuration-enforced delegation-depth limit; the no-nesting rule is therefore an instruction.
+- Use read-only roles for investigation and review. Assign a single writer to each set of files; have other agents report findings rather than edit those files. Keep handoffs concise and include changed paths, evidence, and validation results.
+- Preserve legal clause extraction, exact document/page references, grounded answers with supporting evidence, document-version consistency, confidentiality, tenant isolation, authorization, and the architecture and test rules above. Never trade correctness or security for token savings.

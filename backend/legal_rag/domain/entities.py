@@ -1,4 +1,5 @@
 """Domain entities and value objects."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -71,8 +72,10 @@ class Answer:
         return {
             "answer": self.answer,
             "reasoning": self.reasoning,
-            "sources": [{"document": s.document, "chunk_id": s.chunk_id, "excerpt": s.excerpt}
-                        for s in self.sources],
+            "sources": [
+                {"document": s.document, "chunk_id": s.chunk_id, "excerpt": s.excerpt}
+                for s in self.sources
+            ],
             "confidence": self.confidence,
             "out_of_scope": self.out_of_scope,
         }

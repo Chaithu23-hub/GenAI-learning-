@@ -1,4 +1,5 @@
 """GET /api/health"""
+
 from __future__ import annotations
 
 from typing import Annotated
@@ -12,6 +13,11 @@ from legal_rag.interfaces.http.dependencies import get_container, verify_api_key
 from legal_rag.interfaces.http.schemas import HealthResponse
 
 router = APIRouter(prefix="/api", tags=["health"])
+
+
+@router.get("/live", summary="Public process liveness")
+async def live() -> dict[str, str]:
+    return {"status": "ok"}
 
 
 @router.get("/health", response_model=HealthResponse, summary="Service health check")

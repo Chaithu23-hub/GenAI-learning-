@@ -1,0 +1,28 @@
+name: Setup backend
+description: Install Python backend dependencies and pinned CI tools
+inputs:
+  install-runtime:
+    description: Install the CPU ML runtime and backend requirements
+    required: false
+    default: "true"
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+      with:
+        python-version: "3.13"
+        cache: pip
+        cache-dependency-path: |
+          backend/requirements*.txt
+          .github/requirements-ci.txt
+    - name: Install backend runtime
+      if: inputs.install-runtime == 'true'
+      shell: bash
+      working-directory: backend
+      run: |
+        python -m pip install --disable-pip-version-check --upgrade pip
+        python -m pip install --disable-pip-version-check torch --index-url https://download.pytorch.org/whl/cpu
+        python -m pip install --disable-pip-version-check -r requirements-dev.txt
+    - name: Install CI tools
+      shell: bash
+      run: python -m pip install --disable-pip-version-check -r .github/requirements-ci.txt

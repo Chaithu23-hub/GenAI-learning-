@@ -14,6 +14,8 @@ $RECYCLE.BIN/
 *~
 .claude/
 .claude-code/
+.agents/
+.codex/
 
 # ─── Environments & secrets ───────────────────────────────────────────
 .env
@@ -69,8 +71,10 @@ nosetests.xml
 backend/data/chroma/
 backend/data/evaluation/generated/
 backend/.env
-backend/models/                       # HuggingFace / SentenceTransformer local caches if pinned here
-backend/eval/week*/generated/         # regenerated artifacts under eval/week*/
+# HuggingFace / SentenceTransformer local caches if pinned here
+backend/models/
+# Regenerated artifacts under eval/week*/
+backend/eval/week*/generated/
 
 # ─── Node / Angular ───────────────────────────────────────────────────
 frontend/node_modules/

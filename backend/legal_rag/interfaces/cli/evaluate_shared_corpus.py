@@ -2,6 +2,7 @@
 
 Uses Groq with the credentials and model configured in backend/.env.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -54,11 +55,7 @@ def _score(case: dict[str, Any], result: dict[str, Any]) -> dict[str, Any]:
     elif refusal_expected and not expected_sources and not values:
         passed = False
     else:
-        passed = (
-            not result.get("out_of_scope")
-            and not missing_values
-            and source_match
-        )
+        passed = not result.get("out_of_scope") and not missing_values and source_match
 
     distractor_ids = set(_SOURCE_ID.findall(case.get("distractor_doc", "")))
     if passed:
@@ -158,7 +155,9 @@ def run(format_name: str, output_path: Path, force_provider: str | None = None) 
         "cases": rows,
     }
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    output_path.write_text(
+        json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
     markdown_path = output_path.with_suffix(".md")
     class_order = (
         "direct_lookup",
@@ -185,21 +184,25 @@ def run(format_name: str, output_path: Path, force_provider: str | None = None) 
     for class_name in class_order:
         counts = class_counts.get(class_name, {"passed": 0, "total": 0})
         lines.append(f"| {class_name} | {counts['passed']} | {counts['total']} |")
-    lines.extend([
-        "",
-        "## Failure breakdown",
-        "",
-        "| Failure | Count |",
-        "|---|---:|",
-    ])
+    lines.extend(
+        [
+            "",
+            "## Failure breakdown",
+            "",
+            "| Failure | Count |",
+            "|---|---:|",
+        ]
+    )
     lines.extend(f"| {name} | {count} |" for name, count in failure_counts.items())
-    lines.extend([
-        "",
-        "## Cases",
-        "",
-        "| Case | Class | Result | Failure | Answer |",
-        "|---|---|---|---|---|",
-    ])
+    lines.extend(
+        [
+            "",
+            "## Cases",
+            "",
+            "| Case | Class | Result | Failure | Answer |",
+            "|---|---|---|---|---|",
+        ]
+    )
     lines.extend(
         f"| {row['id']} | {row['class']} | {'PASS' if row['passed'] else 'FAIL'} | {row['failure_type'] or ''} | {row['answer'].replace('|', '\\|').replace(chr(10), '<br>')} |"
         for row in rows
@@ -207,7 +210,9 @@ def run(format_name: str, output_path: Path, force_provider: str | None = None) 
     lines.append("")
     markdown_path.write_text("\n".join(lines), encoding="utf-8")
     print(f"Provider: {provider_name}")
-    print(f"Overall pass rate: {report['overall_pass_rate']['passed']}/{report['overall_pass_rate']['total']}")
+    print(
+        f"Overall pass rate: {report['overall_pass_rate']['passed']}/{report['overall_pass_rate']['total']}"
+    )
     for row in rows:
         status = "PASS" if row["passed"] else "FAIL"
         print(f"{row['id']} {status} {row['failure_type'] or ''}".rstrip())
@@ -220,7 +225,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--format", choices=sorted(FORMAT_DIRS), default="md")
     parser.add_argument(
-        "--output", type=Path, default=BACKEND_ROOT / "data" / "evaluation" / "generated" / "shared_corpus_report.json"
+        "--output",
+        type=Path,
+        default=BACKEND_ROOT / "data" / "evaluation" / "generated" / "shared_corpus_report.json",
     )
     parser.add_argument(
         "--provider",

@@ -1,4 +1,5 @@
 """POST /api/ask and POST /api/inspect"""
+
 from __future__ import annotations
 
 from typing import Annotated
@@ -6,7 +7,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from legal_rag.application.workflows import QaService
-from legal_rag.interfaces.http.dependencies import get_qa_service, verify_api_key
+from legal_rag.composition import Container
+from legal_rag.interfaces.http.dependencies import get_container, get_qa_service, verify_api_key
 from legal_rag.interfaces.http.schemas import (
     AnswerResponse,
     AskRequest,
@@ -22,8 +24,11 @@ async def ask(
     request: AskRequest,
     _: Annotated[str, Depends(verify_api_key)],
     qa: Annotated[QaService, Depends(get_qa_service)],
+    container: Annotated[Container, Depends(get_container)],
 ) -> AnswerResponse:
-    payload = qa.answer(request.question, document_type=request.document_type)
+    payload = await container.work_executor.run(
+        lambda: qa.answer(request.question, document_type=request.document_type),
+    )
     return AnswerResponse(**payload)
 
 
@@ -32,8 +37,11 @@ async def inspect(
     request: AskRequest,
     _: Annotated[str, Depends(verify_api_key)],
     qa: Annotated[QaService, Depends(get_qa_service)],
+    container: Annotated[Container, Depends(get_container)],
 ) -> InspectResponse:
-    result = qa.inspect(request.question, document_type=request.document_type)
+    result = await container.work_executor.run(
+        lambda: qa.inspect(request.question, document_type=request.document_type),
+    )
     return InspectResponse(
         question=result["question"],
         retrieved=[

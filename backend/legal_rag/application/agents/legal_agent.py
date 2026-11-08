@@ -1,4 +1,5 @@
 """Legal agent: budget-limited retrieve/check/definitions/answer loop and its fixed-workflow twin."""
+
 from __future__ import annotations
 
 import re
@@ -76,7 +77,8 @@ class LegalAgent:
                 self._step(state, "check_amendments", "Compare contract and amendment passages.")
             elif self._needs_definitions(query) and "get_definitions" not in state.observations:
                 self._step(
-                    state, "get_definitions",
+                    state,
+                    "get_definitions",
                     "Resolve the defined terms used by the clause.",
                     {"version": "amended" if has_amendment else "original"},
                 )
@@ -99,8 +101,12 @@ class LegalAgent:
         injection_detected = any(detect_prompt_injection(c.text) for c in chunks)
         return {
             "documents": [
-                {"document": c.document, "chunk_id": c.chunk_id, "score": c.score,
-                 "text": sanitize_document_text(c.text)}
+                {
+                    "document": c.document,
+                    "chunk_id": c.chunk_id,
+                    "score": c.score,
+                    "text": sanitize_document_text(c.text),
+                }
                 for c in chunks
             ],
             "injection_detected": injection_detected,
@@ -110,12 +116,10 @@ class LegalAgent:
         docs = state.observations["retrieve"]["documents"]
         return {
             "contract_documents": [
-                d["document"] for d in docs
-                if not d["document"].lower().startswith("amendment")
+                d["document"] for d in docs if not d["document"].lower().startswith("amendment")
             ],
             "amendment_documents": [
-                d["document"] for d in docs
-                if d["document"].lower().startswith("amendment")
+                d["document"] for d in docs if d["document"].lower().startswith("amendment")
             ],
         }
 
@@ -123,9 +127,11 @@ class LegalAgent:
         self, state: AgentState, version: Literal["original", "amended"]
     ) -> dict[str, Any]:
         docs = state.observations["retrieve"]["documents"]
+
         def _matches(doc_name: str) -> bool:
             is_amendment = doc_name.lower().startswith("amendment")
             return is_amendment if version == "amended" else not is_amendment
+
         return {
             "version": version,
             "references": [d["chunk_id"] for d in docs if _matches(d["document"])],
@@ -133,29 +139,40 @@ class LegalAgent:
 
     def _answer(self, state: AgentState) -> dict[str, Any]:
         if state.observations["retrieve"].get("injection_detected"):
-            return {"payload": {
-                "answer": self._budgets.guardrail_answer,
-                "reasoning": ("A retrieved document contained an instruction-like passage "
-                              "and was excluded from answer generation."),
-                "sources": [],
-                "confidence": "high",
-                "out_of_scope": True,
-            }}
+            return {
+                "payload": {
+                    "answer": self._budgets.guardrail_answer,
+                    "reasoning": (
+                        "A retrieved document contained an instruction-like passage "
+                        "and was excluded from answer generation."
+                    ),
+                    "sources": [],
+                    "confidence": "high",
+                    "out_of_scope": True,
+                }
+            }
         return {"payload": self._qa.answer(state.query)}
 
     # ── helpers ────────────────────────────────────────────────────────
     def _step(
-        self, state: AgentState, tool_name: str, reason: str,
+        self,
+        state: AgentState,
+        tool_name: str,
+        reason: str,
         arguments: dict[str, Any] | None = None,
     ) -> None:
         if len(state.steps) >= self._budgets.max_steps:
             self._stop_for_budget(state, "max_iterations")
             return
         arguments = arguments or {}
-        state.steps.append({
-            "step": len(state.steps) + 1, "action": tool_name,
-            "reason": reason, "arguments": arguments,
-        })
+        state.steps.append(
+            {
+                "step": len(state.steps) + 1,
+                "action": tool_name,
+                "reason": reason,
+                "arguments": arguments,
+            }
+        )
         state.tool_calls += 1
         state.observations[tool_name] = self.tools[tool_name](state, **arguments)
         state.token_count += self._estimate_tokens(state.observations[tool_name])
@@ -194,7 +211,9 @@ class LegalAgent:
         return {
             "answer": "The agent stopped before producing an answer.",
             "reasoning": f"The {state.status} limit was reached.",
-            "sources": [], "confidence": "low", "out_of_scope": True,
+            "sources": [],
+            "confidence": "low",
+            "out_of_scope": True,
         }
 
     @staticmethod
@@ -233,7 +252,8 @@ class FixedWorkflow:
             agent._step(state, "check_amendments", "Compare original and amendment passages.")
         if agent._needs_definitions(query):
             agent._step(
-                state, "get_definitions",
+                state,
+                "get_definitions",
                 "Resolve the defined terms used by the clause.",
                 {"version": "amended" if has_amendment else "original"},
             )
@@ -249,8 +269,11 @@ class FixedWorkflow:
 
 
 def compare_strategies(
-    query: str, *, agent_factory: Callable[[], LegalAgent],
-    fixed_factory: Callable[[], FixedWorkflow], runs: int = 3,
+    query: str,
+    *,
+    agent_factory: Callable[[], LegalAgent],
+    fixed_factory: Callable[[], FixedWorkflow],
+    runs: int = 3,
 ) -> dict[str, Any]:
     """Run both strategies N times and return a comparative summary."""
     agent_runs = [agent_factory().run(query) for _ in range(runs)]
@@ -265,12 +288,8 @@ def compare_strategies(
             "average_seconds": round(
                 statistics.mean(item["elapsed_seconds"] for item in results), 4
             ),
-            "average_tool_calls": round(
-                statistics.mean(item["tool_calls"] for item in results), 2
-            ),
-            "estimated_cost_usd": round(
-                sum(item["estimated_cost_usd"] for item in results), 4
-            ),
+            "average_tool_calls": round(statistics.mean(item["tool_calls"] for item in results), 2),
+            "estimated_cost_usd": round(sum(item["estimated_cost_usd"] for item in results), 4),
             "runs_detail": results,
         }
 

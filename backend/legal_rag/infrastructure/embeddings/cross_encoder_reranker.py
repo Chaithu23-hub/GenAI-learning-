@@ -1,4 +1,5 @@
 """Cross-encoder reranker adapter."""
+
 from __future__ import annotations
 
 from threading import Lock

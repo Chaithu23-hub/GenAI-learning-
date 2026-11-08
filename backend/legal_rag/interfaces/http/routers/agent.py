@@ -1,4 +1,5 @@
 """POST /api/agent"""
+
 from __future__ import annotations
 
 from typing import Annotated, Any
@@ -6,8 +7,10 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends
 
 from legal_rag.application.agents.legal_agent import compare_strategies
+from legal_rag.composition import Container
 from legal_rag.interfaces.http.dependencies import (
     get_agent_factory,
+    get_container,
     get_fixed_factory,
     verify_api_key,
 )
@@ -30,15 +33,20 @@ async def run_agent(
     _: Annotated[str, Depends(verify_api_key)],
     agent_factory: Annotated[Any, Depends(get_agent_factory)],
     fixed_factory: Annotated[Any, Depends(get_fixed_factory)],
+    container: Annotated[Container, Depends(get_container)],
 ) -> AgentResponse | AgentComparisonResponse:
     if request.strategy == "agent":
-        report = agent_factory().run(request.question)
+        report = await container.work_executor.run(lambda: agent_factory().run(request.question))
         return AgentResponse.model_validate(report)
     if request.strategy == "fixed":
-        report = fixed_factory().run(request.question)
+        report = await container.work_executor.run(lambda: fixed_factory().run(request.question))
         return AgentResponse.model_validate(report)
-    report = compare_strategies(
-        request.question,
-        agent_factory=agent_factory, fixed_factory=fixed_factory, runs=request.runs,
+    report = await container.work_executor.run(
+        lambda: compare_strategies(
+            request.question,
+            agent_factory=agent_factory,
+            fixed_factory=fixed_factory,
+            runs=request.runs,
+        ),
     )
     return AgentComparisonResponse.model_validate(report)

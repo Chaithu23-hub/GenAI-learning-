@@ -1,4 +1,5 @@
 """Fake MCP host — no subprocesses, records calls."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -21,11 +22,10 @@ class FakeMCPHost:
     async def discover(self) -> dict[str, list[str]]:
         return dict(self._discovered)
 
-    async def call(
-        self, server: str, tool: str, arguments: dict[str, Any]
-    ) -> dict[str, Any]:
+    async def call(self, server: str, tool: str, arguments: dict[str, Any]) -> dict[str, Any]:
         self.calls.append({"server": server, "tool": tool, "arguments": arguments})
         return {
-            "server": server, "tool": tool,
+            "server": server,
+            "tool": tool,
             "content": [self._tool_responses.get((server, tool), {"ok": True})],
         }

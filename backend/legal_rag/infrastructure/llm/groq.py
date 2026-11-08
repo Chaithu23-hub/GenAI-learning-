@@ -1,4 +1,5 @@
 """Groq chat adapter using the OpenAI-compatible SDK transport."""
+
 from __future__ import annotations
 
 from typing import Any

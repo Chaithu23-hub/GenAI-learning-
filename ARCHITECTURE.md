@@ -27,6 +27,8 @@ backend/
 │   ├── domain/                     # Pure business rules; NO I/O, NO frameworks
 │   │   ├── entities.py             # Chunk, Document, RetrievedChunk, Citation, Answer, AgentState
 │   │   ├── policies.py             # Guardrails, injection defence, completeness, trajectory audit
+│   │   ├── evidence.py             # Bind explicit document/clause references to evidence
+│   │   ├── pages.py                # Validate cited page lists and ranges
 │   │   ├── response_schema.py      # JSON Schema + validate_response
 │   │   └── exceptions.py           # DomainError, GuardrailBlocked, OutOfScope...
 │   │
@@ -45,11 +47,13 @@ backend/
 │   │       ├── race.py             # AgentRace, MultiAgentRace, MeteredLegalAgent
 │   │       ├── judge.py            # JudgeService + deterministic assertions
 │   │       ├── evaluation.py       # hit-rate@k
+│   │       ├── corpus_lookup.py    # Source-backed contract and clause lookup
 │   │       └── mcp_lookup.py
 │   │
 │   ├── infrastructure/             # Concrete adapters; implements ports
 │   │   ├── settings.py             # pydantic-settings — 12-factor config
 │   │   ├── errors.py               # Infrastructure exceptions (transient / permanent)
+│   │   ├── execution.py            # Bounded blocking work with request context propagation
 │   │   ├── observability/
 │   │   │   └── logging.py          # Structured JSON logging + request-id context
 │   │   ├── vector_store/
@@ -60,7 +64,9 @@ backend/
 │   │   ├── llm/groq.py              # Groq via OpenAI-compatible SDK transport
 │   │   ├── documents/
 │   │   │   ├── shared_corpus_loader.py # Markdown, DOCX and corpus PDFs
-│   │   │   └── pdf_loader.py
+│   │   │   ├── pdf_loader.py       # Isolated upload extraction adapter
+│   │   │   ├── pdf_worker.py       # Child-process parser entry point
+│   │   │   └── process_limits.py   # Parser process memory limits
 │   │   ├── prompts/                # Versioned prompt templates
 │   │   │   ├── qa_system.py
 │   │   │   ├── orchestrator_prompts.py
@@ -80,9 +86,35 @@ backend/
 │   ├── unit/                       # Pure domain
 │   ├── fakes/                      # In-memory port implementations
 │   ├── integration/                # Services wired against fakes
-│   └── e2e/                        # HTTP TestClient over a fake-backed Container
+│   ├── e2e/                        # HTTP, subprocess, filesystem and CI-tool checks
+│   └── slow/                       # Real model/database and format-parity checks
 └── data/                           # Chroma index and markdown corpus
 ```
+
+## File placement
+
+New files follow the existing dependency layers; keep a module with the capability it implements.
+
+| Responsibility | Location | Examples |
+| --- | --- | --- |
+| Pure legal evidence rules | `backend/legal_rag/domain/` | `evidence.py`, `pages.py` |
+| Use cases depending on ports | `backend/legal_rag/application/workflows/` | `corpus_lookup.py` |
+| External I/O and execution adapters | `backend/legal_rag/infrastructure/` | `execution.py`, `documents/pdf_worker.py`, `documents/process_limits.py` |
+| Framework endpoints and DTOs | `backend/legal_rag/interfaces/` | HTTP routers, CLI, MCP servers |
+| Pure rule tests and in-memory substitutes | `backend/tests/unit/`, `backend/tests/fakes/` | `test_evidence_associations.py`, `documents.py` |
+| Service and adapter coordination tests without disk/network | `backend/tests/integration/` | Ingestion versions, lexical cache, executor tests |
+| Boundary checks requiring filesystem or subprocesses | `backend/tests/e2e/` | CI helpers, offline benchmark, PDF worker, HTTP/MCP tests |
+| Real dependencies and format fixtures | `backend/tests/slow/` | Chroma, embedding/reranking models, document-format parity |
+| Workflow definitions and shared action setup | `.github/workflows/`, `.github/actions/` | CI, RAG evaluation, deployment readiness, setup-backend |
+| CI-only dependencies and dependency updates | `.github/` | `requirements-ci.txt`, `dependabot.yml` |
+| CI gate implementations | `scripts/ci/` | Quality, tests, security, workflow validation |
+| Developer evaluation tools | `scripts/evaluation/` | `measure_retrieval.py` |
+| Local review findings and planning records | `docs/reviews/`, `docs/superpowers/specs/`, `docs/superpowers/plans/` | Dated review, approved design and implementation plan |
+| Installed repository skills | `.agents/skills/` | Keep `skills-lock.json` at repository root for the skill manager |
+
+Generated evaluation output belongs in ignored `backend/data/evaluation/generated/`; the persistent index belongs in ignored `backend/data/chroma/`. Keep test fixtures in the repository, outside the production image. Keep local dependencies and model caches in their existing ignored locations. Superpowers plugin files remain in the plugin manager's installation directory; project designs and plans stay under `docs/superpowers/`.
+
+Before deleting a file, check its callers, dynamic imports, CLI/subprocess entry points, workflow references, tests and Docker inputs. An untracked file is not necessarily disposable: new source modules and regression tests still need to be included when the changes are committed. Update imports, commands, path filters and documentation together when moving an active file.
 
 ## Design decisions
 

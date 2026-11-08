@@ -1,9 +1,18 @@
 """Domain exception hierarchy — business-rule failures only."""
+
 from __future__ import annotations
 
 
 class DomainError(Exception):
     """Base class for domain-rule failures."""
+
+
+class InvalidDocumentError(DomainError, ValueError):
+    """A document cannot safely produce a replacement index revision."""
+
+
+class InvalidEvaluationLabelsError(DomainError, ValueError):
+    """Evaluation labels do not identify evidence in the current index."""
 
 
 class GuardrailBlockedError(DomainError):

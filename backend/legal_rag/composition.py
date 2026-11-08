@@ -1,4 +1,5 @@
 """DI container — every service built lazily from a single Settings object."""
+
 from __future__ import annotations
 
 from functools import cached_property
@@ -15,15 +16,18 @@ from legal_rag.application.workflows import (
     QaService,
     RetrievalService,
 )
+from legal_rag.application.workflows.corpus_lookup import CorpusLookupService
 from legal_rag.application.workflows.generation import GenerationSettings, Generator
 from legal_rag.application.workflows.ingestion import IngestionSettings
 from legal_rag.application.workflows.judge import JudgeSettings
 from legal_rag.application.workflows.race import AgentRace, MeteredLegalAgent, MultiAgentRace
 from legal_rag.application.workflows.retrieval import RetrievalSettings
 from legal_rag.infrastructure.chunking.section_chunker import SectionChunker
+from legal_rag.infrastructure.documents.pdf_loader import IsolatedPDFTextExtractor
 from legal_rag.infrastructure.documents.shared_corpus_loader import SharedCorpusDocumentSource
 from legal_rag.infrastructure.embeddings import CrossEncoderReranker, SentenceTransformerEmbedder
 from legal_rag.infrastructure.errors import PermanentLLMError
+from legal_rag.infrastructure.execution import BoundedWorkExecutor
 from legal_rag.infrastructure.llm import GroqClient
 from legal_rag.infrastructure.llm.conversation import LLMConversation
 from legal_rag.infrastructure.settings import Settings, get_settings
@@ -39,6 +43,27 @@ class Container:
     @property
     def settings(self) -> Settings:
         return self._settings
+
+    @cached_property
+    def work_executor(self) -> BoundedWorkExecutor:
+        return BoundedWorkExecutor(
+            max_workers=self._settings.http_max_concurrent_jobs,
+            timeout_seconds=self._settings.http_request_timeout_seconds,
+        )
+
+    @cached_property
+    def pdf_extractor(self) -> IsolatedPDFTextExtractor:
+        return IsolatedPDFTextExtractor(
+            max_pages=self._settings.pdf_max_pages,
+            max_characters=self._settings.pdf_max_characters,
+            timeout_seconds=self._settings.pdf_timeout_seconds,
+            memory_mb=self._settings.pdf_memory_mb,
+            max_input_bytes=self._settings.upload_max_file_bytes,
+        )
+
+    @cached_property
+    def upload_document_source(self) -> SharedCorpusDocumentSource:
+        return SharedCorpusDocumentSource(self._settings.docs_dir)
 
     # ── infrastructure ────────────────────────────────────────────────
     @cached_property
@@ -57,7 +82,9 @@ class Container:
     def llm_client(self) -> GroqClient:
         s = self._settings
         if not s.llm_api_key:
-            raise PermanentLLMError(f"An API key is required for the {s.llm_provider} LLM provider.")
+            raise PermanentLLMError(
+                f"An API key is required for the {s.llm_provider} LLM provider."
+            )
         return GroqClient(
             base_url=s.effective_llm_base_url,
             api_key=s.llm_api_key,
@@ -141,7 +168,9 @@ class Container:
 
     def new_legal_agent(self) -> LegalAgent:
         return LegalAgent(
-            retrieval=self.retrieval_service, qa=self.qa_service, budgets=self._agent_budgets,
+            retrieval=self.retrieval_service,
+            qa=self.qa_service,
+            budgets=self._agent_budgets,
         )
 
     def new_fixed_workflow(self) -> FixedWorkflow:
@@ -149,7 +178,9 @@ class Container:
 
     def new_metered_agent(self) -> MeteredLegalAgent:
         return MeteredLegalAgent(
-            retrieval=self.retrieval_service, qa=self.qa_service, budgets=self._agent_budgets,
+            retrieval=self.retrieval_service,
+            qa=self.qa_service,
+            budgets=self._agent_budgets,
             chars_per_token=self._settings.chars_per_token,
             cost_per_token_usd=self._settings.agent_cost_per_token_usd,
         )
@@ -181,12 +212,13 @@ class Container:
 
     @cached_property
     def evaluation_service(self) -> EvaluationService:
-        return EvaluationService(retrieval=self.retrieval_service)
+        return EvaluationService(retrieval=self.retrieval_service, vector_store=self.vector_store)
 
     @cached_property
     def agent_race(self) -> AgentRace:
         return AgentRace(
-            agent_factory=self.new_legal_agent, fixed_factory=self.new_fixed_workflow,
+            agent_factory=self.new_legal_agent,
+            fixed_factory=self.new_fixed_workflow,
         )
 
     @cached_property
@@ -202,6 +234,15 @@ class Container:
             cost_per_token_usd=self._settings.agent_cost_per_token_usd,
             chars_per_token=self._settings.chars_per_token,
             artifact_dir=artifact_dir,
+        )
+
+    @cached_property
+    def corpus_lookup_service(self) -> CorpusLookupService:
+        return CorpusLookupService(
+            document_source=SharedCorpusDocumentSource(self._settings.docs_dir),
+            chunker=SectionChunker(),
+            chunk_size=self._settings.chunk_size_tokens,
+            overlap=self._settings.chunk_overlap_tokens,
         )
 
     @cached_property

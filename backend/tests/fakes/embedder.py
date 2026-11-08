@@ -1,4 +1,5 @@
 """Deterministic hash-bucket embedder for tests (no ML deps)."""
+
 from __future__ import annotations
 
 import hashlib

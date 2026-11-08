@@ -1,4 +1,5 @@
 """Reranker fakes."""
+
 from __future__ import annotations
 
 
@@ -14,7 +15,4 @@ class ScoringReranker:
 
     def score(self, query: str, texts: list[str]) -> list[float]:
         q_terms = set(query.lower().split())
-        return [
-            sum(1.0 for t in text.lower().split() if t in q_terms)
-            for text in texts
-        ]
+        return [sum(1.0 for t in text.lower().split() if t in q_terms) for text in texts]

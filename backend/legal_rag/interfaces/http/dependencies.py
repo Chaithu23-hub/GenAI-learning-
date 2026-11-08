@@ -1,6 +1,8 @@
 """FastAPI DI wiring — everything resolves via the composition Container."""
+
 from __future__ import annotations
 
+from secrets import compare_digest
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request, Security, status
@@ -48,13 +50,37 @@ async def verify_api_key(
     container: Annotated[Container, Depends(get_container)],
     api_key: Annotated[str | None, Security(_API_KEY_HEADER)] = None,
 ) -> str:
-    configured = container.settings.api_key_value
-    if not configured:
+    settings = container.settings
+    if settings.development_mode and not settings.api_key_value:
         return "dev"
-    if not api_key or api_key != configured:
+    supplied = (api_key or "").encode("utf-8")
+    reader_matches = compare_digest(supplied, settings.api_key_value.encode("utf-8"))
+    admin_matches = compare_digest(supplied, settings.admin_api_key_value.encode("utf-8"))
+    if not api_key or not (reader_matches or admin_matches):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or missing API key.",
+            headers={"WWW-Authenticate": "ApiKey"},
+        )
+    return api_key
+
+
+async def verify_admin_api_key(
+    container: Annotated[Container, Depends(get_container)],
+    api_key: Annotated[str | None, Security(_API_KEY_HEADER)] = None,
+) -> str:
+    configured = container.settings.admin_api_key_value
+    if (
+        not configured
+        or not api_key
+        or not compare_digest(
+            api_key.encode("utf-8"),
+            configured.encode("utf-8"),
+        )
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing administrator API key.",
             headers={"WWW-Authenticate": "ApiKey"},
         )
     return api_key

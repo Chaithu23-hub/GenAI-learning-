@@ -1,4 +1,5 @@
 """Orchestrator, defined-terms worker, and synthesiser prompts (v1)."""
+
 from legal_rag.infrastructure.prompts.prompt import PromptTemplate
 
 _ORCH_TEXT = """ROLE
@@ -19,8 +20,12 @@ DEFINED_TERMS_PROMPT = _DT_TEXT
 SYNTHESIZER_PROMPT = _SYN_TEXT
 
 ORCHESTRATOR_PROMPT_V1 = PromptTemplate(name="orchestrator.planner", version="v1", text=_ORCH_TEXT)
-DEFINED_TERMS_PROMPT_V1 = PromptTemplate(name="orchestrator.defined_terms", version="v1", text=_DT_TEXT)
-SYNTHESIZER_PROMPT_V1 = PromptTemplate(name="orchestrator.synthesizer", version="v1", text=_SYN_TEXT)
+DEFINED_TERMS_PROMPT_V1 = PromptTemplate(
+    name="orchestrator.defined_terms", version="v1", text=_DT_TEXT
+)
+SYNTHESIZER_PROMPT_V1 = PromptTemplate(
+    name="orchestrator.synthesizer", version="v1", text=_SYN_TEXT
+)
 
 GET_DEFINITIONS_TOOL = {
     "type": "function",
