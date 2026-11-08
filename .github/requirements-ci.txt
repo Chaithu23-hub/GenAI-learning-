@@ -3,4 +3,4 @@ mypy==2.4.1
 bandit==1.9.4
 pip-audit==2.10.1
 PyYAML==6.0.3
-setuptools==84.1.0
+setuptools==84.2.1
