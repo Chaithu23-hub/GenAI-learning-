@@ -7,7 +7,7 @@ python-multipart>=0.0.9
 setuptools>=84.1.0
 
 # ── Config & CLI ──────────────────────────────────────────────────────
-pydantic>=2.7
+pydantic>=2.14.3
 pydantic-settings>=2.4
 typer>=0.12
 
