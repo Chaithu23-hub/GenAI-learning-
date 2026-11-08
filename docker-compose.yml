@@ -8,6 +8,7 @@ services:
       - "127.0.0.1:8000:8000"
     volumes:
       - ./backend/data:/app/data
+      - model_cache:/home/appuser/.cache/huggingface
     env_file:
       - ./backend/.env
     healthcheck:
@@ -31,3 +32,6 @@ services:
       backend:
         condition: service_healthy
     restart: unless-stopped
+
+volumes:
+  model_cache:

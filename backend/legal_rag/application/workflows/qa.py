@@ -9,6 +9,10 @@ from legal_rag.application.ports import Conversation
 from legal_rag.application.workflows.generation import Generator
 from legal_rag.application.workflows.retrieval import RetrievalService
 from legal_rag.domain.clauses import DOCUMENT_ID_RE, parse_clause_request
+from legal_rag.domain.exceptions import (
+    ConversationUnavailableError,
+    InvalidConversationResponseError,
+)
 from legal_rag.domain.policies import is_greeting, screen_query
 from legal_rag.domain.query import normalize_document_query
 from legal_rag.infrastructure.observability import get_logger, get_metrics
@@ -25,7 +29,6 @@ class QaService:
         generator: Generator,
         guardrail_answer: str,
         no_drafting_answer: str,
-        greeting_answer: str,
         out_of_scope_answer: str,
         conversation: Conversation | None = None,
     ):
@@ -33,7 +36,6 @@ class QaService:
         self._generator = generator
         self._guardrail_answer = guardrail_answer
         self._no_drafting_answer = no_drafting_answer
-        self._greeting_answer = greeting_answer
         self._out_of_scope_answer = out_of_scope_answer
         self._conversation = conversation
 
@@ -45,14 +47,22 @@ class QaService:
     ) -> dict[str, Any]:
         query = normalize_document_query(query)
         if is_greeting(query):
+            if self._conversation is None:
+                raise ConversationUnavailableError(
+                    "Greeting responses require the configured LLM adapter."
+                )
+            reply = self._conversation.reply_if_general(query)
+            if not reply:
+                raise InvalidConversationResponseError(
+                    ["The LLM did not return a valid greeting response."]
+                )
             log.info("greeting handled", extra={"query": query})
             _metrics.greetings.inc()
             _metrics.requests.inc(outcome="greeting")
             return {
-                "answer": self._greeting_answer,
+                "answer": reply,
                 "reasoning": (
-                    "The message is a greeting or small-talk phrase and does not "
-                    "require a retrieval — a friendly canned reply is returned."
+                    "The LLM generated a conversational reply; no document retrieval was needed."
                 ),
                 "sources": [],
                 "confidence": "high",

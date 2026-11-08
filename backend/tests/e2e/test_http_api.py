@@ -26,6 +26,7 @@ class TestHealth:
         assert r.status_code == 200
         body = r.json()
         assert body["status"] == "ok"
+
         assert body["embedding_model"]
         assert body["version"]
         assert set(body["prompt_versions"]) >= {"qa.system", "judge.system"}
@@ -37,6 +38,55 @@ class TestHealth:
     def test_supplied_request_id_is_kept(self, client):
         r = client.get("/api/health", headers={"X-Request-ID": "test-id-123"})
         assert r.headers.get("X-Request-ID") == "test-id-123"
+
+
+@pytest.mark.parametrize(
+    "question", ["Hello", "Hi!", "Good morning", "Good afternoon!", "Good evening"]
+)
+def test_greeting_http_returns_adapter_model_reply(client, container, question):
+    import json
+
+    reply = "A greeting returned by the test provider."
+    llm = FakeLLMClient(responses=[{"content": json.dumps({"route": "general", "answer": reply})}])
+    container._llm_fake = llm
+    response = client.post("/api/ask", json={"question": question})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["answer"] == reply
+    assert payload["sources"] == []
+    assert payload["out_of_scope"] is False
+    assert len(llm.calls) == 1
+
+
+def test_greeting_http_preserves_provider_failure(client, container):
+    class UnavailableLLM(FakeLLMClient):
+        def chat(self, **kwargs):
+            raise TransientLLMError("Provider unavailable")
+
+    container._llm_fake = UnavailableLLM()
+    response = client.post("/api/ask", json={"question": "Hi"})
+    assert response.status_code == 503
+
+
+@pytest.mark.parametrize(
+    "content", ["not json", '{"route":"general","answer":""}', '{"route":"documents","answer":""}']
+)
+def test_invalid_model_greeting_is_upstream_error_not_client_error(client, container, content):
+    container._llm_fake = FakeLLMClient(responses=[{"content": content}])
+    response = client.post("/api/ask", json={"question": "Hello"})
+    assert response.status_code == 502
+    payload = response.json()
+    assert payload["status"] == 502
+    assert payload["title"] == "Invalid conversation response"
+    assert payload["request_id"] == response.headers["X-Request-ID"]
+    assert content not in payload["detail"]
+
+
+def test_missing_greeting_adapter_is_server_error_not_client_error(client, container):
+    container.qa_service._conversation = None
+    response = client.post("/api/ask", json={"question": "Hi"})
+    assert response.status_code == 500
+    assert response.json()["title"] == "Conversation unavailable"
 
 
 class TestAskEndpoint:

@@ -10,6 +10,9 @@ class TestGreetingDetection:
             "Hi",
             "hello",
             "Hey!",
+            "Hi there!",
+            "Hello there",
+            "Hey there!",
             "hola",
             "Yo",
             "Howdy",
@@ -46,6 +49,8 @@ class TestGreetingDetection:
             "What is the late payment fee?",
             "hi, what does the amendment change?",  # greeting + real question
             "hello, when does the contract expire",
+            "Hi there, what is the late fee?",
+            "Good morning, what is the fee?",
             "thanks, but I still need the termination clause",
             "help me draft a clause",
             "",  # empty
