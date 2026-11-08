@@ -163,6 +163,42 @@ def test_actionlint_download_rejects_tampered_binary_archive():
         load_tool("install_actionlint").verify_archive(b"modified executable", "0" * 64)
 
 
+@pytest.mark.parametrize(
+    "error,reason",
+    [
+        (urllib.error.HTTPError("SECRET_CANARY", 503, "SECRET_CANARY", {}, None), "http_error"),
+        (urllib.error.URLError("SECRET_CANARY"), "network_error"),
+        (TimeoutError("SECRET_CANARY"), "network_error"),
+        (ValueError("SECRET_CANARY"), "validation_error"),
+        (tarfile.ReadError("SECRET_CANARY"), "archive_error"),
+        (PermissionError("SECRET_CANARY"), "filesystem_error"),
+        (RuntimeError("SECRET_CANARY"), "unexpected_error"),
+    ],
+)
+def test_actionlint_failure_diagnostics_explain_category_without_sensitive_text(error, reason):
+    report = load_tool("install_actionlint").failure_summary(error)
+    assert report["status"] == "failed"
+    assert report["reason"] == reason
+    assert "CANARY" not in json.dumps(report)
+    if isinstance(error, urllib.error.HTTPError):
+        assert report["http_status"] == 503
+
+
+def test_actionlint_cli_reports_failure_category_and_returns_failure(monkeypatch, tmp_path, capsys):
+    tool = load_tool("install_actionlint")
+
+    def fail(_):
+        raise urllib.error.URLError("SECRET_CANARY")
+
+    monkeypatch.setattr(tool, "install", fail)
+    assert tool.main(["--destination", str(tmp_path)]) == 1
+    captured = capsys.readouterr()
+    report = json.loads(captured.out)
+    assert report["reason"] == "network_error"
+    assert "CANARY" not in captured.out
+    assert captured.err == ""
+
+
 def test_actionlint_install_retries_transient_download_and_extracts_linux_binary(
     monkeypatch, tmp_path
 ):

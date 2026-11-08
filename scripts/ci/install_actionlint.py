@@ -73,15 +73,38 @@ def install(destination: Path) -> Path:
     return target
 
 
-if __name__ == "__main__":
+def failure_summary(error: Exception) -> dict:
+    """Expose fixed diagnostic categories, never URLs, paths or exception messages."""
+    report = {"event": "actionlint_install", "status": "failed"}
+    if isinstance(error, urllib.error.HTTPError):
+        report.update(reason="http_error", http_status=error.code)
+    elif isinstance(error, (urllib.error.URLError, TimeoutError)):
+        report["reason"] = "network_error"
+    elif isinstance(error, (tarfile.TarError, zipfile.BadZipFile, KeyError)):
+        report["reason"] = "archive_error"
+    elif isinstance(error, ValueError):
+        report["reason"] = "validation_error"
+    elif isinstance(error, OSError):
+        report["reason"] = "filesystem_error"
+    else:
+        report["reason"] = "unexpected_error"
+    return report
+
+
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--destination", type=Path, required=True)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     try:
         install(args.destination)
-    except Exception:
-        sys.stdout.write(json.dumps({"event": "actionlint_install", "status": "failed"}) + "\n")
-        raise SystemExit(1) from None
+    except Exception as exc:
+        sys.stdout.write(json.dumps(failure_summary(exc)) + "\n")
+        return 1
     sys.stdout.write(
         json.dumps({"event": "actionlint_install", "version": VERSION, "status": "verified"}) + "\n"
     )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
