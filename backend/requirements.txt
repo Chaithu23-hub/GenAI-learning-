@@ -13,7 +13,7 @@ openai>=1.40
 jsonschema>=4.20
 
 # ── Retrieval & embedding stack ──────────────────────────────────────
-sentence-transformers>=3.0,<6
+sentence-transformers>=6.2.0,<7
 # Reviewed embedded-only applicability assessment expires 2026-12-08 UTC.
 chromadb==1.5.9
 
