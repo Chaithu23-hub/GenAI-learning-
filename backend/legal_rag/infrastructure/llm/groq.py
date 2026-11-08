@@ -55,10 +55,26 @@ class GroqClient:
             response = self._client.chat.completions.create(**kwargs)
         except Exception as exc:  # noqa: BLE001
             # Best-effort transient/permanent classification.
-            text = str(exc).lower()
-            if any(k in text for k in ("timeout", "rate limit", "429", "503", "502", "500")):
-                raise TransientLLMError(str(exc)) from exc
-            raise PermanentLLMError(str(exc)) from exc
+            status = getattr(exc, "status_code", None)
+            if isinstance(status, int):
+                transient = status in {408, 429} or 500 <= status < 600
+            else:
+                text = str(exc).lower()
+                transient = (
+                    isinstance(exc, (TimeoutError, ConnectionError))
+                    or type(exc).__name__ in {"APIConnectionError", "APITimeoutError"}
+                    or any(
+                        value in text
+                        for value in ("timeout", "rate limit", "429", "503", "502", "500")
+                    )
+                )
+            # SDK diagnostics can include upstream response bodies. Keep them out of
+            # both public errors and structured logs, including exception chaining.
+            if transient:
+                raise TransientLLMError("LLM provider temporarily unavailable.") from None
+            raise PermanentLLMError(
+                "LLM provider rejected the request or is misconfigured."
+            ) from None
 
         message = response.choices[0].message
         usage = getattr(response, "usage", None)

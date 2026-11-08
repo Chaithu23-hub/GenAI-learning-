@@ -121,6 +121,22 @@ def test_injected_initial_passage_never_enters_model_context(stack):
     )
 
 
+def test_configured_refusal_sentence_is_given_to_generator_model(stack):
+    store, retrieval, settings, _ = stack
+    settings.out_of_scope_answer = "No evidence — please clarify.\nSupporting evidence is needed."
+    refusal = {
+        "answer": settings.out_of_scope_answer,
+        "reasoning": "No reliable evidence.",
+        "sources": [],
+        "confidence": "low",
+        "out_of_scope": True,
+    }
+    llm = FakeLLMClient(responses=[{"content": json.dumps(refusal)}])
+    generator = LLMGenerator(retrieval=retrieval, vector_store=store, llm=llm, settings=settings)
+    assert generator.generate("What does the document say?", chunks=[])["out_of_scope"]
+    assert json.dumps(settings.out_of_scope_answer) in llm.calls[0]["messages"][0]["content"]
+
+
 def test_long_clause_is_not_truncated_before_its_qualifying_conditions():
     text = (
         "3.4 Payment. "

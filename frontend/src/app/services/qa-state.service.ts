@@ -24,7 +24,12 @@ export class QaStateService {
     effect(() => {
       const snapshot = this.history()
         .filter((item) => !item.isLoading)
-        .slice(-MAX_PERSISTED_ITEMS);
+        .slice(-MAX_PERSISTED_ITEMS)
+        .map((item) => ({
+          question: item.question,
+          ...(typeof item.answer === 'string' ? { answer: item.answer } : {}),
+          ...(typeof item.error === 'string' ? { error: item.error } : {}),
+        }));
       this.saveToStorage(snapshot);
     });
   }
@@ -77,9 +82,14 @@ export class QaStateService {
       const parsed = JSON.parse(raw) as unknown;
       if (!Array.isArray(parsed)) return [];
       return parsed
-        .filter((item): item is HistoryItem =>
-          !!item && typeof (item as HistoryItem).question === 'string')
-        .map((item) => ({ ...item, isLoading: false, pendingId: undefined }));
+        .filter(isPersistedHistoryItem)
+        .slice(-MAX_PERSISTED_ITEMS)
+        .map((item) => ({
+          question: item.question,
+          ...(typeof item.answer === 'string' ? { answer: item.answer } : {}),
+          ...(typeof item.error === 'string' ? { error: item.error } : {}),
+          isLoading: false,
+        }));
     } catch {
       return [];
     }
@@ -92,4 +102,19 @@ export class QaStateService {
       /* storage full/unavailable — silently skip */
     }
   }
+}
+
+type PersistedHistoryItem = {
+  question: string;
+  answer?: string;
+  error?: string;
+};
+
+function isPersistedHistoryItem(value: unknown): value is PersistedHistoryItem {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const item = value as Record<string, unknown>;
+  if (typeof item['question'] !== 'string') return false;
+  if (item['answer'] !== undefined && typeof item['answer'] !== 'string') return false;
+  if (item['error'] !== undefined && typeof item['error'] !== 'string') return false;
+  return true;
 }

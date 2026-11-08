@@ -37,6 +37,43 @@ def test_direct_chat_omits_tools():
     assert "tools" not in sdk.calls[0]
 
 
+def test_provider_error_does_not_expose_raw_diagnostics():
+    private = "PRIVATE_DOCUMENT_AND_DUMMY_SECRET"
+
+    def fail(**kwargs):
+        raise RuntimeError(f"HTTP 503: {private}")
+
+    sdk = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=fail)))
+    with pytest.raises(TransientLLMError) as error:
+        client(sdk).chat(messages=[])
+    assert private not in str(error.value)
+
+
+@pytest.mark.parametrize("status,error", [(400, PermanentLLMError), (504, TransientLLMError)])
+def test_structured_provider_status_takes_priority_over_response_body(status, error):
+    class ProviderError(Exception):
+        status_code = status
+
+    def fail(**kwargs):
+        raise ProviderError("Request text happened to mention HTTP 500")
+
+    sdk = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=fail)))
+    with pytest.raises(error):
+        client(sdk).chat(messages=[])
+
+
+def test_sdk_connection_errors_are_retryable_without_private_diagnostics():
+    import httpx
+    from openai import APIConnectionError
+
+    def fail(**kwargs):
+        raise APIConnectionError(request=httpx.Request("POST", "https://example.invalid"))
+
+    sdk = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=fail)))
+    with pytest.raises(TransientLLMError):
+        client(sdk).chat(messages=[])
+
+
 @pytest.mark.parametrize(
     "message,error",
     [
@@ -51,5 +88,5 @@ def test_sdk_errors_use_adapter_taxonomy(message, error):
         raise RuntimeError(message)
 
     sdk = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=fail)))
-    with pytest.raises(error, match=message):
+    with pytest.raises(error):
         client(sdk).chat(messages=[])

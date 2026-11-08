@@ -7,6 +7,24 @@ from legal_rag.application.workflows.judge import (
 
 
 class TestDeterministicAssertions:
+    def test_clause_ranges_require_every_member(self):
+        answer = {
+            "answer": "Sections 3.4–3.6 apply.",
+            "sources": [{"excerpt": "Section 3.4 applies."}],
+        }
+        assert not clause_references_exist(answer, retrieved_sources=[])
+
+    def test_section_number_cannot_match_inside_another_number(self):
+        answer = {
+            "answer": "Section 7.2 applies.",
+            "sources": [{"excerpt": "Section 17.2 applies."}],
+        }
+        assert not clause_references_exist(answer, retrieved_sources=[])
+
+    def test_reference_followed_by_sentence_punctuation_still_matches(self):
+        answer = {"answer": "Section 7.2 applies.", "sources": [{"excerpt": "See Section 7.2."}]}
+        assert clause_references_exist(answer, retrieved_sources=[])
+
     def test_clause_reference_matches_source_text(self):
         answer = {
             "answer": "Section 7.2 controls",

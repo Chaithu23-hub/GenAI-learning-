@@ -9,8 +9,8 @@ from typing import Any
 from legal_rag.application.ports import Embedder, Reranker, VectorStore
 from legal_rag.domain.clauses import DOCUMENT_ID_RE
 from legal_rag.domain.entities import RetrievedChunk
+from legal_rag.domain.ranking import reciprocal_rank_fusion
 from legal_rag.infrastructure.observability.logging import get_logger
-from legal_rag.infrastructure.retrieval import reciprocal_rank_fusion
 
 log = get_logger(__name__)
 

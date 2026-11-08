@@ -47,7 +47,12 @@ def test_greeting_http_returns_adapter_model_reply(client, container, question):
     import json
 
     reply = "A greeting returned by the test provider."
-    llm = FakeLLMClient(responses=[{"content": json.dumps({"route": "general", "answer": reply})}])
+    llm = FakeLLMClient(
+        responses=[
+            {"content": '{"route":"social"}'},
+            {"content": json.dumps({"answer": reply})},
+        ]
+    )
     container._llm_fake = llm
     response = client.post("/api/ask", json={"question": question})
     assert response.status_code == 200
@@ -55,12 +60,18 @@ def test_greeting_http_returns_adapter_model_reply(client, container, question):
     assert payload["answer"] == reply
     assert payload["sources"] == []
     assert payload["out_of_scope"] is False
-    assert len(llm.calls) == 1
+    assert len(llm.calls) == 2
+    assert [call["temperature"] for call in llm.calls] == [0.0, 0.8]
 
 
 def test_greeting_http_preserves_provider_failure(client, container):
     class UnavailableLLM(FakeLLMClient):
+        def __init__(self):
+            super().__init__(responses=[{"content": '{"route":"social"}'}])
+
         def chat(self, **kwargs):
+            if self._responses:
+                return super().chat(**kwargs)
             raise TransientLLMError("Provider unavailable")
 
     container._llm_fake = UnavailableLLM()
@@ -68,11 +79,11 @@ def test_greeting_http_preserves_provider_failure(client, container):
     assert response.status_code == 503
 
 
-@pytest.mark.parametrize(
-    "content", ["not json", '{"route":"general","answer":""}', '{"route":"documents","answer":""}']
-)
+@pytest.mark.parametrize("content", ["not json", '{"answer":""}', "{}"])
 def test_invalid_model_greeting_is_upstream_error_not_client_error(client, container, content):
-    container._llm_fake = FakeLLMClient(responses=[{"content": content}])
+    container._llm_fake = FakeLLMClient(
+        responses=[{"content": '{"route":"social"}'}, {"content": content}]
+    )
     response = client.post("/api/ask", json={"question": "Hello"})
     assert response.status_code == 502
     payload = response.json()
@@ -100,9 +111,77 @@ class TestAskEndpoint:
         assert response.status_code == 200
         payload = response.json()
         assert set(payload) == {"answer", "reasoning", "sources", "confidence", "out_of_scope"}
-        assert payload["answer"] == container.settings.out_of_scope_answer
+        assert payload["answer"] == "I need more supporting document evidence to answer."
         assert payload["out_of_scope"] is True
         assert payload["sources"] == []
+
+    @pytest.mark.parametrize(
+        "question,reason",
+        [
+            ("What is the capital of France?", "outside_document_qa"),
+            ("Quote clause 99.99 of MSA-2026-014.", "insufficient_evidence"),
+        ],
+    )
+    def test_repeated_unsupported_questions_return_fresh_provider_wording(
+        self, client, container, question, reason
+    ):
+        import json
+
+        decision = (
+            {"route": "unsupported"}
+            if reason == "outside_document_qa"
+            else {
+                "answer": container.settings.out_of_scope_answer,
+                "reasoning": "No supporting evidence.",
+                "sources": [],
+                "confidence": "low",
+                "out_of_scope": True,
+            }
+        )
+        replies = [
+            "I cannot answer that without supporting document evidence.",
+            "I am unable to help without relevant legal document evidence.",
+        ]
+        llm = FakeLLMClient(
+            responses=[
+                {"content": json.dumps(payload)}
+                for reply in replies
+                for payload in (decision, {"reason": reason, "answer": reply})
+            ]
+        )
+        container._llm_fake = llm
+        for reply in replies:
+            response = client.post("/api/ask", json={"question": question})
+            assert response.status_code == 200
+            payload = response.json()
+            assert set(payload) == {"answer", "reasoning", "sources", "confidence", "out_of_scope"}
+            assert payload["answer"] == reply
+            assert payload["sources"] == []
+            assert payload["confidence"] == "low"
+            assert payload["out_of_scope"] is True
+        assert len(llm.calls) == 4
+        assert all(call["messages"][1]["content"] == reason for call in llm.calls[1::2])
+
+    def test_invalid_refusal_returns_502_without_provider_content(self, client, container):
+        container._llm_fake = FakeLLMClient(
+            responses=[
+                {"content": '{"route":"unsupported"}'},
+                {"content": "malformed private provider output"},
+            ]
+        )
+        response = client.post("/api/ask", json={"question": "What is the capital of France?"})
+        assert response.status_code == 502
+        assert "malformed private provider output" not in response.text
+
+    def test_refusal_provider_failure_returns_503(self, client, container):
+        class UnavailableRefusals:
+            def reply(self, reason):
+                raise TransientLLMError("Provider unavailable")
+
+        container._llm_fake = FakeLLMClient(responses=[{"content": '{"route":"unsupported"}'}])
+        container.unsupported_responses = UnavailableRefusals()
+        response = client.post("/api/ask", json={"question": "What is the capital of France?"})
+        assert response.status_code == 503
 
     def test_ask_valid_returns_answer(self, client):
         r = client.post("/api/ask", json={"question": "What is the late payment fee?"})

@@ -102,8 +102,29 @@ the replaced term briefly only if needed to explain the difference. Preserve all
 material limits and uncertainty. Do not add unsupported facts or generic filler.
 """
 )
-SYSTEM_PROMPT = _TEXT_V4
-QA_SYSTEM_PROMPT = PromptTemplate(name="qa.system", version="v4", text=_TEXT_V4)
+QA_SYSTEM_PROMPT_V4 = PromptTemplate(name="qa.system", version="v4", text=_TEXT_V4)
+QA_SYSTEM_PROMPT = PromptTemplate(
+    name="qa.system",
+    version="v5",
+    text=_TEXT_V4
+    + """
+
+APPLICABILITY CONDITIONS
+Completeness takes precedence over the preferred answer length. A request for
+a rate, fee, deadline or other headline term still requires its material conditions.
+For each agreement, read the complete supporting provision and state the term
+together with who or what it applies to, what triggers it, and any stated exceptions,
+limits or timing qualifications. Keep each qualification attached to its own term.
+Before returning JSON, compare each answer statement with its cited provision:
+if a condition changes when, whether or to what the stated term applies, include
+that condition in the answer field. A complete source excerpt or reasoning field
+does not compensate for an unconditional or incomplete answer statement.
+Never infer a condition absent from evidence or transfer a qualification between
+agreements. Repeated questions may receive fresh phrasing, but the supported
+rates, applicability conditions and document versions must remain consistent.
+""",
+)
+SYSTEM_PROMPT = QA_SYSTEM_PROMPT.text
 
 RETRIEVE_TOOL = {
     "type": "function",

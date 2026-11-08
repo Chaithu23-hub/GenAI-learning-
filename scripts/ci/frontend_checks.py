@@ -29,6 +29,7 @@ def run(check: str) -> dict:
         "install": ["ci"],
         "build": ["run", "build", "--", "--configuration", "production"],
         "test": ["test", "--", "--watch=false", "--browsers=ChromeHeadless"],
+        "audit": ["audit", "--omit=dev", "--audit-level=high"],
     }
     environment = {**os.environ, "LEGAL_RAG_API_KEY": ""}
     result = subprocess.run(
@@ -43,7 +44,7 @@ def run(check: str) -> dict:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--check", choices=["install", "build", "test"], required=True)
+    parser.add_argument("--check", choices=["install", "build", "test", "audit"], required=True)
     args = parser.parse_args()
     try:
         result = run(args.check)

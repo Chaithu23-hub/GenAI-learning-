@@ -18,6 +18,13 @@ class MemoryDocumentSource:
         self.documents[name] = text
         return Path(name)
 
+    def write_documents(self, documents):
+        names = [name for name, _ in documents]
+        if len(set(names)) != len(names) or any(name in self.documents for name in names):
+            raise DocumentConflictError("Document already exists.")
+        self.documents.update(documents)
+        return [Path(name) for name in names]
+
 
 class FakePDFTextExtractor:
     def __init__(self, *, text="Test document", error=None):

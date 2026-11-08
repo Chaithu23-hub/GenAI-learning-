@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
-from legal_rag.infrastructure.mcp import run_lookup
+from legal_rag.application.ports import ContractLookup
 
 
 class MCPLookupService:
-    def __init__(self, *, mcp_config_path: Path):
-        self._config_path = mcp_config_path
+    def __init__(self, *, lookup: ContractLookup):
+        self._lookup = lookup
 
     def lookup_contract(self, contract_id: str) -> dict[str, Any]:
-        return run_lookup(self._config_path, contract_id)
+        return self._lookup.lookup_contract(contract_id)
