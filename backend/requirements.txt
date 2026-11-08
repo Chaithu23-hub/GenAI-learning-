@@ -1,5 +1,5 @@
 # ── Core web framework ────────────────────────────────────────────────
-fastapi>=0.111
+fastapi>=0.162.0
 uvicorn[standard]>=0.30
 python-multipart>=0.0.9
 
@@ -7,16 +7,16 @@ python-multipart>=0.0.9
 setuptools>=84.1.0
 
 # ── Config & CLI ──────────────────────────────────────────────────────
-pydantic>=2.7
+pydantic>=2.14.3
 pydantic-settings>=2.4
 typer>=0.12
 
 # ── LLM & structured validation ───────────────────────────────────────
-openai>=1.40
+openai>=3.46.0
 jsonschema>=4.20
 
 # ── Retrieval & embedding stack ──────────────────────────────────────
-sentence-transformers>=3.0,<6
+sentence-transformers>=6.2.0,<7
 # Reviewed embedded-only applicability assessment expires 2026-12-08 UTC.
 chromadb==1.5.9
 
