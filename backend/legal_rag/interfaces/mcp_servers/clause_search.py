@@ -1,46 +1,39 @@
 """MCP server: search local legal clauses."""
+
 from __future__ import annotations
+
+from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from legal_rag.infrastructure.settings import get_settings
+from legal_rag.application.workflows.corpus_lookup import CorpusLookupService
 
 mcp = FastMCP("clause-search")
+_lookup: CorpusLookupService | None = None
 
 
-def _documents():
-    return sorted(get_settings().docs_dir.glob("*.md"))
+def configure(lookup: CorpusLookupService) -> None:
+    """Install the service supplied by the MCP interface's startup Container."""
+    global _lookup
+    _lookup = lookup
 
 
 @mcp.tool()
-def search_clauses(query: str) -> list[dict[str, str]]:
+def search_clauses(query: str) -> list[dict[str, Any]]:
     """Search the local legal document corpus for matching clause text."""
-    terms = set((query or "").lower().split())
-    if not terms:
-        return []
-    matches = []
-    for path in _documents():
-        text = path.read_text(encoding="utf-8")
-        score = sum(text.lower().count(term) for term in terms)
-        if score:
-            matches.append({"document": path.name, "excerpt": text[:1000],
-                            "matches": str(score)})
-    return sorted(matches, key=lambda item: int(item["matches"]), reverse=True)[:5]
+    return _lookup.search_clauses(query) if _lookup else []
 
 
 @mcp.tool()
-def get_contract_clause(contract_id: str, clause_number: str) -> dict[str, str]:
-    """Return one clause, or explain the available range when it is absent."""
-    if clause_number not in {str(number) for number in range(1, 12)}:
-        return {
-            "error": (
-                f"No clause {clause_number} in {contract_id} as amended: clauses run 1-11; "
-                "see Amendment 2 effective 2023-06-01."
-            )
-        }
-    return {"contract_id": contract_id, "clause": clause_number,
-            "text": f"Clause {clause_number} from {contract_id}."}
+def get_contract_clause(contract_id: str, clause_number: str) -> dict[str, Any]:
+    """Return an exact corpus clause, or a not-found/ambiguity result."""
+    if _lookup is None:
+        return {"error": "corpus_lookup_unavailable"}
+    return _lookup.get_contract_clause(contract_id, clause_number)
 
 
 if __name__ == "__main__":
+    from legal_rag.composition import Container
+
+    configure(Container().corpus_lookup_service)
     mcp.run()

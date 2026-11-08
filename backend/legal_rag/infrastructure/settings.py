@@ -1,4 +1,5 @@
 """12-factor configuration via pydantic-settings."""
+
 from __future__ import annotations
 
 from functools import lru_cache
@@ -28,8 +29,12 @@ class Settings(BaseSettings):
     docs_dir: Path = Field(default=_PROJECT_DATA_ROOT / "shared-corpus" / "contracts")
     chroma_dir: Path = Field(default=_BACKEND_ROOT / "data" / "chroma")
     mcp_config_path: Path = Field(default=_BACKEND_ROOT / "mcp_servers.json")
-    evaluation_labels_path: Path = Field(default=_BACKEND_ROOT / "data" / "evaluation" / "labels.json")
-    evaluation_artifact_dir: Path = Field(default=_BACKEND_ROOT / "data" / "evaluation" / "generated")
+    evaluation_labels_path: Path = Field(
+        default=_BACKEND_ROOT / "data" / "evaluation" / "labels.json"
+    )
+    evaluation_artifact_dir: Path = Field(
+        default=_BACKEND_ROOT / "data" / "evaluation" / "generated"
+    )
 
     # ── Chunking ─────────────────────────────────────────────────────────
     chunk_size_tokens: int = Field(default=512, ge=64, le=4096)
@@ -68,6 +73,20 @@ class Settings(BaseSettings):
 
     # ── Security ─────────────────────────────────────────────────────────
     api_key: SecretStr | None = Field(default=None)
+    admin_api_key: SecretStr | None = Field(default=None)
+    development_mode: bool = Field(default=False)
+
+    # Resource budgets apply before parsing and while executing blocking work.
+    http_max_body_bytes: int = Field(default=26 * 1024 * 1024, ge=1024)
+    http_max_concurrent_jobs: int = Field(default=4, ge=1, le=32)
+    http_request_timeout_seconds: float = Field(default=120, gt=0, le=600)
+    http_body_timeout_seconds: float = Field(default=30, gt=0, le=600)
+    upload_max_file_bytes: int = Field(default=25 * 1024 * 1024, ge=1)
+    upload_max_files: int = Field(default=4, ge=1, le=16)
+    pdf_max_pages: int = Field(default=100, ge=1, le=10000)
+    pdf_max_characters: int = Field(default=1_000_000, ge=1)
+    pdf_timeout_seconds: float = Field(default=20, gt=0, le=120)
+    pdf_memory_mb: int = Field(default=512, ge=128, le=4096)
 
     # ── HTTP ─────────────────────────────────────────────────────────────
     cors_origins: list[str] = Field(
@@ -98,9 +117,7 @@ class Settings(BaseSettings):
         )
     )
     greeting_answer: str = Field(
-        default=(
-            "Hi! I'm here and ready to help. How can I help you today?"
-        )
+        default=("Hi! I'm here and ready to help. How can I help you today?")
     )
 
     # ── Validators ───────────────────────────────────────────────────────
@@ -116,6 +133,22 @@ class Settings(BaseSettings):
     @property
     def api_key_value(self) -> str:
         return self.api_key.get_secret_value() if self.api_key else ""
+
+    @property
+    def admin_api_key_value(self) -> str:
+        return self.admin_api_key.get_secret_value() if self.admin_api_key else ""
+
+    def validate_http_security(self) -> None:
+        """Validate HTTP credentials without restricting CLI configuration."""
+        reader, admin = self.api_key_value, self.admin_api_key_value
+        if not self.development_mode and (not reader.strip() or not admin.strip()):
+            raise ValueError(
+                "HTTP requires distinct reader and admin API keys; anonymous reads require explicit development_mode."
+            )
+        if (reader and not reader.strip()) or (admin and not admin.strip()):
+            raise ValueError("HTTP API keys cannot contain only whitespace.")
+        if reader and admin and reader == admin:
+            raise ValueError("HTTP reader and admin API keys must be distinct.")
 
     @property
     def llm_api_key(self) -> str:

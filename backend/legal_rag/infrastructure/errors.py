@@ -1,4 +1,5 @@
 """Infrastructure errors: TransientError (retryable) vs PermanentError."""
+
 from __future__ import annotations
 
 
@@ -40,3 +41,23 @@ class MCPTransportError(TransientError):
 
 class DocumentSourceError(PermanentError):
     """Missing or unreadable source documents."""
+
+
+class WorkCapacityError(TransientError):
+    """All admitted worker slots, or the mutation slot, are occupied."""
+
+
+class WorkTimeoutError(TransientError):
+    """The response deadline expired; capacity remains charged to running work."""
+
+
+class PdfExtractionError(PermanentError):
+    """PDF input is invalid or exceeds its configured processing budget."""
+
+
+class PdfTimeoutError(TransientError):
+    """Isolated PDF parsing exceeded its wall-clock deadline and was terminated."""
+
+
+class DocumentConflictError(PermanentError):
+    """An upload would replace an existing corpus document."""

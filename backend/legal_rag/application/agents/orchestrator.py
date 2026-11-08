@@ -1,4 +1,5 @@
 """Orchestrator: plan → clause worker + defined-terms worker → synthesise, all metered per hop."""
+
 from __future__ import annotations
 
 import json
@@ -33,7 +34,9 @@ log = get_logger(__name__)
 _TERM_PATTERNS = (
     re.compile(r'"([^"]+)"'),
     re.compile(r"\bwhat (?:does|do) (?:the )?([\w\s-]+?) mean\b", re.IGNORECASE),
-    re.compile(r"\bwhat(?: is|'s) (?:a |an |the )?([\w\s'-]+?)(?:\s+(?:under|in|of)\b|\?|$)", re.IGNORECASE),
+    re.compile(
+        r"\bwhat(?: is|'s) (?:a |an |the )?([\w\s'-]+?)(?:\s+(?:under|in|of)\b|\?|$)", re.IGNORECASE
+    ),
     re.compile(r"\bdefin(?:ition of|e)\s+([\w\s-]+?)(?:\?|$)", re.IGNORECASE),
 )
 _DEFINED_TERM = re.compile(r'\("([A-Z][^"]+)"\)')
@@ -58,19 +61,25 @@ class HandoffLog:
     chars_per_token: int = 4
 
     def record(
-        self, hop: str, input_payload: Any, output_payload: Any,
-        status: int = 200, attempt: int = 1,
+        self,
+        hop: str,
+        input_payload: Any,
+        output_payload: Any,
+        status: int = 200,
+        attempt: int = 1,
     ) -> None:
         i_tokens = estimate_tokens(input_payload, self.chars_per_token)
         o_tokens = estimate_tokens(output_payload, self.chars_per_token)
-        self.entries.append({
-            "hop": hop,
-            "input_tokens": i_tokens,
-            "output_tokens": o_tokens,
-            "tokens": i_tokens + o_tokens,
-            "status": status,
-            "attempt": attempt,
-        })
+        self.entries.append(
+            {
+                "hop": hop,
+                "input_tokens": i_tokens,
+                "output_tokens": o_tokens,
+                "tokens": i_tokens + o_tokens,
+                "status": status,
+                "attempt": attempt,
+            }
+        )
 
     @property
     def total_tokens(self) -> int:
@@ -97,8 +106,7 @@ def _governing_effective_date(docs_dir: str | Path) -> str:
     if not path.exists():
         return ""
     dates = [
-        d for p in path.glob("*.md")
-        for d in _EFFECTIVE_DATE.findall(p.read_text(encoding="utf-8"))
+        d for p in path.glob("*.md") for d in _EFFECTIVE_DATE.findall(p.read_text(encoding="utf-8"))
     ]
     return max(dates, default="")
 
@@ -136,32 +144,36 @@ class Orchestrator:
             "effective_date": _governing_effective_date(str(self._settings.docs_dir)),
         }
 
-    def clause_worker(
-        self, brief: dict[str, Any]
-    ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    def clause_worker(self, brief: dict[str, Any]) -> tuple[dict[str, Any], list[dict[str, Any]]]:
         query = brief["question"]
         allowed, reason = screen_query(query)
         if not allowed:
             answer = (
                 self._settings.guardrail_answer
-                if reason == "injection" else self._settings.no_drafting_answer
+                if reason == "injection"
+                else self._settings.no_drafting_answer
             )
             return {
                 "answer": answer,
                 "reasoning": (
-                    "The question was rejected by the input guardrails before "
-                    f"retrieval: {reason}."
+                    f"The question was rejected by the input guardrails before retrieval: {reason}."
                 ),
-                "sources": [], "confidence": "high", "out_of_scope": True,
+                "sources": [],
+                "confidence": "high",
+                "out_of_scope": True,
             }, []
         where = self._retrieval.detect_metadata_filter(query)
         chunks = self._retrieval.retrieve(query, where=where)
         if any(detect_prompt_injection(c.text) for c in chunks):
             return {
                 "answer": self._settings.guardrail_answer,
-                "reasoning": ("A retrieved document contained instruction-like content "
-                              "and was excluded from answer generation."),
-                "sources": [], "confidence": "high", "out_of_scope": True,
+                "reasoning": (
+                    "A retrieved document contained instruction-like content "
+                    "and was excluded from answer generation."
+                ),
+                "sources": [],
+                "confidence": "high",
+                "out_of_scope": True,
             }, chunks_payload(chunks)
         return self._generator.generate(query, where=where, chunks=chunks), chunks_payload(chunks)
 
@@ -181,8 +193,9 @@ class Orchestrator:
                 if request["version"] == "original" and doc_type == "amendment":
                     continue
                 for sentence in re.split(r"(?<=[.;])\s+", text):
-                    if any(found.lower() == term.lower()
-                           for found in _DEFINED_TERM.findall(sentence)):
+                    if any(
+                        found.lower() == term.lower() for found in _DEFINED_TERM.findall(sentence)
+                    ):
                         hit = {
                             "term": term,
                             "document": (meta or {}).get("document", "unknown"),
@@ -197,13 +210,18 @@ class Orchestrator:
             else:
                 not_found.append(term)
         return {
-            "status": 200, "version": request["version"],
-            "definitions": definitions, "not_found": not_found,
+            "status": 200,
+            "version": request["version"],
+            "definitions": definitions,
+            "not_found": not_found,
         }
 
     def synthesize(
-        self, query: str, clause: dict[str, Any],
-        definitions: dict[str, Any], terms: list[str],
+        self,
+        query: str,
+        clause: dict[str, Any],
+        definitions: dict[str, Any],
+        terms: list[str],
     ) -> dict[str, Any]:
         # If the clause worker was blocked (guardrail / out-of-scope), preserve
         # that verdict unchanged — never merge over a refusal.
@@ -213,16 +231,16 @@ class Orchestrator:
         if definitions.get("status") != 200:
             note = (
                 f'The meaning of "{", ".join(terms)}" could not be verified: the defined-terms '
-                f'worker returned HTTP {definitions.get("status")}, so no definition is given.'
+                f"worker returned HTTP {definitions.get('status')}, so no definition is given."
             )
-            result["reasoning"] = f'{clause.get("reasoning", "")} [Partial answer] {note}'
-            result["answer"] = f'{clause["answer"]} {note}'
+            result["reasoning"] = f"{clause.get('reasoning', '')} [Partial answer] {note}"
+            result["answer"] = f"{clause['answer']} {note}"
             result["confidence"] = "low"
             return result
         if not definitions["definitions"]:
             result["reasoning"] = (
-                f'{clause.get("reasoning", "")} No Definitions-clause entry for: '
-                f'{", ".join(definitions["not_found"])}.'
+                f"{clause.get('reasoning', '')} No Definitions-clause entry for: "
+                f"{', '.join(definitions['not_found'])}."
             )
             return result
         quoted = " ".join(
@@ -232,13 +250,14 @@ class Orchestrator:
         return {
             "answer": f"{quoted} {clause['answer']}",
             "reasoning": (
-                f'Defined-terms worker resolved {len(definitions["definitions"])} term(s); '
-                f'clause worker supplied the clause text. {clause.get("reasoning", "")}'
+                f"Defined-terms worker resolved {len(definitions['definitions'])} term(s); "
+                f"clause worker supplied the clause text. {clause.get('reasoning', '')}"
             ).strip(),
             "sources": [
                 {k: item[k] for k in ("document", "chunk_id", "excerpt")}
                 for item in definitions["definitions"]
-            ] + list(clause.get("sources", [])),
+            ]
+            + list(clause.get("sources", [])),
             "confidence": clause.get("confidence", "medium"),
             "out_of_scope": False,
         }
@@ -249,8 +268,14 @@ class Orchestrator:
 
         task_plan = self.plan(query)
         log_.record("user -> orchestrator (plan)", [ORCHESTRATOR_PROMPT, query], task_plan)
-        steps = [{"step": 1, "action": "plan",
-                  "reason": "Decompose the question into worker subtasks.", "arguments": {}}]
+        steps = [
+            {
+                "step": 1,
+                "action": "plan",
+                "reason": "Decompose the question into worker subtasks.",
+                "arguments": {},
+            }
+        ]
 
         brief = {
             "question": query,
@@ -260,10 +285,17 @@ class Orchestrator:
         clause, chunks = self.clause_worker(brief)
         log_.record(
             "orchestrator -> clause_worker (brief + retrieved chunks)",
-            [SYSTEM_PROMPT, RETRIEVE_TOOL, brief, chunks], clause,
+            [SYSTEM_PROMPT, RETRIEVE_TOOL, brief, chunks],
+            clause,
         )
-        steps.append({"step": 2, "action": "clause_worker",
-                      "reason": "Retrieve and quote the governing clause.", "arguments": brief})
+        steps.append(
+            {
+                "step": 2,
+                "action": "clause_worker",
+                "reason": "Retrieve and quote the governing clause.",
+                "arguments": brief,
+            }
+        )
 
         result = clause
         if "defined_terms" in task_plan["subtasks"]:
@@ -277,7 +309,8 @@ class Orchestrator:
                     log_.record(
                         "orchestrator -> defined_terms_worker",
                         [DEFINED_TERMS_PROMPT, GET_DEFINITIONS_TOOL, request],
-                        definitions, attempt=attempt,
+                        definitions,
+                        attempt=attempt,
                     )
                     break
                 except WorkerError as error:
@@ -285,19 +318,33 @@ class Orchestrator:
                     log_.record(
                         "orchestrator -> defined_terms_worker",
                         [DEFINED_TERMS_PROMPT, GET_DEFINITIONS_TOOL, request],
-                        definitions, status=error.status, attempt=attempt,
+                        definitions,
+                        status=error.status,
+                        attempt=attempt,
                     )
-            steps.append({"step": 3, "action": "defined_terms_worker",
-                          "reason": "Resolve the defined terms the question asks about.",
-                          "arguments": request})
+            steps.append(
+                {
+                    "step": 3,
+                    "action": "defined_terms_worker",
+                    "reason": "Resolve the defined terms the question asks about.",
+                    "arguments": request,
+                }
+            )
 
             result = self.synthesize(query, clause, definitions, task_plan["terms"])
             log_.record(
                 "workers -> synthesizer (clause answer + definitions)",
-                [SYNTHESIZER_PROMPT, query, clause, definitions], result,
+                [SYNTHESIZER_PROMPT, query, clause, definitions],
+                result,
             )
-            steps.append({"step": 4, "action": "synthesizer",
-                          "reason": "Merge both worker outputs into one answer.", "arguments": {}})
+            steps.append(
+                {
+                    "step": 4,
+                    "action": "synthesizer",
+                    "reason": "Merge both worker outputs into one answer.",
+                    "arguments": {},
+                }
+            )
 
         schema_errors = validate_response(result)
         total_tokens = log_.total_tokens

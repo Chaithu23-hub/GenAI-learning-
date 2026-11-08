@@ -1,4 +1,5 @@
 """QA system prompt + retrieve tool schema (v1)."""
+
 from legal_rag.infrastructure.prompts.prompt import PromptTemplate
 
 _TEXT_V1 = """ROLE
@@ -84,7 +85,9 @@ _TEXT_V3 = _TEXT.replace(
     "asks for them in the answer. Use real line breaks between paragraphs or list items.",
 )
 QA_SYSTEM_PROMPT_V3 = PromptTemplate(name="qa.system", version="v3", text=_TEXT_V3)
-_TEXT_V4 = _TEXT_V3 + """
+_TEXT_V4 = (
+    _TEXT_V3
+    + """
 
 CHAT ANSWER STYLE
 The answer field is the complete user-facing chat reply. Speak directly to the user in a
@@ -98,6 +101,7 @@ When an amendment replaces an earlier term, state the current term first and men
 the replaced term briefly only if needed to explain the difference. Preserve all
 material limits and uncertainty. Do not add unsupported facts or generic filler.
 """
+)
 SYSTEM_PROMPT = _TEXT_V4
 QA_SYSTEM_PROMPT = PromptTemplate(name="qa.system", version="v4", text=_TEXT_V4)
 

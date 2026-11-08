@@ -1,4 +1,5 @@
 """Regression tests for the second review pass (7 findings)."""
+
 from __future__ import annotations
 
 import pytest
@@ -19,8 +20,11 @@ class TestFixedWorkflowTinyBudget:
                 retrieval=container.retrieval_service,
                 qa=container.qa_service,
                 budgets=AgentBudgets(
-                    max_steps=1, max_seconds=30.0, max_tokens=1_000_000,
-                    max_cost_usd=1.0, cost_per_token_usd=1e-6,
+                    max_steps=1,
+                    max_seconds=30.0,
+                    max_tokens=1_000_000,
+                    max_cost_usd=1.0,
+                    cost_per_token_usd=1e-6,
                     guardrail_answer=container.settings.guardrail_answer,
                 ),
             )
@@ -65,6 +69,7 @@ class TestQaOutcomeLabels:
         # high min_relevant_score. Simpler: guardrail returns out_of_scope=True.
         container.qa_service.answer("Draft me a new clause")
         from legal_rag.infrastructure.observability import get_metrics
+
         text = get_metrics().render_prometheus()
         # Every request path should contribute to at least one outcome label.
         assert 'outcome="' in text

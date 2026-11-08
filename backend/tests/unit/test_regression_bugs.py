@@ -1,4 +1,5 @@
 """Regression tests for the 9 bugs surfaced by the code review."""
+
 from __future__ import annotations
 
 from legal_rag.application.workflows.race import classify_failure
@@ -55,13 +56,22 @@ class TestFinding4VersionSelectionInAgentDefinitions:
         agent = container.new_legal_agent()
         # Seed the state with mixed docs
         from legal_rag.domain.entities import AgentState
+
         state = AgentState(query="terminate")
         state.observations["retrieve"] = {
             "documents": [
-                {"document": "master_services_agreement.md", "chunk_id": "msa::001",
-                 "score": 0.9, "text": "..."},
-                {"document": "amendment_01_payment_terms.md", "chunk_id": "amd::001",
-                 "score": 0.8, "text": "..."},
+                {
+                    "document": "master_services_agreement.md",
+                    "chunk_id": "msa::001",
+                    "score": 0.9,
+                    "text": "...",
+                },
+                {
+                    "document": "amendment_01_payment_terms.md",
+                    "chunk_id": "amd::001",
+                    "score": 0.8,
+                    "text": "...",
+                },
             ],
             "injection_detected": False,
         }
@@ -71,13 +81,22 @@ class TestFinding4VersionSelectionInAgentDefinitions:
     def test_original_returns_only_non_amendment_chunks(self, container):
         agent = container.new_legal_agent()
         from legal_rag.domain.entities import AgentState
+
         state = AgentState(query="terminate")
         state.observations["retrieve"] = {
             "documents": [
-                {"document": "master_services_agreement.md", "chunk_id": "msa::001",
-                 "score": 0.9, "text": "..."},
-                {"document": "amendment_01_payment_terms.md", "chunk_id": "amd::001",
-                 "score": 0.8, "text": "..."},
+                {
+                    "document": "master_services_agreement.md",
+                    "chunk_id": "msa::001",
+                    "score": 0.9,
+                    "text": "...",
+                },
+                {
+                    "document": "amendment_01_payment_terms.md",
+                    "chunk_id": "amd::001",
+                    "score": 0.8,
+                    "text": "...",
+                },
             ],
             "injection_detected": False,
         }
@@ -110,8 +129,16 @@ class TestFinding8MultiplierGuardsAgainstZero:
 class TestFinding9ClassifyFailureHandlesMissingExcerpt:
     def test_missing_excerpt_key_does_not_raise(self):
         report = {
-            "handoffs": [{"hop": "orchestrator -> defined_terms_worker", "status": 500,
-                          "tokens": 10, "input_tokens": 5, "output_tokens": 5, "attempt": 1}],
+            "handoffs": [
+                {
+                    "hop": "orchestrator -> defined_terms_worker",
+                    "status": 500,
+                    "tokens": 10,
+                    "input_tokens": 5,
+                    "output_tokens": 5,
+                    "attempt": 1,
+                }
+            ],
             "result": {
                 "answer": "no info",
                 "reasoning": "[Partial answer] worker failed",

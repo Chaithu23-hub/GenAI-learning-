@@ -1,4 +1,5 @@
 """Ingestion service — read → chunk → embed → upsert."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -6,6 +7,7 @@ from pathlib import Path
 
 from legal_rag.application.ports import Chunker, DocumentSource, Embedder, VectorStore
 from legal_rag.domain.entities import IndexedChunk
+from legal_rag.domain.exceptions import InvalidDocumentError
 from legal_rag.infrastructure.observability import get_logger, get_metrics
 
 log = get_logger(__name__)
@@ -46,6 +48,8 @@ class IngestionService:
                 chunk_size=self._settings.chunk_size_tokens,
                 overlap=self._settings.chunk_overlap_tokens,
             )
+            if not chunks:
+                raise InvalidDocumentError(f"Document {document.name} has no indexable text.")
             for chunk in chunks:
                 metadata = dict(document.metadata)
                 metadata["clause_ref"] = chunk.heading or "Preamble"
@@ -54,25 +58,39 @@ class IngestionService:
                 # unnumbered; Markdown/DOCX have no stable physical pagination.
                 normalized = " ".join(chunk.text.split())
                 page_matches = [
-                    number for number, text in enumerate(document.pages, start=1)
+                    number
+                    for number, text in enumerate(document.pages, start=1)
                     if normalized and normalized in " ".join(text.split())
                 ]
                 if document.pages:
                     metadata.pop("page_number", None)
                     if len(page_matches) == 1:
                         metadata["page_number"] = page_matches[0]
-                indexed.append(IndexedChunk(
-                    id=f"{metadata['source_doc']}::{chunk.index:03d}",
-                    text=chunk.text,
-                    heading=chunk.heading,
-                    chunk_index=chunk.index,
-                    document=document.name,
-                    document_type=document.document_type,
-                    metadata=metadata,
-                ))
+                indexed.append(
+                    IndexedChunk(
+                        id=f"{metadata['source_doc']}::{chunk.index:03d}",
+                        text=chunk.text,
+                        heading=chunk.heading,
+                        chunk_index=chunk.index,
+                        document=document.name,
+                        document_type=document.document_type,
+                        metadata=metadata,
+                    )
+                )
                 texts.append(chunk.text)
         embeddings = self._embedder.embed(texts)
+        # Missing files are not an implicit request to revoke unrelated sources.
+        current_ids = {chunk.id for chunk in indexed}
+        obsolete_ids = [
+            chunk_id
+            for source in {chunk.metadata["source_doc"] for chunk in indexed}
+            for chunk_id in self._vector_store.get_all(where={"source_doc": source})["ids"]
+            if chunk_id not in current_ids
+        ]
         self._vector_store.upsert(indexed, embeddings)
+        # Chroma has no atomic upsert+delete transaction. Preserve old evidence
+        # if staging/upsert fails; propagate cleanup failures to the caller.
+        self._vector_store.delete_chunks(obsolete_ids)
         log.info(
             "ingestion complete",
             extra={

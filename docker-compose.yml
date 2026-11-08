@@ -5,13 +5,13 @@ services:
       dockerfile: Dockerfile
     container_name: legal_rag_backend
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       - ./backend/data:/app/data
     env_file:
       - ./backend/.env
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/live')"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -22,6 +22,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        LEGAL_RAG_API_KEY: ${LEGAL_RAG_API_KEY:-}
     container_name: legal_rag_frontend
     ports:
       - "80:80"

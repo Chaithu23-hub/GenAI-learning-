@@ -17,10 +17,14 @@ def client(sdk):
 def test_groq_request_and_normalized_reply():
     sdk = FakeChatSDK()
     tools = [{"type": "function", "function": {"name": "retrieve_chunks"}}]
-    result = client(sdk).chat(messages=[{"role": "user", "content": "Hello"}], tools=tools, temperature=0.2)
+    result = client(sdk).chat(
+        messages=[{"role": "user", "content": "Hello"}], tools=tools, temperature=0.2
+    )
     assert sdk.calls[0] == {
-        "model": "openai/gpt-oss-20b", "messages": [{"role": "user", "content": "Hello"}],
-        "tools": tools, "temperature": 0.2,
+        "model": "openai/gpt-oss-20b",
+        "messages": [{"role": "user", "content": "Hello"}],
+        "tools": tools,
+        "temperature": 0.2,
     }
     assert result["content"] == "Hello"
     assert result["usage"]["total_tokens"] == 12
@@ -33,12 +37,15 @@ def test_direct_chat_omits_tools():
     assert "tools" not in sdk.calls[0]
 
 
-@pytest.mark.parametrize("message,error", [
-    ("HTTP 429 rate limit", TransientLLMError),
-    ("timeout", TransientLLMError),
-    ("HTTP 503", TransientLLMError),
-    ("invalid API key", PermanentLLMError),
-])
+@pytest.mark.parametrize(
+    "message,error",
+    [
+        ("HTTP 429 rate limit", TransientLLMError),
+        ("timeout", TransientLLMError),
+        ("HTTP 503", TransientLLMError),
+        ("invalid API key", PermanentLLMError),
+    ],
+)
 def test_sdk_errors_use_adapter_taxonomy(message, error):
     def fail(**kwargs):
         raise RuntimeError(message)

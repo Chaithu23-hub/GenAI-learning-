@@ -5,10 +5,14 @@ An Angular chat workspace and FastAPI service for searching legal contracts and 
 ## Project structure
 
 ```text
-.github/workflows/          CI: backend lint/tests and frontend build/tests
+.github/
+  workflows/               CI, RAG evaluation, and deployment readiness
+  actions/setup-backend/   Shared Python dependency setup
+  requirements-ci.txt      CI-only validation tools
+  dependabot.yml           Dependency update configuration
 backend/
   legal_rag/
-    domain/                Entities, policies, response schema, exceptions
+    domain/                Entities, clause/page/evidence rules, response schema
     application/           Ports, agents, and workflows
     infrastructure/        LLM, retrieval, documents, settings, observability
     interfaces/            HTTP API, CLI, and MCP servers
@@ -27,13 +31,22 @@ frontend/
   Dockerfile               Angular build and nginx runtime
   nginx.conf               Same-origin API proxy and SPA routing
 .agents/skills/            Repository skills
+skills-lock.json           Installed repository skill versions (keep at root)
+scripts/
+  ci/                      CI gates and local validation helpers
+  evaluation/              Developer retrieval comparisons
+  README.md                Tool usage and output locations
+docs/
+  reviews/                 Local review findings
+  superpowers/specs/       Superpowers design documents
+  superpowers/plans/       Superpowers implementation plans
 AGENTS.md                  Contribution rules
 ARCHITECTURE.md             Layer design
 docker-compose.yml         Local full-stack deployment
 Makefile                   Development shortcuts
 ```
 
-Historical learning notes and generated reports are kept separately. Agents, evaluation workflows, CLI commands, MCP servers, and tests remain part of the application. Supporting review and deployment notes under `docs/` are local files and are not versioned.
+Historical learning notes and generated reports are kept separately. Agents, evaluation workflows, CLI commands, MCP servers, and tests remain part of the application. Supporting review and deployment notes under `docs/` are local files and are not versioned. See [file placement rules](ARCHITECTURE.md#file-placement) before adding or moving files, and [repository tools](scripts/README.md) for validation commands.
 
 ## Run with Docker
 
@@ -41,18 +54,22 @@ Prerequisites: Docker with Compose. From the repository root:
 
 ```powershell
 Copy-Item backend/.env.example backend/.env  # First setup only; do not overwrite an existing file.
-# Edit backend/.env and configure GROQ_API_KEY.
-docker compose up -d --build
+# Edit backend/.env: configure GROQ_API_KEY and distinct random
+# LEGAL_RAG_API_KEY (reader) and LEGAL_RAG_ADMIN_API_KEY (administrator).
+docker compose --env-file backend/.env up -d --build
 # Populate the index on first setup, or after changing the corpus:
 docker compose exec backend python -m legal_rag.interfaces.cli ingest
 ```
 
 - Chat: http://localhost
 - API docs: http://localhost:8000/api/docs
-- Health: http://localhost:8000/api/health
+- Public liveness: http://localhost:8000/api/live
+- Detailed health: http://localhost:8000/api/health (reader or administrator key)
 - Metrics: http://localhost:8000/metrics
 
-Compose reads backend configuration from `backend/.env`. The root `.env` is not needed for application configuration. Model downloads can make the first retrieval request slow. The `backend/data` bind mount preserves documents and the vector index across container recreation.
+Compose reads backend configuration from `backend/.env`. Passing `--env-file backend/.env` also supplies the reader key to the frontend build. Browser configuration is public; the admin and Groq keys stay on the backend. The backend port is published only on `127.0.0.1`; nginx proxies browser API requests. Model downloads can make the first retrieval request slow. The `backend/data` bind mount preserves documents and the vector index across container recreation.
+
+HTTP startup fails unless reader and admin keys are nonempty and distinct. Send the appropriate key in `X-API-Key`: either role can read and query, while `/api/ingest` and `/api/upload` require the admin key. Query parameters do not authenticate requests. For local anonymous reads, explicitly set `LEGAL_RAG_DEVELOPMENT_MODE=true`; writes still require an admin key. CLI commands do not require HTTP credentials. `/api/live` reports only process liveness; detailed health requires reader access in production. Metrics and interactive API documentation remain public; restrict them at the deployment proxy for an external deployment. Shared keys do not provide per-user identity or tenant isolation.
 
 ## LLM configuration
 
@@ -67,7 +84,7 @@ Document answers require a working Groq model; provider failures return errors, 
 After changing backend configuration:
 
 ```powershell
-docker compose up -d --build backend
+docker compose --env-file backend/.env up -d --build backend
 docker compose restart frontend
 ```
 
@@ -80,6 +97,8 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install torch --index-url https://download.pytorch.org/whl/cpu
 .\.venv\Scripts\python.exe -m pip install -r backend/requirements-dev.txt
 Push-Location backend
+# Configure backend/.env credentials, or explicitly allow local anonymous reads:
+# $env:LEGAL_RAG_DEVELOPMENT_MODE = "true"
 ..\.venv\Scripts\python.exe -m uvicorn legal_rag.interfaces.http.app:app --reload --port 8000
 Pop-Location
 ```
@@ -89,11 +108,12 @@ In another terminal:
 ```powershell
 Push-Location frontend
 npm ci
+# For anonymous reads, explicitly enable backend development mode as above.
 npm start
 Pop-Location
 ```
 
-The Angular development server uses `/api` through its proxy to port 8000.
+The Angular development server uses `/api` through its proxy to port 8000. For authenticated local access, set `$env:LEGAL_RAG_API_KEY` to the reader key, run `node scripts/set-env.js` from `frontend/`, then run `npm start -- --configuration production` so Angular uses the generated environment.
 
 ## Validation
 
@@ -145,8 +165,9 @@ The API retains evidence for audit and integration use. The chat displays only `
 ## Deployment and maintenance
 
 - Read [architecture](ARCHITECTURE.md) and [contribution rules](AGENTS.md) before modifying the backend. Repository skills live under `.agents/skills/`.
-- Keep provider credentials on the backend. `LEGAL_RAG_API_KEY` is a shared API gate; it does not provide per-user identity or tenant isolation.
-- The Compose data mount preserves documents and indexes. Back up this data; ingestion upserts do not delete obsolete chunks.
+- GitHub Actions workflows live in `.github/workflows/`; local validation commands are documented in [scripts/README.md](scripts/README.md).
+- Keep provider credentials and `LEGAL_RAG_ADMIN_API_KEY` on the backend. Only the reader `LEGAL_RAG_API_KEY` may enter the public frontend build; rebuild the frontend after rotating it.
+- The Compose data mount preserves documents and indexes. Successful re-ingestion removes obsolete chunks for sources in that batch. Removing a file does not automatically revoke its indexed source. Chroma upsert and stale-chunk cleanup are separate operations; preserve backups and avoid concurrent index writers during replacement.
 - Health reports configuration, not model access or index readiness. Verify a known question and its sources after deployment.
 - For public deployment, use TLS and authentication, restrict administrative endpoints, and configure the frontend origin.
 

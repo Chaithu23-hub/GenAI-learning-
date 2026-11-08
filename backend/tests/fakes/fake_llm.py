@@ -1,4 +1,5 @@
 """Fake LLM client used by service tests."""
+
 from __future__ import annotations
 
 import json
@@ -60,9 +61,13 @@ class ContextLLMClient(FakeLLMClient):
             return {"content": '{"route":"documents","answer":""}', "tool_calls": []}
         chunks, _ = json.JSONDecoder().raw_decode(content.split(marker, 1)[1])
         payload = {
-            "answer": "The retrieved passages provide the contract terms." if chunks else self._out_of_scope_answer,
+            "answer": "The retrieved passages provide the contract terms."
+            if chunks
+            else self._out_of_scope_answer,
             "reasoning": "Test model response from supplied context.",
-            "sources": [{key: c[key] for key in ("document", "chunk_id", "excerpt")} for c in chunks],
+            "sources": [
+                {key: c[key] for key in ("document", "chunk_id", "excerpt")} for c in chunks
+            ],
             "confidence": "medium" if chunks else "low",
             "out_of_scope": not chunks,
         }

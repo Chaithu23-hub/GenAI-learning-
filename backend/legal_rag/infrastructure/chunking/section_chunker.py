@@ -4,6 +4,7 @@ Supports markdown, docx, and pdf documents. Splits by headings (markdown or text
 and numbered subclauses (e.g. 3.4 Late Payment) so that individual legal clauses
 are not buried in long mixed chunks, giving high semantic precision for retrieval.
 """
+
 from __future__ import annotations
 
 import re
@@ -34,11 +35,20 @@ def split_into_sections(text: str) -> list[tuple[str, str]]:
             raw_title = (match.group(1) or match.group(2)).strip()
             lines = []
             md_level = len(stripped) - len(stripped.lstrip("#"))
-            if md_level == 1:
+            if md_level == 1 or re.match(r"^Schedule\s+[A-Z0-9-]+\b", raw_title, re.IGNORECASE):
                 parent_title = raw_title
                 parent_intro = ""
                 heading = raw_title
-            elif md_level >= 2 and parent_title and not re.match(r"^(?:Section|Clause|Schedule)\b", raw_title, re.IGNORECASE):
+            elif (
+                parent_title
+                and (
+                    md_level >= 2
+                    or re.match(
+                        r"^(?:Part\s+\d+|Calendar\s+Year\s+\d+)\b", raw_title, re.IGNORECASE
+                    )
+                )
+                and not re.match(r"^(?:Section|Clause|Schedule)\b", raw_title, re.IGNORECASE)
+            ):
                 heading = f"{parent_title}: {raw_title}"
                 if parent_intro:
                     lines.append(parent_intro)
@@ -69,9 +79,15 @@ def chunk_document(text: str, chunk_size: int = 512, overlap: int = 50) -> list[
     chunks: list[Chunk] = []
 
     for heading, body in split_into_sections(text):
-        matches = list(re.finditer(r"(?m)^(?:\*\*)?(\d+\.\d+(?:\.\d+)?)\s*(?:\*\*)?\s*", body))
-        if len(matches) >= 2:
-            prefix = body[:matches[0].start()].strip()
+        matches = list(
+            re.finditer(
+                r"(?m)^[ \t]*(?:\*\*)?(\d+(?:\.\d+)+(?:\([a-zA-Z0-9]+\))*)"
+                r"(?![\d.\w(])\s*(?:\*\*)?\s*",
+                body,
+            )
+        )
+        if matches:
+            prefix = body[: matches[0].start()].strip()
             if prefix:
                 _emit_tokens(chunks, prefix, heading, chunk_size, overlap)
             for i, match in enumerate(matches):
@@ -80,11 +96,19 @@ def chunk_document(text: str, chunk_size: int = 512, overlap: int = 50) -> list[
                 end = matches[i + 1].start() if i + 1 < len(matches) else len(body)
                 c_text = body[start:end].strip()
                 title_m = re.match(
-                    r"^(?:\*\*)?" + re.escape(clause_num) + r"\s*(?:\*\*)?\s*([^.\n]+?)(?:\.|\*\*|\n)",
+                    r"^(?:\*\*)?"
+                    + re.escape(clause_num)
+                    + r"\s*(?:\*\*)?\s*([^.\n]+?)(?:\.|\*\*|\n)",
                     c_text,
                 )
-                title = title_m.group(1).strip() if title_m and len(title_m.group(1).strip()) < 50 else ""
-                c_heading = f"Section {clause_num} {title}".strip() if title else f"Section {clause_num}"
+                title = (
+                    title_m.group(1).strip()
+                    if title_m and len(title_m.group(1).strip()) < 50
+                    else ""
+                )
+                c_heading = (
+                    f"Section {clause_num} {title}".strip() if title else f"Section {clause_num}"
+                )
                 _emit_tokens(chunks, c_text, c_heading, chunk_size, overlap)
         else:
             _emit_tokens(chunks, body, heading, chunk_size, overlap)

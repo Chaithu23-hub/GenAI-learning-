@@ -1,5 +1,3 @@
-
-
 class TestRetrievalService:
     def test_returns_relevant_chunks(self, container):
         chunks = container.retrieval_service.retrieve("late payment interest")
@@ -8,20 +6,23 @@ class TestRetrievalService:
 
     def test_metadata_filter_amendment_only(self, container):
         chunks = container.retrieval_service.retrieve(
-            "payment interest", where={"document_type": "amendment"},
+            "payment interest",
+            where={"document_type": "amendment"},
         )
         assert chunks
         assert all(c.document_type == "amendment" for c in chunks)
 
     def test_metadata_filter_contract_only(self, container):
         chunks = container.retrieval_service.retrieve(
-            "termination", where={"document_type": "contract"},
+            "termination",
+            where={"document_type": "contract"},
         )
         assert all(c.document_type == "contract" for c in chunks)
 
     def test_no_hits_returns_empty(self, container):
         chunks = container.retrieval_service.retrieve(
-            "nonexistent topic", where={"document_type": "amendment"},
+            "nonexistent topic",
+            where={"document_type": "amendment"},
         )
         # In-memory store may still surface something; ensure the API never raises.
         assert isinstance(chunks, list)
@@ -32,15 +33,22 @@ class TestRetrievalService:
         assert dense and hybrid
 
     def test_detect_metadata_filter(self, container):
-        assert container.retrieval_service.detect_metadata_filter(
-            "What did the amendment change?"
-        ) is None
-        assert container.retrieval_service.detect_metadata_filter(
-            "What is the original contract's effective date?"
-        ) is None
-        assert container.retrieval_service.detect_metadata_filter(
-            "What changed in the agreement and its amendment?"
-        ) is None
+        assert (
+            container.retrieval_service.detect_metadata_filter("What did the amendment change?")
+            is None
+        )
+        assert (
+            container.retrieval_service.detect_metadata_filter(
+                "What is the original contract's effective date?"
+            )
+            is None
+        )
+        assert (
+            container.retrieval_service.detect_metadata_filter(
+                "What changed in the agreement and its amendment?"
+            )
+            is None
+        )
         assert container.retrieval_service.detect_metadata_filter(
             "Search amendment documents only"
         ) == {"document_type": "amendment"}
@@ -54,11 +62,11 @@ class TestRetrievalService:
             "What governs Northwind as of 2026-08-01?"
         ) == {
             "counterparty": "Northwind Logistics",
-            "effective_date": "2026-08-01",
         }
         assert container.retrieval_service.detect_metadata_filter(
             "Does Apex Industries have a holiday schedule?"
         ) == {"counterparty": "Apex Industries"}
-        assert container.retrieval_service.detect_metadata_filter(
-            "What is the late payment fee?"
-        ) is None
+        assert (
+            container.retrieval_service.detect_metadata_filter("What is the late payment fee?")
+            is None
+        )

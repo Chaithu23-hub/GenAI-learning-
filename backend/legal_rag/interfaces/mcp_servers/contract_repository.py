@@ -1,55 +1,51 @@
 """MCP server: contract repository lookup."""
+
 from __future__ import annotations
 
 from mcp.server.fastmcp import FastMCP
 
-mcp = FastMCP("contract-repository")
+from legal_rag.application.workflows.corpus_lookup import CorpusLookupService
 
-_CONTRACTS: dict[str, dict] = {
-    "MSA-2021-0142": {
-        "contract_id": "MSA-2021-0142",
-        "effective_date": "2021-01-14",
-        "amendments": [
-            {"id": "AM-2023-02", "effective_date": "2023-06-01", "status": "executed"},
-        ],
-        "clauses": {
-            str(n): f"MSA-2021-0142 clause {n} is present in the executed agreement."
-            for n in range(1, 12)
-        },
-    }
-}
+mcp = FastMCP("contract-repository")
+_lookup: CorpusLookupService | None = None
+
+
+def configure(lookup: CorpusLookupService) -> None:
+    """Install the service supplied by the MCP interface's startup Container."""
+    global _lookup
+    _lookup = lookup
 
 
 @mcp.tool()
 def lookup_contract(contract_id: str) -> dict:
-    """Look up one contract by its repository id; returns effective date and amendments."""
-    contract = _CONTRACTS.get(contract_id)
-    if not contract:
-        return {"error": f"Contract {contract_id} was not found; check the identifier."}
-    return {
-        "contract_id": contract["contract_id"],
-        "effective_date": contract["effective_date"],
-        "amendments": contract["amendments"],
-    }
+    """Look up a source-backed contract record and metadata."""
+    return (
+        _lookup.lookup_contract(contract_id) if _lookup else {"error": "corpus_lookup_unavailable"}
+    )
 
 
 @mcp.tool()
 def get_effective_date(contract_id: str) -> dict:
-    """Return the executed effective date for one contract identifier."""
-    contract = _CONTRACTS.get(contract_id)
-    if not contract:
-        return {"error": f"No effective date exists for {contract_id}; verify the identifier."}
-    return {"contract_id": contract_id, "effective_date": contract["effective_date"]}
+    """Return only the effective date metadata present in the current corpus."""
+    return (
+        _lookup.get_effective_date(contract_id)
+        if _lookup
+        else {"error": "corpus_lookup_unavailable"}
+    )
 
 
 @mcp.tool()
 def get_amendment_chain(contract_id: str) -> dict:
-    """Return the executed amendment chain for one contract identifier."""
-    contract = _CONTRACTS.get(contract_id)
-    if not contract:
-        return {"error": f"No amendment chain exists for {contract_id}; verify the identifier."}
-    return {"contract_id": contract_id, "amendments": contract["amendments"]}
+    """Return documents explicitly linked to this contract by source metadata."""
+    return (
+        _lookup.get_amendment_chain(contract_id)
+        if _lookup
+        else {"error": "corpus_lookup_unavailable"}
+    )
 
 
 if __name__ == "__main__":
+    from legal_rag.composition import Container
+
+    configure(Container().corpus_lookup_service)
     mcp.run()

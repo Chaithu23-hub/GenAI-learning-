@@ -1,4 +1,5 @@
 """Multi-format loader for the programme's shared legal corpus."""
+
 from __future__ import annotations
 
 import re
@@ -8,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from legal_rag.domain.entities import Document
-from legal_rag.infrastructure.errors import DocumentSourceError
+from legal_rag.infrastructure.errors import DocumentConflictError, DocumentSourceError
 
 SUPPORTED_SUFFIXES = frozenset({".md", ".markdown", ".docx", ".pdf"})
 _COUNTERPARTIES = {
@@ -23,9 +24,16 @@ _DOC_TYPES = (
     (r"master\s+services\s+agreement", "master_agreement"),
 )
 _HEADER_LABELS = (
-    r"Agreement No\.", r"Amendment No\.", r"Document No\.", r"Amends",
-    r"Forms part of", r"Counterparty", r"Provider", r"Effective Date",
-    r"Document Version", r"Status",
+    r"Agreement No\.",
+    r"Amendment No\.",
+    r"Document No\.",
+    r"Amends",
+    r"Forms part of",
+    r"Counterparty",
+    r"Provider",
+    r"Effective Date",
+    r"Document Version",
+    r"Status",
 )
 _STOP_LABELS = "|".join(_HEADER_LABELS)
 _ID_PATTERN = re.compile(r"\b([A-Z]{2,4}-\d{4}-\d{3}(?:-\d{2})?)\b")
@@ -40,9 +48,7 @@ class LoadedDocument:
     pages: tuple[str, ...] = ()
 
     def to_entity(self) -> Document:
-        document_type = (
-            "amendment" if self.metadata["doc_type"] == "amendment" else "contract"
-        )
+        document_type = "amendment" if self.metadata["doc_type"] == "amendment" else "contract"
         return Document(
             name=self.metadata["source_doc"],
             text=self.text,
@@ -73,11 +79,17 @@ def _read_markdown(path: Path) -> tuple[str, int]:
 
     def is_separator(line: str) -> bool:
         stripped = line.strip()
-        return bool(stripped) and set(stripped) <= set("|-: ") and "-" in stripped and "|" in stripped
+        return (
+            bool(stripped) and set(stripped) <= set("|-: ") and "-" in stripped and "|" in stripped
+        )
 
     while index < len(lines):
         line = lines[index]
-        if line.strip().startswith("|") and index + 1 < len(lines) and is_separator(lines[index + 1]):
+        if (
+            line.strip().startswith("|")
+            and index + 1 < len(lines)
+            and is_separator(lines[index + 1])
+        ):
             header = [cell.strip() for cell in line.strip().strip("|").split("|")]
             index += 2
             rows: list[list[str]] = []
@@ -140,7 +152,8 @@ def _read_pdf(path: Path) -> tuple[str, int, tuple[str, ...]]:
             for table in tables:
                 rows = [
                     [cell.strip().replace("\n", " ") if cell else "" for cell in row]
-                    for row in table if row
+                    for row in table
+                    if row
                 ]
                 if len(rows) >= 2:
                     page_parts.append(_flatten_table(rows[0], rows[1:]))
@@ -197,7 +210,9 @@ def _extract_metadata(text: str, path: Path) -> dict[str, Any]:
     if date_match:
         for date_format in ("%d %B %Y", "%d %b %Y", "%Y-%m-%d"):
             try:
-                effective_date = datetime.strptime(date_match.group(1), date_format).strftime("%Y-%m-%d")
+                effective_date = datetime.strptime(date_match.group(1), date_format).strftime(
+                    "%Y-%m-%d"
+                )
                 break
             except ValueError:
                 continue
@@ -265,8 +280,7 @@ class SharedCorpusDocumentSource:
         if not source_dir.exists():
             raise DocumentSourceError(f"docs directory not found: {source_dir}")
         paths = sorted(
-            path for path in source_dir.iterdir()
-            if path.suffix.lower() in SUPPORTED_SUFFIXES
+            path for path in source_dir.iterdir() if path.suffix.lower() in SUPPORTED_SUFFIXES
         )
         if not paths:
             raise DocumentSourceError(f"no supported documents found in {source_dir}")
@@ -279,7 +293,16 @@ class SharedCorpusDocumentSource:
         yield from documents
 
     def write_document(self, name: str, text: str) -> Path:
+        if Path(name).name != name:
+            raise DocumentSourceError("document name must be a filename")
         self._docs_dir.mkdir(parents=True, exist_ok=True)
         target = self._docs_dir / name
-        target.write_text(text, encoding="utf-8")
+        try:
+            # Exclusive creation prevents uploaded names from replacing trusted corpus files.
+            with target.open("x", encoding="utf-8") as stream:
+                stream.write(text)
+        except FileExistsError as exc:
+            raise DocumentConflictError("A document with this filename already exists.") from exc
+        except OSError as exc:
+            raise DocumentSourceError("Unable to write uploaded document.") from exc
         return target

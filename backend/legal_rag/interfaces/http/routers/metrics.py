@@ -1,4 +1,5 @@
 """GET /metrics — Prometheus text format. Unauthenticated by design (scraper)."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Response

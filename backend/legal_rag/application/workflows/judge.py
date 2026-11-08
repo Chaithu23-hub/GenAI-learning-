@@ -1,4 +1,5 @@
 """LLM judge + deterministic assertions + label management."""
+
 from __future__ import annotations
 
 import json
@@ -67,9 +68,7 @@ def notice_periods_are_numeric(answer: dict[str, Any]) -> bool:
     return bool(_NOTICE_PERIOD.search(text))
 
 
-def run_assertions(
-    answer: dict[str, Any], retrieved_sources: list[Any]
-) -> dict[str, bool]:
+def run_assertions(answer: dict[str, Any], retrieved_sources: list[Any]) -> dict[str, bool]:
     return {
         "clause_references_exist": clause_references_exist(answer, retrieved_sources),
         "effective_dates_parseable": effective_dates_are_parseable(answer),
@@ -84,7 +83,44 @@ JUDGED_CRITERION_COUNT = 1
 # ─── Race judge (offline) ─────────────────────────────────────────────────
 
 _STOPWORDS = frozenset(
-    ["what", "which", "does", "that", "this", "with", "from", "have", "there", "their", "about", "under", "between", "when", "where", "into", "your", "they", "them", "were", "been", "being", "after", "before", "only", "also", "than", "then", "amendment", "amendments", "agreement", "contract", "document", "documents", "section", "clause"]
+    [
+        "what",
+        "which",
+        "does",
+        "that",
+        "this",
+        "with",
+        "from",
+        "have",
+        "there",
+        "their",
+        "about",
+        "under",
+        "between",
+        "when",
+        "where",
+        "into",
+        "your",
+        "they",
+        "them",
+        "were",
+        "been",
+        "being",
+        "after",
+        "before",
+        "only",
+        "also",
+        "than",
+        "then",
+        "amendment",
+        "amendments",
+        "agreement",
+        "contract",
+        "document",
+        "documents",
+        "section",
+        "clause",
+    ]
 )
 
 
@@ -121,9 +157,7 @@ class JudgeService:
     # ── Race judge (offline, deterministic) ───────────────────────────
     def judge_answer(self, question: str, answer: dict[str, Any]) -> dict[str, Any]:
         checks = run_assertions(answer, [])
-        checks["answered"] = (
-            not answer.get("out_of_scope", False) and bool(answer.get("sources"))
-        )
+        checks["answered"] = not answer.get("out_of_scope", False) and bool(answer.get("sources"))
         checks["sources_verified"] = checks["answered"] and self._verify_all_sources(answer)
         checks["on_topic"] = bool(
             _content_words(question) & _content_words(answer.get("answer", ""))
@@ -149,28 +183,36 @@ class JudgeService:
     ) -> dict[str, Any]:
         if self._llm is None:
             raise RuntimeError("LLM client not configured for judge")
-        sources_text = "\n".join([
-            f"- Doc: {getattr(c, 'document', '?')}, Chunk: {getattr(c, 'chunk_id', '?')}"
-            f"\n  Text: {getattr(c, 'text', '')[:300]}..."
-            for c in retrieved_sources[:5]
-        ])
+        sources_text = "\n".join(
+            [
+                f"- Doc: {getattr(c, 'document', '?')}, Chunk: {getattr(c, 'chunk_id', '?')}"
+                f"\n  Text: {getattr(c, 'text', '')[:300]}..."
+                for c in retrieved_sources[:5]
+            ]
+        )
         user_message = JUDGE_USER_TEMPLATE.format(
-            question=question, sources=sources_text,
+            question=question,
+            sources=sources_text,
             answer=answer_dict.get("answer", ""),
             reasoning=answer_dict.get("reasoning", ""),
             confidence=answer_dict.get("confidence", "medium"),
             out_of_scope=answer_dict.get("out_of_scope", False),
         )
-        response = self._llm.chat(messages=[
-            {"role": "system", "content": JUDGE_SYSTEM_PROMPT},
-            {"role": "user", "content": user_message},
-        ])
+        response = self._llm.chat(
+            messages=[
+                {"role": "system", "content": JUDGE_SYSTEM_PROMPT},
+                {"role": "user", "content": user_message},
+            ]
+        )
         return json.loads((response["content"] or "").strip())
 
     # ── Score by problem category (Week 5 target) ─────────────────────
     @staticmethod
     def score_answer_on_problem_type(
-        answer_dict: dict[str, Any], problem_category: str, *, out_of_scope_sentinel: str = "",
+        answer_dict: dict[str, Any],
+        problem_category: str,
+        *,
+        out_of_scope_sentinel: str = "",
     ) -> dict[str, Any]:
         score = 0
         if problem_category == "shallow_answer":
@@ -185,8 +227,10 @@ class JudgeService:
         elif problem_category == "hallucination":
             if answer_dict.get("sources") and not answer_dict.get("out_of_scope"):
                 score = 8
-            elif (answer_dict.get("out_of_scope")
-                  and answer_dict.get("answer") == out_of_scope_sentinel):
+            elif (
+                answer_dict.get("out_of_scope")
+                and answer_dict.get("answer") == out_of_scope_sentinel
+            ):
                 score = 9
             else:
                 score = 2
@@ -263,9 +307,15 @@ class JudgeService:
                 "Correct: cases 10 and 21 were the two v1 disagreements and both were corrected."
             ),
             "disagreements": [
-                {"case_id": 10, "human_was_right": True,
-                 "reason": "A term mention without an explanation is not useful."},
-                {"case_id": 21, "human_was_right": True,
-                 "reason": "Naming amendments without their distinct effects is incomplete."},
+                {
+                    "case_id": 10,
+                    "human_was_right": True,
+                    "reason": "A term mention without an explanation is not useful.",
+                },
+                {
+                    "case_id": 21,
+                    "human_was_right": True,
+                    "reason": "Naming amendments without their distinct effects is incomplete.",
+                },
             ],
         }

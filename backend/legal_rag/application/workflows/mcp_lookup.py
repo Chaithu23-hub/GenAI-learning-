@@ -1,4 +1,5 @@
 """MCP discovery + tool call service (thin wrapper over the host adapter)."""
+
 from __future__ import annotations
 
 from pathlib import Path

@@ -1,4 +1,5 @@
 """In-memory VectorStore fake — deterministic, no I/O."""
+
 from __future__ import annotations
 
 import math
@@ -26,9 +27,7 @@ class InMemoryVectorStore:
         self._metadatas: list[dict[str, Any]] = []
         self._embeddings: list[list[float]] = []
 
-    def upsert(
-        self, indexed: Iterable[IndexedChunk], embeddings: list[list[float]]
-    ) -> None:
+    def upsert(self, indexed: Iterable[IndexedChunk], embeddings: list[list[float]]) -> None:
         indexed_list = list(indexed)
         assert len(indexed_list) == len(embeddings)
         for chunk, emb in zip(indexed_list, embeddings, strict=False):
@@ -46,22 +45,33 @@ class InMemoryVectorStore:
                 continue
             self._ids.append(chunk.id)
             self._documents.append(chunk.text)
-            self._metadatas.append({
-                "document": chunk.document,
-                "document_type": chunk.document_type,
-                "heading": chunk.heading,
-                "chunk_index": chunk.chunk_index,
-                **chunk.metadata,
-            })
+            self._metadatas.append(
+                {
+                    "document": chunk.document,
+                    "document_type": chunk.document_type,
+                    "heading": chunk.heading,
+                    "chunk_index": chunk.chunk_index,
+                    **chunk.metadata,
+                }
+            )
             self._embeddings.append(list(emb))
 
     def _filtered_indexes(self, where: dict[str, Any] | None) -> list[int]:
         if not where:
             return list(range(len(self._ids)))
         return [
-            i for i, meta in enumerate(self._metadatas)
+            i
+            for i, meta in enumerate(self._metadatas)
             if all(meta.get(k) == v for k, v in where.items())
         ]
+
+    def delete_chunks(self, ids: list[str]) -> None:
+        removed = set(ids)
+        keep = [index for index, identifier in enumerate(self._ids) if identifier not in removed]
+        self._ids = [self._ids[index] for index in keep]
+        self._documents = [self._documents[index] for index in keep]
+        self._metadatas = [self._metadatas[index] for index in keep]
+        self._embeddings = [self._embeddings[index] for index in keep]
 
     def dense_search(
         self, query_embedding: list[float], *, k: int, where: dict[str, Any] | None = None
@@ -92,8 +102,7 @@ class InMemoryVectorStore:
                 scored.append((score, i))
         scored.sort(reverse=True)
         return [
-            {"id": self._ids[i], "document": self._documents[i],
-             "metadata": self._metadatas[i]}
+            {"id": self._ids[i], "document": self._documents[i], "metadata": self._metadatas[i]}
             for _, i in scored[:k]
         ]
 

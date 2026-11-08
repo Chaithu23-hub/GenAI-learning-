@@ -1,5 +1,6 @@
 """Fixed answer schema. Field changes require coordinated updates to
 interfaces/http/schemas.AnswerResponse, domain/entities.Answer, and README."""
+
 from __future__ import annotations
 
 import json
@@ -68,5 +69,5 @@ def parse_json_response(text: str | None) -> dict[str, Any]:
         return json.loads(match.group(1))
     start, end = text.find("{"), text.rfind("}")
     if start != -1 and end > start:
-        return json.loads(text[start:end + 1])
+        return json.loads(text[start : end + 1])
     raise ValueError("No JSON object found in response")

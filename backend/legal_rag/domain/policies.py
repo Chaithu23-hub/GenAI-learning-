@@ -1,4 +1,5 @@
 """Domain policies — stateless business-rule functions."""
+
 from __future__ import annotations
 
 import re
@@ -70,7 +71,7 @@ def is_greeting(query: str) -> bool:
         match = _GREETING_RE.match(remaining)
         if not match:
             return False
-        remaining = remaining[match.end():].strip()
+        remaining = remaining[match.end() :].strip()
     return True
 
 
@@ -164,13 +165,14 @@ QUOTATION_RE = re.compile(r'"([^"]+)"|“([^”]+)”')
 
 def normalize_legal_numbers(text: str) -> str:
     """Render legal duration notation as plain numbers outside exact quotations."""
+
     def repl(m: re.Match) -> str:
         return f"{m.group(2)} {m.group(3)}"
 
     parts: list[str] = []
     end = 0
     for quotation in QUOTATION_RE.finditer(text):
-        parts.append(_LEGAL_NUM_RE.sub(repl, text[end:quotation.start()]))
+        parts.append(_LEGAL_NUM_RE.sub(repl, text[end : quotation.start()]))
         parts.append(quotation.group())
         end = quotation.end()
     parts.append(_LEGAL_NUM_RE.sub(repl, text[end:]))
@@ -242,7 +244,8 @@ def compare_injection_defense() -> tuple[dict[str, Any], dict[str, Any]]:
         for sample, clean in zip(samples, sanitized, strict=False)
     )
     before = {
-        "blocked": 0, "blocked_rate": 0.0,
+        "blocked": 0,
+        "blocked_rate": 0.0,
         "reason": "No document sanitization or injection check",
         "samples": len(samples),
     }

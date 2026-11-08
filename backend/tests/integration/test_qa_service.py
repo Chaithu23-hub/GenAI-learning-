@@ -24,6 +24,7 @@ class TestQaService:
 
     def test_document_type_filter_is_respected(self, container):
         result = container.qa_service.inspect(
-            "late payment", document_type="amendment",
+            "late payment",
+            document_type="amendment",
         )
         assert all(c.document_type == "amendment" for c in result["retrieved"])

@@ -2,6 +2,7 @@
 
 Handles both dense (embedding) and local BM25-style lexical retrieval.
 """
+
 from __future__ import annotations
 
 import math
@@ -30,6 +31,9 @@ class ChromaVectorStore:
         self._client = None
         self._collection = None
         self._lock = Lock()
+        self._statistics_lock = Lock()
+        self._statistics_documents: tuple[str, ...] | None = None
+        self._statistics = None
 
     @staticmethod
     def _where_filter(where: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -47,13 +51,21 @@ class ChromaVectorStore:
             if self._collection is None:
                 try:
                     import chromadb
+                    from chromadb.config import Settings
                 except ImportError as exc:  # pragma: no cover
                     raise VectorStoreError("chromadb not installed") from exc
                 self._chroma_dir.mkdir(parents=True, exist_ok=True)
-                self._client = chromadb.PersistentClient(path=str(self._chroma_dir))
+                # This adapter supports trusted local indexes only, never a Chroma server.
+                settings = Settings(
+                    chroma_api_impl="chromadb.api.rust.RustBindingsAPI", _env_file=None
+                )
+                self._client = chromadb.PersistentClient(
+                    path=str(self._chroma_dir), settings=settings
+                )
                 self._collection = self._client.get_or_create_collection(
                     name=self._collection_name,
                     metadata={"hnsw:space": "cosine"},
+                    embedding_function=None,
                 )
         return self._collection
 
@@ -85,6 +97,14 @@ class ChromaVectorStore:
         log.info("upserted chunks", extra={"count": len(indexed_list)})
 
     # ── reads ───────────────────────────────────────────────────────────
+    def delete_chunks(self, ids: list[str]) -> None:
+        if not ids:
+            return
+        try:
+            self._get_collection().delete(ids=ids)
+        except Exception as exc:
+            raise VectorStoreError(f"delete_chunks failed: {exc}") from exc
+
     def dense_search(
         self, query_embedding: list[float], *, k: int, where: dict[str, Any] | None = None
     ) -> dict[str, Any]:
@@ -104,7 +124,8 @@ class ChromaVectorStore:
         collection = self._get_collection()
         try:
             stored = collection.get(
-                include=["documents", "metadatas"], where=self._where_filter(where),
+                include=["documents", "metadatas"],
+                where=self._where_filter(where),
             )
         except Exception as exc:  # noqa: BLE001
             raise VectorStoreError(f"keyword_search failed: {exc}") from exc
@@ -116,20 +137,9 @@ class ChromaVectorStore:
         if not query_terms:
             return []
 
-        term_frequency: list[dict[str, int]] = []
-        document_frequency: dict[str, int] = {}
-        lengths: list[int] = []
-        for document in documents:
-            terms = _TOKEN_RE.findall(document.lower())
-            lengths.append(len(terms))
-            freqs: dict[str, int] = {}
-            for term in terms:
-                freqs[term] = freqs.get(term, 0) + 1
-            term_frequency.append(freqs)
-            for term in set(terms):
-                document_frequency[term] = document_frequency.get(term, 0) + 1
-
-        average_length = sum(lengths) / len(lengths) or 1
+        term_frequency, document_frequency, lengths, average_length = self._statistics_for(
+            documents
+        )
         scored: list[tuple[float, int]] = []
         for index, freqs in enumerate(term_frequency):
             score = 0.0
@@ -138,7 +148,8 @@ class ChromaVectorStore:
                 if not frequency:
                     continue
                 idf = math.log(
-                    1 + (len(documents) - document_frequency[term] + 0.5)
+                    1
+                    + (len(documents) - document_frequency[term] + 0.5)
                     / (document_frequency[term] + 0.5)
                 )
                 normalization = frequency + 1.5 * (0.25 + 0.75 * lengths[index] / average_length)
@@ -155,11 +166,40 @@ class ChromaVectorStore:
             for _, index in scored[:k]
         ]
 
+    def _statistics_for(self, documents: list[str]):
+        # Read current collection rows on every query, including external edits.
+        # Reuse only statistics of the exact observed text snapshot; retaining a
+        # single snapshot bounds cache growth across arbitrary metadata filters.
+        snapshot = tuple(documents)
+        with self._statistics_lock:
+            if self._statistics_documents == snapshot:
+                return self._statistics
+            term_frequency: list[dict[str, int]] = []
+            document_frequency: dict[str, int] = {}
+            lengths: list[int] = []
+            for document in documents:
+                terms = _TOKEN_RE.findall(document.lower())
+                lengths.append(len(terms))
+                freqs: dict[str, int] = {}
+                for term in terms:
+                    freqs[term] = freqs.get(term, 0) + 1
+                term_frequency.append(freqs)
+                for term in freqs:
+                    document_frequency[term] = document_frequency.get(term, 0) + 1
+            self._statistics = (
+                term_frequency,
+                document_frequency,
+                lengths,
+                sum(lengths) / len(lengths) or 1,
+            )
+            self._statistics_documents = snapshot
+            return self._statistics
+
     def get_document_text(self, chunk_id: str) -> str | None:
         try:
             result = self._get_collection().get(ids=[chunk_id], include=["documents"])
-        except Exception:  # noqa: BLE001
-            return None
+        except Exception as exc:  # noqa: BLE001
+            raise VectorStoreError(f"get_document_text failed: {exc}") from exc
         if not result.get("ids"):
             return None
         docs = result.get("documents", [])
@@ -168,7 +208,8 @@ class ChromaVectorStore:
     def get_all(self, *, where: dict[str, Any] | None = None) -> dict[str, list[Any]]:
         try:
             return self._get_collection().get(
-                include=["documents", "metadatas"], where=self._where_filter(where),
+                include=["documents", "metadatas"],
+                where=self._where_filter(where),
             )
         except Exception as exc:  # noqa: BLE001
             raise VectorStoreError(f"get_all failed: {exc}") from exc

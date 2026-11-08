@@ -1,4 +1,5 @@
 """Pydantic HTTP DTOs (transport layer)."""
+
 from __future__ import annotations
 
 from typing import Any, Literal
@@ -21,10 +22,12 @@ class AnswerResponse(BaseModel):
 
 
 class AskRequest(BaseModel):
-    question: str = Field(..., min_length=1, max_length=2000,
-                          description="The legal question to answer.")
+    question: str = Field(
+        ..., min_length=1, max_length=2000, description="The legal question to answer."
+    )
     document_type: Literal["contract", "amendment"] | None = Field(
-        None, description="Restrict retrieval to a specific document type.",
+        None,
+        description="Restrict retrieval to a specific document type.",
     )
 
 
@@ -52,7 +55,8 @@ class IngestResponse(BaseModel):
 class AgentRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=2000)
     strategy: Literal["agent", "fixed", "compare"] = Field(
-        "compare", description="Which strategy to run.",
+        "compare",
+        description="Which strategy to run.",
     )
     runs: int = Field(3, ge=1, le=10)
 

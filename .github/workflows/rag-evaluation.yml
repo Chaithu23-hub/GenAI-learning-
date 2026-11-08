@@ -1,0 +1,62 @@
+name: RAG evaluation
+
+on:
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "backend/legal_rag/**"
+      - "backend/tests/**"
+      - "backend/requirements*.txt"
+      - "scripts/ci/**"
+      - ".github/actions/**"
+      - ".github/requirements-ci.txt"
+      - ".github/workflows/rag-evaluation.yml"
+  push:
+    branches: [main, master]
+    paths:
+      - "backend/legal_rag/**"
+      - "backend/tests/**"
+      - "backend/requirements*.txt"
+      - "scripts/ci/**"
+      - ".github/actions/**"
+      - ".github/requirements-ci.txt"
+      - ".github/workflows/rag-evaluation.yml"
+  workflow_dispatch:
+    inputs:
+      real_models:
+        description: Run local embedding and reranking models on the synthetic fixtures
+        required: false
+        type: boolean
+        default: false
+  schedule:
+    - cron: "43 6 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rag-evaluation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  evaluate:
+    name: rag-evaluation
+    if: inputs.real_models != true || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-backend
+        with:
+          install-runtime: "true"
+      - name: Evaluate synthetic corpus
+        env:
+          REAL_MODELS: ${{ inputs.real_models || false }}
+        run: |
+          if [ "$REAL_MODELS" = true ]; then
+            python scripts/ci/evaluate_rag.py --real-models
+          else
+            python scripts/ci/evaluate_rag.py
+          fi

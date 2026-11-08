@@ -1,4 +1,5 @@
 """LLM answer generation with evidence validation and explicit failures."""
+
 from __future__ import annotations
 
 import json
@@ -11,8 +12,14 @@ from legal_rag.application.ports import LLMClient, VectorStore
 from legal_rag.application.workflows.retrieval import RetrievalService
 from legal_rag.domain.clauses import DOCUMENT_ID_RE, clause_excerpt, parse_clause_request
 from legal_rag.domain.entities import RetrievedChunk
+from legal_rag.domain.evidence import reference_association_errors
 from legal_rag.domain.exceptions import SchemaValidationError
-from legal_rag.domain.policies import QUOTATION_RE, apply_completeness_adjustment
+from legal_rag.domain.pages import page_references_supported
+from legal_rag.domain.policies import (
+    QUOTATION_RE,
+    apply_completeness_adjustment,
+    detect_prompt_injection,
+)
 from legal_rag.domain.response_schema import parse_json_response, validate_response
 from legal_rag.infrastructure.observability.logging import get_logger
 from legal_rag.infrastructure.prompts import RETRIEVE_TOOL
@@ -24,9 +31,7 @@ SYSTEM_PROMPT = get_prompt("qa.system").text
 
 
 def _clause_refs(text: str) -> list[str]:
-    return sorted(set(re.findall(
-        r"\bsections?\s+(\d+(?:\.\d+)*)", text, re.IGNORECASE
-    )))
+    return sorted(set(re.findall(r"\bsections?\s+(\d+(?:\.\d+)*)", text, re.IGNORECASE)))
 
 
 @dataclass
@@ -49,14 +54,39 @@ class Generator(Protocol):
 
 def chunks_payload(chunks: list[RetrievedChunk]) -> list[dict[str, Any]]:
     return [
-        {"chunk_id": c.chunk_id, "document": c.document, "heading": c.heading,
-         "excerpt": c.text[:600], "metadata": {
-             key: c.metadata[key] for key in (
-                 "source_doc", "document_name", "clause_ref", "page_number",
-                 "document_version", "amends", "effective_date", "status",
-             ) if c.metadata.get(key) is not None
-         }}
+        {
+            "chunk_id": c.chunk_id,
+            "document": c.document,
+            "heading": c.heading,
+            "excerpt": c.text,
+            "metadata": {
+                key: c.metadata[key]
+                for key in (
+                    "source_doc",
+                    "document_name",
+                    "clause_ref",
+                    "page_number",
+                    "document_version",
+                    "amends",
+                    "effective_date",
+                    "status",
+                )
+                if c.metadata.get(key) is not None
+            },
+        }
         for c in chunks
+    ]
+
+
+def _safe_chunks(chunks: list[RetrievedChunk]) -> list[RetrievedChunk]:
+    # Do not rewrite legal passages: exclude detected instruction-bearing
+    # evidence at the shared boundary for both initial and tool retrieval.
+    return [
+        chunk
+        for chunk in chunks
+        if not detect_prompt_injection(
+            f"{chunk.heading}\n{chunk.text}\n{json.dumps(chunk.metadata)}"
+        )
     ]
 
 
@@ -105,7 +135,10 @@ class LLMGenerator:
         return self._generate_llm(query, where=where, chunks=chunks)
 
     def _generate_llm(
-        self, query: str, *, where: dict[str, Any] | None,
+        self,
+        query: str,
+        *,
+        where: dict[str, Any] | None,
         chunks: list[RetrievedChunk] | None = None,
     ) -> dict[str, Any]:
         started_at = time.perf_counter()
@@ -113,16 +146,21 @@ class LLMGenerator:
 
         def retrieve(query_text: str, query_where: dict[str, Any] | None):
             span_started = time.perf_counter()
-            hits = [c for c in self._retrieval.retrieve(query_text, where=query_where)
-                    if c.score >= self._settings.min_relevant_score]
-            spans.append({
-                "name": "retrieval",
-                "latency_ms": round((time.perf_counter() - span_started) * 1000, 3),
-                "input_tokens": None,
-                "output_tokens": None,
-                "cost_usd": None,
-            })
-            return hits
+            hits = [
+                c
+                for c in self._retrieval.retrieve(query_text, where=query_where)
+                if c.score >= self._settings.min_relevant_score
+            ]
+            spans.append(
+                {
+                    "name": "retrieval",
+                    "latency_ms": round((time.perf_counter() - span_started) * 1000, 3),
+                    "input_tokens": None,
+                    "output_tokens": None,
+                    "cost_usd": None,
+                }
+            )
+            return _safe_chunks(hits)
 
         def chat(messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None = None):
             span_started = time.perf_counter()
@@ -133,34 +171,47 @@ class LLMGenerator:
                     temperature=self._settings.llm_temperature,
                 )
             except Exception as exc:
-                spans.append({
-                    "name": "generation",
-                    "latency_ms": round((time.perf_counter() - span_started) * 1000, 3),
-                    "input_tokens": None,
-                    "output_tokens": None,
-                    "cost_usd": None,
-                    "error_type": type(exc).__name__,
-                })
+                spans.append(
+                    {
+                        "name": "generation",
+                        "latency_ms": round((time.perf_counter() - span_started) * 1000, 3),
+                        "input_tokens": None,
+                        "output_tokens": None,
+                        "cost_usd": None,
+                        "error_type": type(exc).__name__,
+                    }
+                )
                 raise
             usage = response.get("usage", {})
-            spans.append({
-                "name": "generation",
-                "latency_ms": round((time.perf_counter() - span_started) * 1000, 3),
-                "input_tokens": usage.get("prompt_tokens"),
-                "output_tokens": usage.get("completion_tokens"),
-                "cost_usd": None,
-                "candidate_clause_refs": _clause_refs(response.get("content") or ""),
-            })
+            spans.append(
+                {
+                    "name": "generation",
+                    "latency_ms": round((time.perf_counter() - span_started) * 1000, 3),
+                    "input_tokens": usage.get("prompt_tokens"),
+                    "output_tokens": usage.get("completion_tokens"),
+                    "cost_usd": None,
+                    "candidate_clause_refs": _clause_refs(response.get("content") or ""),
+                }
+            )
             return response
 
         available_chunks: dict[str, RetrievedChunk] = {}
         try:
             # Supplied chunks must remain inside the request scope too.
-            initial_hits = retrieve(query, where) if chunks is None else [
-                c for c in chunks if c.score >= self._settings.min_relevant_score
-                and all(c.metadata.get(key, getattr(c, key, None)) == value
-                        for key, value in (where or {}).items())
-            ]
+            initial_hits = (
+                retrieve(query, where)
+                if chunks is None
+                else [
+                    c
+                    for c in chunks
+                    if c.score >= self._settings.min_relevant_score
+                    and all(
+                        c.metadata.get(key, getattr(c, key, None)) == value
+                        for key, value in (where or {}).items()
+                    )
+                ]
+            )
+            initial_hits = _safe_chunks(initial_hits)
             available_chunks = {chunk.chunk_id: chunk for chunk in initial_hits}
             context = json.dumps(chunks_payload(initial_hits), indent=2)
             user_content = (
@@ -179,29 +230,42 @@ class LLMGenerator:
                 message = response
                 if not response.get("tool_calls"):
                     break
-                messages.append({
-                    "role": "assistant",
-                    "content": response["content"],
-                    "tool_calls": [
-                        {"id": c["id"], "type": "function",
-                         "function": {"name": c["name"], "arguments": c["arguments"]}}
-                        for c in response["tool_calls"]
-                    ],
-                })
+                messages.append(
+                    {
+                        "role": "assistant",
+                        "content": response["content"],
+                        "tool_calls": [
+                            {
+                                "id": c["id"],
+                                "type": "function",
+                                "function": {"name": c["name"], "arguments": c["arguments"]},
+                            }
+                            for c in response["tool_calls"]
+                        ],
+                    }
+                )
                 for call in response["tool_calls"]:
                     args = json.loads(call["arguments"] or "{}")
                     tool_where = dict(where or {})
                     requested_type = args.get("document_type")
-                    conflict = requested_type and "document_type" in tool_where and tool_where["document_type"] != requested_type
+                    conflict = (
+                        requested_type
+                        and "document_type" in tool_where
+                        and tool_where["document_type"] != requested_type
+                    )
                     if requested_type:
                         tool_where["document_type"] = requested_type
-                    hits = [] if conflict else retrieve(args.get("query", query), tool_where or None)
+                    hits = (
+                        [] if conflict else retrieve(args.get("query", query), tool_where or None)
+                    )
                     available_chunks.update({chunk.chunk_id: chunk for chunk in hits})
-                    messages.append({
-                        "role": "tool",
-                        "tool_call_id": call["id"],
-                        "content": json.dumps(chunks_payload(hits)),
-                    })
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": call["id"],
+                            "content": json.dumps(chunks_payload(hits)),
+                        }
+                    )
             else:
                 message = chat(messages, tools=None)
 
@@ -223,14 +287,16 @@ class LLMGenerator:
                     errors = [f"response did not contain a JSON object ({exc})"]
                 if attempt == 0:
                     messages.append({"role": "assistant", "content": message["content"]})
-                    messages.append({
-                        "role": "user",
-                        "content": (
-                            "Your previous reply did not match the required JSON schema: "
-                            + "; ".join(errors)
-                            + "\nReply again with ONLY the corrected JSON object."
-                        ),
-                    })
+                    messages.append(
+                        {
+                            "role": "user",
+                            "content": (
+                                "Your previous reply did not match the required JSON schema: "
+                                + "; ".join(errors)
+                                + "\nReply again with ONLY the corrected JSON object."
+                            ),
+                        }
+                    )
                     message = chat(messages)
 
             raise SchemaValidationError(errors)
@@ -247,14 +313,17 @@ class LLMGenerator:
         started_at: float,
     ) -> None:
         clause_refs = _clause_refs(payload["answer"]) if payload else []
-        log.info("qa trace", extra={
-            "input_type": "text",
-            "prompt_version": get_prompt("qa.system").version,
-            "answer_clause_refs": clause_refs,
-            "retrieved_context_ids": sorted(available_chunks),
-            "spans": spans,
-            "total_latency_ms": round((time.perf_counter() - started_at) * 1000, 3),
-        })
+        log.info(
+            "qa trace",
+            extra={
+                "input_type": "text",
+                "prompt_version": get_prompt("qa.system").version,
+                "answer_clause_refs": clause_refs,
+                "retrieved_context_ids": sorted(available_chunks),
+                "spans": spans,
+                "total_latency_ms": round((time.perf_counter() - started_at) * 1000, 3),
+            },
+        )
 
     def _verify_sources(
         self, payload: dict[str, Any], available_chunks: dict[str, RetrievedChunk]
@@ -273,20 +342,17 @@ class LLMGenerator:
                 errors.append(f"document for {chunk_id} does not match the retrieved source")
             stored_text = self._vector_store.get_document_text(chunk_id)
             if stored_text is None:
-                errors.append(
-                    f"cited chunk_id {chunk_id} does not exist in the knowledge base"
-                )
+                errors.append(f"cited chunk_id {chunk_id} does not exist in the knowledge base")
                 continue
             excerpt = source["excerpt"].strip()
             if not excerpt or excerpt not in stored_text or excerpt not in chunk.text:
-                errors.append(
-                    f"excerpt for {chunk_id} does not match the stored chunk text"
-                )
+                errors.append(f"excerpt for {chunk_id} does not match the stored chunk text")
             cited_chunks.append(chunk)
         references = parse_clause_request(payload["answer"])
         cited_sections = set(references.numbers if references else ())
         supported_sections = {
-            number for number in cited_sections
+            number
+            for number in cited_sections
             if any(clause_excerpt(chunk, number) for chunk in cited_chunks)
         }
         unsupported_sections = cited_sections - supported_sections
@@ -299,15 +365,20 @@ class LLMGenerator:
             quote = next(part for part in quotation if part)
             if not any(quote in source["excerpt"] for source in payload["sources"]):
                 errors.append("answer quotation is not present verbatim in its cited excerpts")
-        for page in re.findall(r"\bpages?\s*[:#]?\s*(\d+)\b", payload["answer"], re.IGNORECASE):
-            if not any(str(chunk.metadata.get("page_number")) == page for chunk in cited_chunks):
-                errors.append("answer page number is not present in cited metadata")
+        if not page_references_supported(
+            payload["answer"],
+            {str(chunk.metadata.get("page_number")) for chunk in cited_chunks},
+        ):
+            errors.append("answer page number is not present in cited metadata")
         supported_documents = {
             match.group().upper()
             for chunk in cited_chunks
             for match in DOCUMENT_ID_RE.finditer(f"{chunk.document}\n{chunk.text}")
         }
-        if any(match.group().upper() not in supported_documents
-               for match in DOCUMENT_ID_RE.finditer(payload["answer"])):
+        if any(
+            match.group().upper() not in supported_documents
+            for match in DOCUMENT_ID_RE.finditer(payload["answer"])
+        ):
             errors.append("answer document reference is not supported by cited evidence")
+        errors.extend(reference_association_errors(payload["answer"], cited_chunks))
         return errors

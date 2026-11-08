@@ -53,11 +53,13 @@ class TestOrchestrator:
 
     def test_injected_worker_failure_degrades_not_lies(self, container):
         report = container.orchestrator.run(
-            'what does "Effective Date" mean?', fail_worker="defined_terms",
+            'what does "Effective Date" mean?',
+            fail_worker="defined_terms",
         )
         # Multiple defined_terms handoff attempts should be present when retries > 0.
         defined_attempts = [
-            e for e in report["handoffs"]
+            e
+            for e in report["handoffs"]
             if e["hop"].startswith("orchestrator -> defined_terms_worker")
         ]
         assert defined_attempts

@@ -30,7 +30,7 @@ class TestCounter:
     def test_labels_are_escaped(self):
         c = Counter("m", "help")
         c.inc(kind='ok"; drop table --')
-        assert "\\\"" in c.render()
+        assert '\\"' in c.render()
 
 
 class TestHistogram:

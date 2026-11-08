@@ -1,4 +1,5 @@
 """Shared fixtures: a Container wired against in-memory fakes, plus a seeded corpus."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -61,6 +62,8 @@ def settings(tmp_path: Path, corpus_dir: Path) -> Settings:
         mcp_config_path=tmp_path / "mcp.json",
         llm_provider="groq",
         api_key=None,
+        development_mode=True,
+        admin_api_key="test-admin-key",
     )
 
 
