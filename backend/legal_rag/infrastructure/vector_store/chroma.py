@@ -51,13 +51,21 @@ class ChromaVectorStore:
             if self._collection is None:
                 try:
                     import chromadb
+                    from chromadb.config import Settings
                 except ImportError as exc:  # pragma: no cover
                     raise VectorStoreError("chromadb not installed") from exc
                 self._chroma_dir.mkdir(parents=True, exist_ok=True)
-                self._client = chromadb.PersistentClient(path=str(self._chroma_dir))
+                # This adapter supports trusted local indexes only, never a Chroma server.
+                settings = Settings(
+                    chroma_api_impl="chromadb.api.rust.RustBindingsAPI", _env_file=None
+                )
+                self._client = chromadb.PersistentClient(
+                    path=str(self._chroma_dir), settings=settings
+                )
                 self._collection = self._client.get_or_create_collection(
                     name=self._collection_name,
                     metadata={"hnsw:space": "cosine"},
+                    embedding_function=None,
                 )
         return self._collection
 

@@ -8,6 +8,15 @@ from legal_rag.infrastructure.vector_store.chroma import ChromaVectorStore
 pytestmark = pytest.mark.slow
 
 
+def test_embedded_engine_overrides_remote_api_environment(monkeypatch, tmp_path):
+    monkeypatch.setenv("CHROMA_API_IMPL", "chromadb.api.fastapi.FastAPI")
+    monkeypatch.setenv("CHROMA_SERVER_HOST", "unreachable.invalid")
+    store = ChromaVectorStore(tmp_path / "embedded")
+    collection = store._get_collection()
+    assert store._client.get_settings().chroma_api_impl == "chromadb.api.rust.RustBindingsAPI"
+    assert collection._embedding_function is None
+
+
 @pytest.mark.parametrize("operation", ["dense", "keyword", "get_all"])
 def test_counterparty_and_document_type_filter_together(tmp_path, operation):
     store = ChromaVectorStore(tmp_path / "chroma")

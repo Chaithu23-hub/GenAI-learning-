@@ -16,14 +16,25 @@ def select_jobs(paths: list[str]) -> dict[str, bool]:
     for path in paths:
         if path.startswith((".github/", "scripts/ci/")):
             return dict.fromkeys(JOBS, True)
-        if path.startswith(("backend/", "scripts/evaluation/")) or path in {
-            "Makefile",
-            "docker-compose.yml",
-        }:
+        compose_file = bool(re.fullmatch(r"(?:docker-)?compose(?:\.override)?\.ya?ml", path))
+        if (
+            path.startswith(("backend/", "scripts/evaluation/"))
+            or path == "Makefile"
+            or compose_file
+        ):
             for job in ("backend", "rag", "security"):
                 selected[job] = True
-        if path.startswith("frontend/") or path == "docker-compose.yml":
+        if path.startswith("frontend/") or compose_file:
             selected["frontend"] = True
+        if path.startswith("frontend/scripts/") or path in {
+            "frontend/Dockerfile",
+            "frontend/.dockerignore",
+            "frontend/nginx.conf",
+            "frontend/package.json",
+            "frontend/package-lock.json",
+            "frontend/angular.json",
+        }:
+            selected["security"] = True
     return selected
 
 
