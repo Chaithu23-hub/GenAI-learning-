@@ -133,7 +133,7 @@ class MetricsRegistry:
         )
         self.greetings = Counter(
             "legal_rag_greetings_total",
-            "Requests short-circuited by the greeting handler.",
+            "Greeting requests answered through the LLM without document retrieval.",
         )
         self.ingested_chunks = Counter(
             "legal_rag_ingested_chunks_total",

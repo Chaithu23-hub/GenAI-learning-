@@ -26,17 +26,16 @@ def service(conversation):
         generator=DocumentGenerator(),
         guardrail_answer="Blocked",
         no_drafting_answer="No drafting",
-        greeting_answer="Hi! How can I help?",
         conversation=conversation,
         out_of_scope_answer="Not in the provided documents.",
     )
 
 
-def test_combined_greeting_skips_model_and_retrieval():
-    conversation = FakeConversation()
+def test_combined_greeting_calls_conversation_but_skips_retrieval():
+    conversation = FakeConversation("A model-generated greeting")
     qa = service(conversation)
-    assert qa.answer("Hi, how are you")["answer"] == "Hi! How can I help?"
-    assert not conversation.calls
+    assert qa.answer("Hi, how are you")["answer"] == "A model-generated greeting"
+    assert conversation.calls == ["Hi, how are you"]
     assert not qa._generator.calls
 
 
@@ -53,6 +52,16 @@ def test_document_question_keeps_grounded_path():
     qa = service(FakeConversation())
     assert qa.answer("What is the late payment fee?")["answer"] == "Document answer"
     assert qa._generator.calls
+
+
+@pytest.mark.parametrize(
+    "query",
+    ["Hi, what is the fee?", "Hi there, what is the fee?", "Good morning, what is the fee?"],
+)
+def test_greeting_with_contract_question_keeps_grounded_generation(query):
+    qa = service(FakeConversation())
+    assert qa.answer(query)["answer"] == "Document answer"
+    assert qa._generator.calls == [query]
 
 
 def test_spelling_is_normalized_before_routing_and_generation():

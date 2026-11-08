@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from legal_rag.domain.policies import is_greeting
+
 
 class FakeLLMClient:
     """Scripted responses; records every call for assertion."""
@@ -58,6 +60,13 @@ class ContextLLMClient(FakeLLMClient):
         content = messages[1]["content"]
         marker = "Retrieved document chunks (cite ONLY these chunk_ids in sources):\n"
         if marker not in content:
+            if is_greeting(content):
+                return {
+                    "content": json.dumps(
+                        {"route": "general", "answer": "Welcome from the test language model."}
+                    ),
+                    "tool_calls": [],
+                }
             return {"content": '{"route":"documents","answer":""}', "tool_calls": []}
         chunks, _ = json.JSONDecoder().raw_decode(content.split(marker, 1)[1])
         payload = {

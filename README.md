@@ -1,6 +1,6 @@
 # LegalRAG
 
-An Angular chat workspace and FastAPI service for searching legal contracts and amendments. Groq writes answers from retrieved passages, and the backend validates citations and quotations before returning them. The chat displays the answer; the API retains supporting evidence. Questions outside document QA receive a fixed refusal.
+An Angular chat workspace and FastAPI service for searching legal contracts and amendments. Groq writes answers from retrieved passages, and the backend validates citations and quotations before returning them. The chat displays the answer; the API retains supporting evidence. Greetings receive an LLM-generated conversational reply without document retrieval. Other questions outside document QA receive a fixed refusal.
 
 ## Project structure
 
@@ -67,7 +67,9 @@ docker compose exec backend python -m legal_rag.interfaces.cli ingest
 - Detailed health: http://localhost:8000/api/health (reader or administrator key)
 - Metrics: http://localhost:8000/metrics
 
-Compose reads backend configuration from `backend/.env`. Passing `--env-file backend/.env` also supplies the reader key to the frontend build. Browser configuration is public; the admin and Groq keys stay on the backend. The backend port is published only on `127.0.0.1`; nginx proxies browser API requests. Model downloads can make the first retrieval request slow. The `backend/data` bind mount preserves documents and the vector index across container recreation.
+Compose reads backend configuration from `backend/.env`. Passing `--env-file backend/.env` also supplies the reader key to the frontend build. Browser configuration is public; the admin and Groq keys stay on the backend. The backend port is published only on `127.0.0.1`; nginx proxies browser API requests. Model downloads can make the first retrieval request slow. The `backend/data` bind mount preserves documents and the vector index across container recreation; the named `model_cache` volume preserves Hugging Face model downloads.
+
+After editing application code, run `docker compose --env-file backend/.env up -d --build` again. Dependencies are installed before source is copied, so unchanged dependency layers are reused. BuildKit caches pip/npm downloads for dependency-layer rebuilds. The first build after changing requirements or the Dockerfile can still install packages; source-only edits do not require reinstalling them. Keep the same Docker builder and its build cache, and use ordinary builds without `--no-cache` for this workflow. Container restarts alone do not incorporate edited source files. Preserve volumes when stopping the app (`docker compose down`, without `-v`).
 
 HTTP startup fails unless reader and admin keys are nonempty and distinct. Send the appropriate key in `X-API-Key`: either role can read and query, while `/api/ingest` and `/api/upload` require the admin key. Query parameters do not authenticate requests. For local anonymous reads, explicitly set `LEGAL_RAG_DEVELOPMENT_MODE=true`; writes still require an admin key. CLI commands do not require HTTP credentials. `/api/live` reports only process liveness; detailed health requires reader access in production. Metrics and interactive API documentation remain public; restrict them at the deployment proxy for an external deployment. Shared keys do not provide per-user identity or tenant isolation.
 

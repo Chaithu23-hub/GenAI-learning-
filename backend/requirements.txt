@@ -3,6 +3,9 @@ fastapi>=0.111
 uvicorn[standard]>=0.30
 python-multipart>=0.0.9
 
+# Keep the runtime packaging dependency at the patched CI baseline.
+setuptools>=84.1.0
+
 # ── Config & CLI ──────────────────────────────────────────────────────
 pydantic>=2.7
 pydantic-settings>=2.4

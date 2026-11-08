@@ -36,6 +36,14 @@ class SchemaValidationError(DomainError):
         self.errors = errors
 
 
+class InvalidConversationResponseError(SchemaValidationError):
+    """The conversation port did not supply a usable generated response."""
+
+
+class ConversationUnavailableError(DomainError):
+    """A requested conversational capability has no configured adapter."""
+
+
 class AgentBudgetExceededError(DomainError):
     """Agent stopped cleanly because a budget was reached."""
 

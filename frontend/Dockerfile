@@ -4,7 +4,8 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN --mount=type=cache,id=legal-rag-npm-node20,target=/root/.npm,sharing=locked \
+    npm ci --prefer-offline
 
 COPY . .
 # Browser configuration is public: only the reader key belongs in this build.
