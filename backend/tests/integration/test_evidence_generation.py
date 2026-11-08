@@ -302,6 +302,44 @@ def test_document_and_tenant_scope_are_preserved(stack):
     assert not retrieval.retrieve(query, where={"source_doc": OTHER})
 
 
+def test_supplied_chunks_are_filtered_by_tenant_before_generation(stack):
+    store, retrieval, settings, seed = stack
+    private = seed(
+        text="Confidential tenant terms: the late fee is 99%.",
+        tenant_id="forbidden",
+    )
+    supplied = RetrievedChunk(
+        private.id,
+        private.document,
+        private.document_type,
+        private.heading,
+        private.text,
+        0,
+        score=5,
+        metadata=private.metadata,
+    )
+    refusal = {
+        "answer": settings.out_of_scope_answer,
+        "reasoning": "No evidence is available in this tenant scope.",
+        "sources": [],
+        "confidence": "low",
+        "out_of_scope": True,
+    }
+    llm = FakeLLMClient(responses=[{"content": json.dumps(refusal)}])
+    generator = LLMGenerator(retrieval=retrieval, vector_store=store, llm=llm, settings=settings)
+
+    result = generator.generate(
+        "What is the late fee?",
+        where={"tenant_id": "allowed"},
+        chunks=[supplied],
+    )
+
+    assert result["out_of_scope"] is True
+    assert result["sources"] == []
+    assert "Confidential tenant terms" not in json.dumps(llm.calls[0]["messages"])
+    assert "99%" not in json.dumps(llm.calls[0]["messages"])
+
+
 @pytest.mark.parametrize(
     "modification", ["document", "empty_excerpt", "quote", "page", "clause", "no_sources"]
 )

@@ -97,6 +97,19 @@ def test_parent_heading_is_supported_when_body_defines_subsections():
     assert clause_excerpt(chunk, "11") == text
 
 
+def test_nested_lettered_subsection_is_resolved_as_its_own_clause():
+    text = (
+        "3.4 Payment. The customer must pay invoices.\n\n"
+        "3.4(a) Late Payment. Overdue amounts accrue interest.\n\n"
+        "3.4(b) Disputes. Disputed amounts are excluded."
+    )
+    chunk = RetrievedChunk("a", "MSA-2026-014", "contract", "Payment", text, 0)
+
+    assert clause_excerpt(chunk, "3.4(a)") == (
+        "3.4(a) Late Payment. Overdue amounts accrue interest."
+    )
+
+
 @pytest.mark.parametrize(
     "text",
     [

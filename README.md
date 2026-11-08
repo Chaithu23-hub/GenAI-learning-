@@ -2,6 +2,19 @@
 
 An Angular chat workspace and FastAPI service for searching legal contracts and amendments. Groq writes answers from retrieved passages, and the backend validates citations and quotations before returning them. The chat displays the answer; the API retains supporting evidence. An LLM classifies conversational intent, including casually misspelled greetings, and generates a fresh reply without document retrieval. Document QA generates fresh LLM refusals for unrelated questions and questions with insufficient supporting evidence.
 
+## Features and functionality
+
+- **Document ingestion:** load Markdown, DOCX and text-based PDF contracts, preserve document metadata, and split content into section-aware chunks. Administrators can upload PDFs through the API.
+- **Hybrid retrieval:** combine SentenceTransformers embeddings in local, embedded Chroma with lexical search, fuse results using reciprocal rank fusion, and rerank with a cross-encoder.
+- **Grounded answers:** retrieve supporting passages, enforce document and clause constraints, and validate source identity, excerpts and quotations. Responses include confidence and an explicit out-of-scope flag.
+- **Natural conversation:** use fresh LLM calls for greetings and unsupported questions, with separate sampling settings. Repeated requests can produce different wording; uniqueness is not guaranteed.
+- **Agent workflows:** run bounded tool-using agents, compare them with a fixed workflow, and access contract lookup through MCP integrations.
+- **Operations and evaluation:** structured logs, request IDs, health endpoints, metrics, automated tests, and separate synthetic RAG evaluation gates.
+
+Document processing follows `load → section-aware chunking → embeddings → persistent Chroma index`. Document questions follow `input guardrails → intent/scope routing → retrieval → fusion and reranking → LLM answer → evidence review and validation`. Social messages bypass retrieval. Answers without sufficient evidence become refusals rather than general-knowledge legal answers.
+
+The default embedding model is `sentence-transformers/all-MiniLM-L6-v2`; reranking uses `cross-encoder/ms-marco-MiniLM-L-6-v2`. Extracted passages and questions used for document answers are sent to the configured Groq service. Confirm that this processing is suitable for your documents before ingesting confidential material. Citation checks support review; they do not establish legal correctness or replace review of the original agreement.
+
 ## Project structure
 
 ```text
@@ -71,6 +84,8 @@ Compose reads backend configuration from `backend/.env`. Passing `--env-file bac
 
 After editing application code, run `docker compose --env-file backend/.env up -d --build` again. Dependencies are installed before source is copied, so unchanged dependency layers are reused. BuildKit caches pip/npm downloads for dependency-layer rebuilds. The first build after changing requirements or the Dockerfile can still install packages; source-only edits do not require reinstalling them. Keep the same Docker builder and its build cache, and use ordinary builds without `--no-cache` for this workflow. Container restarts alone do not incorporate edited source files. Preserve volumes when stopping the app (`docker compose down`, without `-v`).
 
+The backend image installs CPU PyTorch and the Python runtime dependencies, runs Uvicorn as a non-root user, and exposes port 8000. The frontend image builds Angular with Node.js and serves the compiled assets through nginx. Compose maps the configured reader key to the explicitly public `PUBLIC_READER_TOKEN` frontend build argument; provider and administrator keys stay in the backend runtime environment.
+
 HTTP startup fails unless reader and admin keys are nonempty and distinct. Send the appropriate key in `X-API-Key`: either role can read and query, while `/api/ingest` and `/api/upload` require the admin key. Query parameters do not authenticate requests. For local anonymous reads, explicitly set `LEGAL_RAG_DEVELOPMENT_MODE=true`; writes still require an admin key. CLI commands do not require HTTP credentials. `/api/live` reports only process liveness; detailed health requires reader access in production. Metrics and interactive API documentation remain public; restrict them at the deployment proxy for an external deployment. Shared keys do not provide per-user identity or tenant isolation.
 
 ## LLM configuration
@@ -87,24 +102,51 @@ Conversational routing uses the LLM rather than a greeting spelling list. Classi
 
 For substantive document answers, an additional LLM call selects cited chunk IDs containing omitted applicability conditions. The code appends the original excerpt for each selected ID as a document-labeled quotation; the model cannot supply new condition text. The original answer and sources remain unchanged. The generator validates the final citations and quotations before returning the answer. The extra model call adds latency and token usage; both calls are included in generation usage totals.
 
-After changing backend configuration:
+After changing backend-only configuration, recreate the backend:
 
 ```powershell
 docker compose --env-file backend/.env up -d --build backend
-docker compose restart frontend
 ```
+
+After rotating the reader key, rebuild both services with the full Compose command above; restarting the frontend does not replace credentials embedded in its JavaScript bundle.
+
+## Configuration reference
+
+Copy [backend/.env.example](backend/.env.example) to `backend/.env` once and edit it locally. Settings load `.env` relative to the working directory, so run local backend and CLI commands from `backend/`. Environment variables override file values. Never commit the populated file.
+
+| Variable | Purpose / default |
+|---|---|
+| `GROQ_API_KEY` | Required provider credential for LLM calls; backend only. |
+| `LEGAL_RAG_GROQ_MODEL` | Groq model; `openai/gpt-oss-20b`. |
+| `LEGAL_RAG_API_KEY` | Reader credential; public when embedded in the frontend. |
+| `LEGAL_RAG_ADMIN_API_KEY` | Separate administrator credential; backend only. |
+| `LEGAL_RAG_DEVELOPMENT_MODE` | `false`; explicitly enable for local anonymous reads. |
+| `LEGAL_RAG_DOCS_DIR` | Corpus directory; defaults to `backend/data/shared-corpus/contracts`. |
+| `LEGAL_RAG_CHROMA_DIR` | Persistent index directory; defaults to `backend/data/chroma`. |
+| `LEGAL_RAG_HYBRID_ENABLED` | Enable dense plus lexical retrieval; `true`. |
+| `LEGAL_RAG_TOP_K_CANDIDATES` / `LEGAL_RAG_TOP_N_ANSWERS` | Retrieval/reranking limits. Settings defaults are `20` / `8`; the example `.env` overrides them to `5` / `3`. |
+| `LEGAL_RAG_GREETING_TEMPERATURE` | Social reply variation; `0.8`. |
+| `LEGAL_RAG_UNSUPPORTED_RESPONSE_TEMPERATURE` | Refusal variation; `0.7`. |
+| `LEGAL_RAG_CORS_ORIGINS` | JSON array of permitted browser origins for direct cross-origin API access. |
+| `LEGAL_RAG_API_URL` | Frontend build setting; `/api` by default. For a separately hosted API, include its `/api` path. |
+
+The two path settings resolve inside the container when using Docker; use paths such as `/app/data/...` for overrides there. `LEGAL_RAG_API_URL` is read by the frontend build script, not backend Settings. See [Settings](backend/legal_rag/infrastructure/settings.py) for all limits, model names, agent budgets and timeouts.
+
+[frontend/.env.example](frontend/.env.example) documents the two public frontend build variables. The frontend script reads the process environment; copying that template to `.env` alone does not load it. Set variables in the terminal as shown below, or in your hosting provider's build settings. Compose supplies the reader key from `backend/.env` when invoked with `--env-file backend/.env`. Keep provider and administrator keys out of frontend settings, command output and build artifacts. Private `.env` variants are excluded by Git and Docker ignore rules; the example templates intentionally contain no credentials.
 
 ## Local development
 
 Python 3.13 and Node.js 22 are used in CI and Docker. The frontend uses Angular 21.2 and TypeScript 5.9; local Node.js must be at least 22.12.
 
 ```powershell
-python -m venv .venv
+py -3.13 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install torch --index-url https://download.pytorch.org/whl/cpu
 .\.venv\Scripts\python.exe -m pip install -r backend/requirements-dev.txt
+# First setup only, if Docker setup has not already created this file:
+# Copy-Item backend/.env.example backend/.env
+# Edit backend/.env and supply the provider, reader and administrator keys.
 Push-Location backend
-# Configure backend/.env credentials, or explicitly allow local anonymous reads:
-# $env:LEGAL_RAG_DEVELOPMENT_MODE = "true"
+..\.venv\Scripts\python.exe -m legal_rag.interfaces.cli ingest
 ..\.venv\Scripts\python.exe -m uvicorn legal_rag.interfaces.http.app:app --reload --port 8000
 Pop-Location
 ```
@@ -114,12 +156,16 @@ In another terminal:
 ```powershell
 Push-Location frontend
 npm ci
-# For anonymous reads, explicitly enable backend development mode as above.
-npm start
+# Use the reader key configured in backend/.env; never use the administrator key.
+$env:LEGAL_RAG_API_KEY = '<your-reader-key>'
+node scripts/set-env.js
+npm start -- --configuration production
 Pop-Location
 ```
 
-The Angular development server uses `/api` through its proxy to port 8000. For authenticated local access, set `$env:LEGAL_RAG_API_KEY` to the reader key, run `node scripts/set-env.js` from `frontend/`, then run `npm start -- --configuration production` so Angular uses the generated environment.
+The Angular development server is available at http://localhost:4200 and proxies `/api` to port 8000. The production configuration loads the generated reader key. For anonymous local reads instead, explicitly enable `LEGAL_RAG_DEVELOPMENT_MODE=true` on the backend and use `npm start` with the default development configuration. Administrator credentials are still required for writes. PowerShell examples use the Windows Python launcher; on other platforms, use `python3.13 -m venv .venv` and `.venv/bin/python` in place of the Windows executable paths.
+
+The first ingestion downloads embedding models and builds the index; it can take longer than later runs. To add documents locally, place supported files in the configured corpus directory and run `ingest` again. The HTTP upload endpoint accepts PDFs only and converts extracted text to Markdown before ingestion. Scanned images require text extraction outside this application; no OCR pipeline is configured.
 
 ## Validation
 
@@ -135,6 +181,18 @@ Pop-Location
 ```
 
 Chrome must be installed for `ChromeHeadless`; `CHROME_BIN` may point to another compatible Chromium executable. Slow backend tests exercise real infrastructure and are excluded from normal CI. CI installs `requirements-dev.txt`; the runtime image installs `requirements.txt`.
+
+Backend tests are organized by responsibility: `tests/unit/` covers domain rules and adapters, `tests/integration/` checks workflows with in-memory fakes, and `tests/e2e/` exercises the HTTP contract and infrastructure boundaries. Coverage includes grounded and unsupported response generation, conversational routing, clause references, evidence scope, citation validation and error handling. To run only unit and integration tests, use `python -m pytest tests/unit tests/integration -m "not slow"` from `backend/` with the virtual environment active. Run `python -m pytest tests/` for the full suite, including slow infrastructure tests; the latter needs the local Chroma and SentenceTransformers dependencies and model weights.
+
+For the same quality and synthetic RAG gates used by CI, run from the repository root:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r .github/requirements-ci.txt
+.\.venv\Scripts\python.exe scripts/ci/quality_checks.py
+.\.venv\Scripts\python.exe scripts/ci/evaluate_rag.py
+```
+
+The quality gate includes Ruff linting/format checks and scoped mypy checks. RAG evaluation uses synthetic fixtures and scripted answers to check retrieval, evidence and citation behavior without legal documents or provider keys. Optional `--real-models` uses local embedding/reranking models and can download model weights; it still does not assess live LLM factual accuracy. See [repository tools](scripts/README.md) for additional checks.
 
 ## CLI and integrations
 
@@ -157,6 +215,30 @@ Judge/race labels live under `backend/data/evaluation/`. Generated race reports 
 `validate-judge` summarizes the human labels and reports `not_evaluated` with null agreement values. The fixture has no saved model predictions, so it cannot establish judge agreement or before/after improvement. Race commands report their actual runs separately. Evaluation file access is provided through the container's evaluation I/O port. MCP lookups have a total deadline controlled by `LEGAL_RAG_MCP_TIMEOUT_SECONDS` (default 30 seconds).
 
 ## API response contract
+
+Use `X-API-Key` on authenticated requests. The principal endpoints are:
+
+| Method and route | Function | Access |
+|---|---|---|
+| `POST /api/ask` | Answer a question; optional `document_type` is `contract` or `amendment`. | Reader or administrator |
+| `POST /api/inspect` | Return retrieved chunks and the structured answer. | Reader or administrator |
+| `POST /api/ingest` | Re-ingest the configured corpus. | Administrator |
+| `POST /api/upload` | Accept multipart `files` containing PDFs; `auto_ingest` defaults to `true`. | Administrator |
+| `POST /api/agent` | Run `agent`, `fixed` or `compare` strategy. | Reader or administrator |
+| `POST /api/mcp/lookup` | Look up a `contract_id` through MCP. | Reader or administrator |
+| `GET /api/live` | Process liveness. | Public |
+| `GET /api/health` | Configuration health details. | Reader or administrator |
+
+Example from PowerShell after ingestion, using a reader key already set in the terminal:
+
+```powershell
+$headers = @{ 'X-API-Key' = $env:LEGAL_RAG_API_KEY }
+$body = @{ question = 'What is the late payment fee in MSA-2026-014?' } | ConvertTo-Json
+Invoke-RestMethod -Uri http://localhost:8000/api/ask -Method Post `
+    -Headers $headers -ContentType 'application/json' -Body $body
+```
+
+The response shape is shown below; the text and citation are illustrative, not extracted legal facts:
 
 ```json
 {
