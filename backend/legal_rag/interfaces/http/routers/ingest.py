@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
 from legal_rag.application.workflows import IngestionService
 from legal_rag.composition import Container
+from legal_rag.infrastructure.errors import PdfExtractionError
 from legal_rag.interfaces.http.dependencies import (
     get_container,
     get_ingestion_service,
@@ -25,7 +26,12 @@ async def ingest(
     ingestion: Annotated[IngestionService, Depends(get_ingestion_service)],
     container: Annotated[Container, Depends(get_container)],
 ) -> IngestResponse:
-    count = await container.work_executor.run(ingestion.ingest, exclusive=True)
+    count = await container.work_executor.run(
+        ingestion.ingest,
+        exclusive=True,
+        operation_name="ingest-documents",
+        observation_type="chain",
+    )
     return IngestResponse(
         chunks_ingested=count,
         message=f"Successfully ingested {count} chunks from {container.settings.docs_dir}",
@@ -69,12 +75,19 @@ async def upload_pdf(
     def process_upload():
         # Validate every PDF before changing the corpus. Only one mutation runs at a time.
         parsed = [(stem, container.pdf_extractor.extract(data)) for stem, data in documents]
+        if any(not text.strip() for _, text in parsed):
+            raise PdfExtractionError("PDF contains no extractable text.")
         container.upload_document_source.write_documents(
             [(f"{stem}.md", f"# {stem}\n\n{text}\n") for stem, text in parsed]
         )
         return ingestion.ingest() if (auto_ingest and parsed) else 0
 
-    chunks_ingested = await container.work_executor.run(process_upload, exclusive=True)
+    chunks_ingested = await container.work_executor.run(
+        process_upload,
+        exclusive=True,
+        operation_name="upload-documents",
+        observation_type="chain",
+    )
     return IngestResponse(
         chunks_ingested=chunks_ingested,
         message=f"Wrote {len(documents)} markdown file(s). Ingested {chunks_ingested} chunks.",

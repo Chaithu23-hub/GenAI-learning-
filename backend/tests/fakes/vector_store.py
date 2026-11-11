@@ -62,7 +62,12 @@ class InMemoryVectorStore:
         return [
             i
             for i, meta in enumerate(self._metadatas)
-            if all(meta.get(k) == v for k, v in where.items())
+            if all(
+                (set(v) == {"$in"} and isinstance(v["$in"], list) and meta.get(k) in v["$in"])
+                if isinstance(v, dict)
+                else meta.get(k) == v
+                for k, v in where.items()
+            )
         ]
 
     def delete_chunks(self, ids: list[str]) -> None:
@@ -105,6 +110,22 @@ class InMemoryVectorStore:
             {"id": self._ids[i], "document": self._documents[i], "metadata": self._metadatas[i]}
             for _, i in scored[:k]
         ]
+
+    def get_chunk(self, chunk_id: str) -> IndexedChunk | None:
+        try:
+            index = self._ids.index(chunk_id)
+        except ValueError:
+            return None
+        metadata = dict(self._metadatas[index])
+        return IndexedChunk(
+            id=chunk_id,
+            text=self._documents[index],
+            document=metadata["document"],
+            document_type=metadata["document_type"],
+            heading=metadata["heading"],
+            chunk_index=metadata["chunk_index"],
+            metadata=metadata,
+        )
 
     def get_document_text(self, chunk_id: str) -> str | None:
         try:

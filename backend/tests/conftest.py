@@ -57,6 +57,8 @@ def corpus_dir(tmp_path: Path) -> Path:
 @pytest.fixture()
 def settings(tmp_path: Path, corpus_dir: Path) -> Settings:
     return Settings(
+        _env_file=None,
+        langfuse_enabled=False,
         docs_dir=corpus_dir,
         chroma_dir=tmp_path / "chroma",
         mcp_config_path=tmp_path / "mcp.json",

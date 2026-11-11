@@ -195,6 +195,24 @@ class ChromaVectorStore:
             self._statistics_documents = snapshot
             return self._statistics
 
+    def get_chunk(self, chunk_id: str) -> IndexedChunk | None:
+        try:
+            result = self._get_collection().get(ids=[chunk_id], include=["documents", "metadatas"])
+            if not result.get("ids"):
+                return None
+            metadata = dict(result["metadatas"][0])
+            return IndexedChunk(
+                id=result["ids"][0],
+                text=result["documents"][0],
+                document=metadata["document"],
+                document_type=metadata["document_type"],
+                heading=metadata["heading"],
+                chunk_index=metadata["chunk_index"],
+                metadata=metadata,
+            )
+        except Exception as exc:
+            raise VectorStoreError(f"get_chunk failed: {exc}") from exc
+
     def get_document_text(self, chunk_id: str) -> str | None:
         try:
             result = self._get_collection().get(ids=[chunk_id], include=["documents"])

@@ -7,6 +7,7 @@ from functools import cached_property
 from legal_rag.application.agents import FixedWorkflow, LegalAgent, Orchestrator
 from legal_rag.application.agents.legal_agent import AgentBudgets
 from legal_rag.application.agents.orchestrator import OrchestratorSettings
+from legal_rag.application.ports import LLMClient, Monitoring
 from legal_rag.application.workflows import (
     EvaluationService,
     IngestionService,
@@ -43,6 +44,25 @@ class Container:
 
     def __init__(self, settings: Settings | None = None):
         self._settings = settings or get_settings()
+        self._closed = False
+
+    def close(self) -> None:
+        """Release only initialized resources; telemetry cleanup is best effort."""
+        if self._closed:
+            return
+        self._closed = True
+        executor = vars(self).get("work_executor")
+        if executor is not None:
+            executor.close()
+        monitoring = vars(self).get("monitoring")
+        if monitoring is not None:
+            monitoring.close()
+
+    @cached_property
+    def monitoring(self) -> Monitoring:
+        from legal_rag.infrastructure.observability.langfuse import from_settings
+
+        return from_settings(self._settings)
 
     @property
     def settings(self) -> Settings:
@@ -53,6 +73,7 @@ class Container:
         return BoundedWorkExecutor(
             max_workers=self._settings.http_max_concurrent_jobs,
             timeout_seconds=self._settings.http_request_timeout_seconds,
+            monitoring=self.monitoring,
         )
 
     @cached_property
@@ -83,19 +104,24 @@ class Container:
         return CrossEncoderReranker(self._settings.rerank_model)
 
     @cached_property
-    def llm_client(self) -> GroqClient:
+    def llm_client(self) -> LLMClient:
         s = self._settings
         if not s.llm_api_key:
             raise PermanentLLMError(
                 f"An API key is required for the {s.llm_provider} LLM provider."
             )
-        return GroqClient(
+        client = GroqClient(
             base_url=s.effective_llm_base_url,
             api_key=s.llm_api_key,
             model=s.llm_model,
             timeout=s.llm_timeout_seconds,
             max_retries=s.llm_max_retries,
         )
+        if not s.langfuse_enabled:
+            return client
+        from legal_rag.infrastructure.observability.langfuse import MonitoredLLMClient
+
+        return MonitoredLLMClient(client, self.monitoring, s.llm_model)
 
     # ── application services ──────────────────────────────────────────
     @cached_property
@@ -123,6 +149,7 @@ class Container:
                 hybrid_enabled=self._settings.hybrid_enabled,
                 rrf_k=self._settings.rrf_k,
             ),
+            monitoring=self.monitoring,
         )
 
     @cached_property

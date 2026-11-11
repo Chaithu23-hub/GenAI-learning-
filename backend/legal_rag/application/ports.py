@@ -45,7 +45,10 @@ class VectorStore(Protocol):
     ) -> list[KeywordSearchHit]: ...
 
     def get_document_text(self, chunk_id: str) -> str | None:
-        """Return the stored text for a chunk, or None. Used by citation verification."""
+        """Return the stored text for a chunk, or None."""
+
+    def get_chunk(self, chunk_id: str) -> IndexedChunk | None:
+        """Read current text and metadata together; not a multi-chunk snapshot."""
 
     def get_all(self, *, where: dict[str, Any] | None = None) -> dict[str, list[Any]]:
         """Return ``{ids, documents, metadatas}`` for all rows (used by defined-terms worker)."""
@@ -87,6 +90,30 @@ class LLMClient(Protocol):
           "usage": {"prompt_tokens": int, "completion_tokens": int, "total_tokens": int},
         }
         """
+
+
+class Monitoring(Protocol):
+    """Best-effort execution monitoring; application results remain authoritative."""
+
+    def run[T](
+        self,
+        name: str,
+        operation: Callable[[], T],
+        *,
+        as_type: Literal["span", "chain", "agent", "tool", "retriever"] = "span",
+    ) -> T: ...
+
+    def generation(
+        self,
+        operation: Callable[[], dict[str, Any]],
+        *,
+        model: str,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None,
+        temperature: float,
+    ) -> dict[str, Any]: ...
+
+    def close(self) -> None: ...
 
 
 ConversationIntent = Literal["social", "documents", "unsupported"]

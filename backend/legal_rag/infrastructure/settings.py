@@ -5,8 +5,9 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
+from urllib.parse import urlsplit
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # ``backend/`` — resolved from this file's location.
@@ -23,6 +24,7 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
         case_sensitive=False,
+        hide_input_in_errors=True,
     )
 
     # ── Paths ────────────────────────────────────────────────────────────
@@ -105,6 +107,56 @@ class Settings(BaseSettings):
     # ── Observability ────────────────────────────────────────────────────
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = Field(default="INFO")
     log_format: Literal["json", "text"] = Field(default="json")
+
+    # Optional backend-only LLM monitoring. Explicit content export requires opt-in.
+    langfuse_enabled: bool = False
+    langfuse_public_key: SecretStr | None = None
+    langfuse_secret_key: SecretStr | None = None
+    langfuse_base_url: str | None = None
+    langfuse_environment: str = Field(default="development", min_length=1, max_length=64)
+    langfuse_capture_content: bool = False
+    langfuse_max_content_chars: int = Field(default=12000, ge=1, le=100000)
+    langfuse_timeout_seconds: int = Field(default=2, ge=1, le=10)
+    langfuse_shutdown_timeout_seconds: float = Field(default=3, gt=0, le=10)
+
+    @field_validator("langfuse_base_url")
+    @classmethod
+    def _monitoring_url(cls, value: str | None) -> str | None:
+        if value is None or value == "":
+            return None
+        try:
+            parsed = urlsplit(value)
+            valid = (
+                parsed.scheme in {"http", "https"}
+                and parsed.hostname
+                and parsed.port != 0
+                and not parsed.username
+                and not parsed.password
+                and not parsed.query
+                and not parsed.fragment
+                and not any(char.isspace() for char in value)
+            )
+        except ValueError:
+            valid = False
+        if not valid:
+            raise ValueError(
+                "Langfuse requires an HTTP(S) URL without credentials, query or fragment."
+            )
+        return value.rstrip("/")
+
+    @model_validator(mode="after")
+    def _monitoring_credentials(self):
+        if self.langfuse_enabled and (
+            not self.langfuse_base_url
+            or not self.langfuse_public_key
+            or not self.langfuse_public_key.get_secret_value().strip()
+            or not self.langfuse_secret_key
+            or not self.langfuse_secret_key.get_secret_value().strip()
+        ):
+            raise ValueError(
+                "Enabled Langfuse requires an explicit destination and both project keys."
+            )
+        return self
 
     # ── Fixed answer strings — must not diverge from RESPONSE_SCHEMA ─────
     out_of_scope_answer: str = Field(

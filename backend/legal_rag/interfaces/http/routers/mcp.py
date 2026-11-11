@@ -25,4 +25,8 @@ async def lookup_contract_via_mcp(
     service: Annotated[MCPLookupService, Depends(get_mcp_lookup_service)],
     container: Annotated[Container, Depends(get_container)],
 ) -> dict:
-    return await container.work_executor.run(lambda: service.lookup_contract(request.contract_id))
+    return await container.work_executor.run(
+        lambda: service.lookup_contract(request.contract_id),
+        operation_name="lookup-contract",
+        observation_type="tool",
+    )

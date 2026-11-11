@@ -12,11 +12,10 @@ from legal_rag.application.ports import LLMClient, VectorStore
 from legal_rag.application.workflows.retrieval import RetrievalService
 from legal_rag.domain.clauses import DOCUMENT_ID_RE, clause_excerpt, parse_clause_request
 from legal_rag.domain.entities import RetrievedChunk
-from legal_rag.domain.evidence import reference_association_errors
+from legal_rag.domain.evidence import quotation_association_errors, reference_association_errors
 from legal_rag.domain.exceptions import SchemaValidationError
 from legal_rag.domain.pages import page_references_supported
 from legal_rag.domain.policies import (
-    QUOTATION_RE,
     apply_completeness_adjustment,
     detect_prompt_injection,
 )
@@ -90,6 +89,29 @@ def _safe_chunks(chunks: list[RetrievedChunk]) -> list[RetrievedChunk]:
     ]
 
 
+def _retrieval_arguments(call: Any) -> dict[str, Any]:
+    """Validate untrusted model tool input without echoing provider output."""
+    error = SchemaValidationError(["The model returned an invalid retrieval tool call."])
+    if not isinstance(call, dict) or call.get("name") != "retrieve_chunks":
+        raise error
+    if not isinstance(call.get("id"), str) or not call["id"].strip():
+        raise error
+    if not isinstance(call.get("arguments"), str):
+        raise error
+    try:
+        args = json.loads(call["arguments"])
+    except (ValueError, RecursionError):
+        raise error from None
+    if not isinstance(args, dict):
+        raise error
+    query = args.get("query")
+    if not isinstance(query, str) or not query.strip() or len(query) > 2000:
+        raise error
+    if args.get("document_type") not in (None, "contract", "amendment"):
+        raise error
+    return args
+
+
 def _out_of_scope(out_of_scope_answer: str) -> dict[str, Any]:
     return {
         "answer": out_of_scope_answer,
@@ -128,10 +150,9 @@ class LLMGenerator:
     ) -> dict[str, Any]:
         documents = {match.group().upper() for match in DOCUMENT_ID_RE.finditer(query)}
         if len(documents) == 1:
-            document = next(iter(documents))
-            if where and where.get("source_doc", document) != document:
+            allowed, where = self._retrieval.resolve_scope(query, where)
+            if not allowed:
                 return _out_of_scope(self._settings.out_of_scope_answer)
-            where = {**(where or {}), "source_doc": document}
         return self._generate_llm(query, where=where, chunks=chunks)
 
     def _generate_llm(
@@ -206,7 +227,15 @@ class LLMGenerator:
                     for c in chunks
                     if c.score >= self._settings.min_relevant_score
                     and all(
-                        c.metadata.get(key, getattr(c, key, None)) == value
+                        (
+                            (
+                                set(value) == {"$in"}
+                                and isinstance(value["$in"], list)
+                                and c.metadata.get(key, getattr(c, key, None)) in value["$in"]
+                            )
+                            if isinstance(value, dict)
+                            else c.metadata.get(key, getattr(c, key, None)) == value
+                        )
                         for key, value in (where or {}).items()
                     )
                 ]
@@ -237,6 +266,9 @@ class LLMGenerator:
                 message = response
                 if not response.get("tool_calls"):
                     break
+                validated_calls = [
+                    (call, _retrieval_arguments(call)) for call in response["tool_calls"]
+                ]
                 messages.append(
                     {
                         "role": "assistant",
@@ -251,8 +283,7 @@ class LLMGenerator:
                         ],
                     }
                 )
-                for call in response["tool_calls"]:
-                    args = json.loads(call["arguments"] or "{}")
+                for call, args in validated_calls:
                     tool_where = dict(where or {})
                     requested_type = args.get("document_type")
                     conflict = (
@@ -262,9 +293,7 @@ class LLMGenerator:
                     )
                     if requested_type:
                         tool_where["document_type"] = requested_type
-                    hits = (
-                        [] if conflict else retrieve(args.get("query", query), tool_where or None)
-                    )
+                    hits = [] if conflict else retrieve(args["query"], tool_where or None)
                     available_chunks.update({chunk.chunk_id: chunk for chunk in hits})
                     messages.append(
                         {
@@ -347,12 +376,29 @@ class LLMGenerator:
                 continue
             if source["document"] != chunk.document:
                 errors.append(f"document for {chunk_id} does not match the retrieved source")
-            stored_text = self._vector_store.get_document_text(chunk_id)
-            if stored_text is None:
+            stored = self._vector_store.get_chunk(chunk_id)
+            if stored is None:
                 errors.append(f"cited chunk_id {chunk_id} does not exist in the knowledge base")
                 continue
+            transport_keys = {"document", "document_type", "heading", "chunk_index"}
+            retrieved_metadata = {
+                key: value for key, value in chunk.metadata.items() if key not in transport_keys
+            }
+            stored_metadata = {
+                key: value for key, value in stored.metadata.items() if key not in transport_keys
+            }
+            if (
+                stored.id != chunk_id
+                or stored.text != chunk.text
+                or stored.document != chunk.document
+                or stored.heading != chunk.heading
+                or stored.document_type != chunk.document_type
+                or stored_metadata != retrieved_metadata
+            ):
+                errors.append(f"cited chunk_id {chunk_id} changed since retrieval")
+                continue
             excerpt = source["excerpt"].strip()
-            if not excerpt or excerpt not in stored_text or excerpt not in chunk.text:
+            if not excerpt or excerpt not in stored.text or excerpt not in chunk.text:
                 errors.append(f"excerpt for {chunk_id} does not match the stored chunk text")
             cited_chunks.append(chunk)
         references = parse_clause_request(payload["answer"])
@@ -370,10 +416,16 @@ class LLMGenerator:
                 "answer cites section(s) not present in its cited sources: "
                 + ", ".join(sorted(unsupported_sections))
             )
-        for quotation in QUOTATION_RE.findall(payload["answer"]):
-            quote = next(part for part in quotation if part)
-            if not any(quote in source["excerpt"] for source in payload["sources"]):
-                errors.append("answer quotation is not present verbatim in its cited excerpts")
+        quotation_sources: dict[str, list[str]] = {}
+        for source in payload["sources"]:
+            chunk = available_chunks.get(source["chunk_id"])
+            if chunk is None:
+                continue
+            identity = str(chunk.metadata.get("source_doc") or chunk.document).upper()
+            identifiers = [match.group().upper() for match in DOCUMENT_ID_RE.finditer(identity)]
+            for identifier in identifiers or [identity]:
+                quotation_sources.setdefault(identifier, []).append(source["excerpt"])
+        errors.extend(quotation_association_errors(payload["answer"], quotation_sources))
         if not page_references_supported(
             payload["answer"],
             {str(chunk.metadata.get("page_number")) for chunk in cited_chunks},
