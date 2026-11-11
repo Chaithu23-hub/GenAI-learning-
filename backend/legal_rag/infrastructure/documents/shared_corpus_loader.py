@@ -71,8 +71,8 @@ def _flatten_table(header: list[str], rows: list[list[str]]) -> str:
     return "\n".join(lines)
 
 
-def _read_markdown(path: Path) -> tuple[str, int]:
-    lines = path.read_text(encoding="utf-8").splitlines()
+def _read_markdown_text(text: str) -> tuple[str, int]:
+    lines = text.splitlines()
     output: list[str] = []
     table_count = 0
     index = 0
@@ -102,6 +102,10 @@ def _read_markdown(path: Path) -> tuple[str, int]:
         output.append(re.sub(r"[*_`]{1,2}", "", line))
         index += 1
     return "\n".join(output), table_count
+
+
+def _read_markdown(path: Path) -> tuple[str, int]:
+    return _read_markdown_text(path.read_text(encoding="utf-8"))
 
 
 def _read_docx(path: Path) -> tuple[str, int]:
@@ -302,6 +306,41 @@ class SharedCorpusDocumentSource:
         if len({name.casefold() for name in names}) != len(names):
             raise DocumentConflictError("Upload batch contains duplicate document names.")
         targets = [self._docs_dir / name for name in names]
+
+        # Preflight against the corpus using the same readers and metadata rules as ingestion.
+        # This must finish before creating the directory or committing any uploaded file.
+        if any(target.exists() for target in targets):
+            raise DocumentConflictError("A document with this filename already exists.")
+        existing_ids: set[str] = set()
+        if self._docs_dir.exists():
+            paths = sorted(
+                path
+                for path in self._docs_dir.iterdir()
+                if path.suffix.lower() in SUPPORTED_SUFFIXES
+            )
+            for path in paths:
+                source_id = load_document(path).metadata["source_doc"]
+                if source_id in existing_ids:
+                    raise DocumentSourceError(
+                        "directory contains duplicate source_doc IDs; ingest one format at a time"
+                    )
+                existing_ids.add(source_id)
+
+        incoming_ids: set[str] = set()
+        for name, text in documents:
+            parsed_text, table_count = _read_markdown_text(text)
+            normalized_text = re.sub(r"[ \t]+", " ", parsed_text)
+            normalized_text = re.sub(r"\n{3,}", "\n\n", normalized_text).strip()
+            metadata = _extract_metadata(normalized_text, Path(name))
+            if metadata["doc_type"] == "schedule" and table_count == 0:
+                raise DocumentSourceError(
+                    "schedule document produced no tables; refusing ingestion because schedule facts would be lost"
+                )
+            source_id = metadata["source_doc"]
+            if source_id in existing_ids or source_id in incoming_ids:
+                raise DocumentConflictError("A document with this source_doc ID already exists.")
+            incoming_ids.add(source_id)
+
         created: list[Path] = []
         try:
             self._docs_dir.mkdir(parents=True, exist_ok=True)

@@ -7,6 +7,35 @@ import re
 from legal_rag.domain.clauses import DOCUMENT_ID_RE, clause_excerpt, parse_clause_request
 from legal_rag.domain.entities import RetrievedChunk
 from legal_rag.domain.pages import page_references_supported
+from legal_rag.domain.policies import QUOTATION_RE
+
+
+def quotation_association_errors(text: str, excerpts: dict[str, list[str]]) -> list[str]:
+    """Bind quotes to the last named document, without changing quoted bytes.
+
+    A following sentence inherits the document scope. Document IDs occurring
+    inside a quotation cannot change that scope. An unscoped quotation may be
+    supported by any of the cited excerpts, as before.
+    """
+    scope: str | None = None
+    cursor = 0
+    errors: list[str] = []
+    dashes = str.maketrans(dict.fromkeys("‐‑‒–—―−", "-"))
+    for match in QUOTATION_RE.finditer(text):
+        prefix = text[cursor : match.start()].translate(dashes)
+        references = list(DOCUMENT_ID_RE.finditer(prefix))
+        if references:
+            scope = references[-1].group().upper()
+        quote = next(value for value in match.groups() if value is not None)
+        candidates = (
+            excerpts.get(scope, [])
+            if scope is not None
+            else [excerpt for values in excerpts.values() for excerpt in values]
+        )
+        if not any(quote in excerpt for excerpt in candidates):
+            errors.append("answer quotation is not present verbatim in its cited excerpts")
+        cursor = match.end()
+    return errors
 
 
 def reference_association_errors(text: str, chunks: list[RetrievedChunk]) -> list[str]:

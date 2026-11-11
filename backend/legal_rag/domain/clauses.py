@@ -20,7 +20,7 @@ _CHAINED_RANGE = re.compile(
     re.IGNORECASE,
 )
 _QUERY_RE = re.compile(
-    rf"\b(?:clauses?|sections?|articles?)\s+({_NUMBER}(?:(?:\s*(?:-|\u2013|\u2014|\bto\b)\s*|\s*,\s*|\s+and\s+|\s*&\s*){_NUMBER})*)",
+    rf"\b(?:clauses?|sections?|articles?)\s+({_NUMBER}(?:(?:\s*(?:-|\u2013|\u2014|\bto\b)\s*|\s*,\s*(?:(?:and|or)\s+)?|\s+(?:and|or)\s+|\s*&\s*){_NUMBER})*)",
     re.IGNORECASE,
 )
 # Only a definition at a line boundary counts. A cross-reference in prose does not.
