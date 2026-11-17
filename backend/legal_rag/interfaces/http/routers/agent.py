@@ -36,10 +36,18 @@ async def run_agent(
     container: Annotated[Container, Depends(get_container)],
 ) -> AgentResponse | AgentComparisonResponse:
     if request.strategy == "agent":
-        report = await container.work_executor.run(lambda: agent_factory().run(request.question))
+        report = await container.work_executor.run(
+            lambda: agent_factory().run(request.question),
+            operation_name="run-legal-agent",
+            observation_type="agent",
+        )
         return AgentResponse.model_validate(report)
     if request.strategy == "fixed":
-        report = await container.work_executor.run(lambda: fixed_factory().run(request.question))
+        report = await container.work_executor.run(
+            lambda: fixed_factory().run(request.question),
+            operation_name="run-fixed-workflow",
+            observation_type="chain",
+        )
         return AgentResponse.model_validate(report)
     report = await container.work_executor.run(
         lambda: compare_strategies(
@@ -48,5 +56,7 @@ async def run_agent(
             fixed_factory=fixed_factory,
             runs=request.runs,
         ),
+        operation_name="compare-agent-strategies",
+        observation_type="chain",
     )
     return AgentComparisonResponse.model_validate(report)

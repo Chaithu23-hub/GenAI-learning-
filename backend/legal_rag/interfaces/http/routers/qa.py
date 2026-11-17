@@ -28,6 +28,8 @@ async def ask(
 ) -> AnswerResponse:
     payload = await container.work_executor.run(
         lambda: qa.answer(request.question, document_type=request.document_type),
+        operation_name="answer-question",
+        observation_type="chain",
     )
     return AnswerResponse(**payload)
 
@@ -41,6 +43,8 @@ async def inspect(
 ) -> InspectResponse:
     result = await container.work_executor.run(
         lambda: qa.inspect(request.question, document_type=request.document_type),
+        operation_name="inspect-retrieval",
+        observation_type="chain",
     )
     return InspectResponse(
         question=result["question"],

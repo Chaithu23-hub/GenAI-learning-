@@ -16,10 +16,12 @@ from legal_rag.infrastructure.settings import get_settings
 app = typer.Typer(help="LegalRAG command-line interface", no_args_is_help=True)
 
 
-def _container() -> Container:
+def _container(context: typer.Context) -> Container:
     settings = get_settings()
     configure_logging(level=settings.log_level, format=settings.log_format)
-    return Container(settings)
+    container = Container(settings)
+    context.call_on_close(container.close)
+    return container
 
 
 def _echo_json(payload: object) -> None:
@@ -27,21 +29,27 @@ def _echo_json(payload: object) -> None:
 
 
 @app.command()
-def ingest():
+def ingest(ctx: typer.Context):
     """Chunk, embed, and store all docs in data/shared-corpus/."""
-    container = _container()
-    count = container.ingestion_service.ingest()
+    container = _container(ctx)
+    count = container.monitoring.run("cli.ingest", container.ingestion_service.ingest)
     typer.echo(f"Ingested {count} chunks into {container.settings.chroma_dir}")
 
 
 @app.command()
-def evaluate(k: int = typer.Option(3, "--k", help="Top-k value for hit rate")):
+def evaluate(ctx: typer.Context, k: int = typer.Option(3, "--k", help="Top-k value for hit rate")):
     """Compare dense-only and hybrid hit-rate@k."""
-    _echo_json(_container().evaluation_service.compare_retrieval(k=k))
+    container = _container(ctx)
+    _echo_json(
+        container.monitoring.run(
+            "cli.evaluate", lambda: container.evaluation_service.compare_retrieval(k=k)
+        )
+    )
 
 
 @app.command()
 def agent(
+    ctx: typer.Context,
     question: str,
     strategy: str = typer.Option("compare", help="agent|fixed|compare"),
     runs: int = typer.Option(3, help="Runs for the 'compare' strategy"),
@@ -49,17 +57,20 @@ def agent(
     """Run or compare the legal agent loop."""
     from legal_rag.application.agents.legal_agent import compare_strategies
 
-    c = _container()
+    c = _container(ctx)
     if strategy == "agent":
-        report = c.new_legal_agent().run(question)
+        report = c.monitoring.run("cli.agent", lambda: c.new_legal_agent().run(question))
     elif strategy == "fixed":
-        report = c.new_fixed_workflow().run(question)
+        report = c.monitoring.run("cli.fixed", lambda: c.new_fixed_workflow().run(question))
     elif strategy == "compare":
-        report = compare_strategies(
-            question,
-            agent_factory=c.new_legal_agent,
-            fixed_factory=c.new_fixed_workflow,
-            runs=runs,
+        report = c.monitoring.run(
+            "cli.compare",
+            lambda: compare_strategies(
+                question,
+                agent_factory=c.new_legal_agent,
+                fixed_factory=c.new_fixed_workflow,
+                runs=runs,
+            ),
         )
     else:
         typer.echo(f"Unknown strategy: {strategy}", err=True)
@@ -68,10 +79,12 @@ def agent(
 
 
 @app.command("agent-safety-check")
-def agent_safety_check():
+def agent_safety_check(ctx: typer.Context):
     """Measure agent trajectories and document injection defense."""
-    c = _container()
-    trajectory = c.new_legal_agent().run("What is the late payment fee?")
+    c = _container(ctx)
+    trajectory = c.monitoring.run(
+        "cli.agent_safety_check", lambda: c.new_legal_agent().run("What is the late payment fee?")
+    )
     before, after = compare_injection_defense()
     _echo_json(
         {
@@ -84,21 +97,24 @@ def agent_safety_check():
 
 
 @app.command("validate-judge")
-def validate_judge():
+def validate_judge(ctx: typer.Context):
     """Run the 25-case judge validation report."""
-    _echo_json(_container().judge_service.build_report())
+    c = _container(ctx)
+    _echo_json(c.monitoring.run("cli.validate_judge", c.judge_service.build_report))
 
 
 @app.command("race-agent")
-def race_agent():
+def race_agent(ctx: typer.Context):
     """Race the agent against the fixed legal workflow."""
-    _echo_json(_container().agent_race.run())
+    c = _container(ctx)
+    _echo_json(c.monitoring.run("cli.race_agent", c.agent_race.run))
 
 
 @app.command("race-orchestrator")
-def race_orchestrator():
+def race_orchestrator(ctx: typer.Context):
     """Race the single agent against the orchestrator on the labelled cases."""
-    race = _container().multi_agent_race.write_artifacts()
+    c = _container(ctx)
+    race = c.monitoring.run("cli.race_orchestrator", c.multi_agent_race.write_artifacts)
     _echo_json(
         {
             "cases": race["case_ids"],

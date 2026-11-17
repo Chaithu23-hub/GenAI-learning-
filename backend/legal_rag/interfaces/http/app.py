@@ -38,9 +38,11 @@ def create_app(
             yield
         finally:
             for active in (container, app.state.container):
-                executor = vars(active).get("work_executor")
-                if executor is not None:
-                    executor.close()
+                # Test interfaces may replace the container; avoid invoking a
+                # lazy or untrusted __getattr__ merely to clean up resources.
+                close = getattr(type(active), "close", None)
+                if close is not None:
+                    close(active)
             log.info("shutdown")
 
     app = FastAPI(

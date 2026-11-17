@@ -7,18 +7,30 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from contextvars import copy_context
 from threading import BoundedSemaphore, Lock
+from typing import Literal
 
+from legal_rag.application.ports import Monitoring
 from legal_rag.infrastructure.errors import WorkCapacityError, WorkTimeoutError
 
 
 class BoundedWorkExecutor:
-    def __init__(self, *, max_workers: int, timeout_seconds: float):
+    def __init__(
+        self, *, max_workers: int, timeout_seconds: float, monitoring: Monitoring | None = None
+    ):
         self._pool = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="legal-rag")
         self._slots = BoundedSemaphore(max_workers)
         self._mutation = Lock()
         self._timeout = timeout_seconds
+        self._monitoring = monitoring
 
-    async def run[T](self, operation: Callable[[], T], *, exclusive: bool = False) -> T:
+    async def run[T](
+        self,
+        operation: Callable[[], T],
+        *,
+        exclusive: bool = False,
+        operation_name: str = "application.workflow",
+        observation_type: Literal["span", "chain", "agent", "tool", "retriever"] = "span",
+    ) -> T:
         # Do not queue arbitrary work or release slots when only the HTTP waiter ends.
         if not self._slots.acquire(blocking=False):
             raise WorkCapacityError("Service is busy. Retry after current work completes.")
@@ -34,7 +46,13 @@ class BoundedWorkExecutor:
 
         try:
             context = copy_context()
-            future = self._pool.submit(context.run, operation)
+
+            def execute():
+                if self._monitoring is None:
+                    return operation()
+                return self._monitoring.run(operation_name, operation, as_type=observation_type)
+
+            future = self._pool.submit(context.run, execute)
         except BaseException:
             release(None)
             raise

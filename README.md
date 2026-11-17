@@ -134,6 +134,31 @@ The two path settings resolve inside the container when using Docker; use paths 
 
 [frontend/.env.example](frontend/.env.example) documents the two public frontend build variables. The frontend script reads the process environment; copying that template to `.env` alone does not load it. Set variables in the terminal as shown below, or in your hosting provider's build settings. Compose supplies the reader key from `backend/.env` when invoked with `--env-file backend/.env`. Keep provider and administrator keys out of frontend settings, command output and build artifacts. Private `.env` variants are excluded by Git and Docker ignore rules; the example templates intentionally contain no credentials.
 
+## LLM monitoring with Langfuse
+
+Langfuse monitoring is optional and disabled by default. It instruments the shared LLM client used by document answers, evidence review, conversational routing, greetings, refusals and judge calls. HTTP worker operations and CLI workflows have parent execution spans, with child generations recording model, sampling parameters, duration, token usage and outcome. Each workflow receives an internally generated trace identity; client-supplied request IDs do not control trace parenting.
+
+HTTP workflows use stable operation names such as `answer-question`, `inspect-retrieval` and `run-legal-agent`. Retrieval appears beneath its workflow as a `retrieve-context` observation of type `retriever`; agent execution uses type `agent`, and MCP lookup uses type `tool`. This makes requests and slow retrieval steps easier to find without exporting document text. Tests explicitly disable monitoring and ignore the private `.env`; real-SDK tests use an in-memory exporter.
+
+Create a Langfuse project in your chosen region or self-hosted deployment. The pinned Python SDK v5 requires Langfuse Cloud or self-hosted Langfuse **4.59.0 or later**; see the [official compatibility guidance](https://langfuse.com/docs/observability/sdk/upgrade-path/python-v4-to-v5). Add the following to your private `backend/.env`, using the project URL and keys from its settings:
+
+```dotenv
+LEGAL_RAG_LANGFUSE_ENABLED=true
+LEGAL_RAG_LANGFUSE_BASE_URL=https://your-approved-langfuse-host.example
+LEGAL_RAG_LANGFUSE_PUBLIC_KEY=
+LEGAL_RAG_LANGFUSE_SECRET_KEY=
+LEGAL_RAG_LANGFUSE_ENVIRONMENT=development
+LEGAL_RAG_LANGFUSE_CAPTURE_CONTENT=false
+```
+
+Fill both blank key values locally; the host above is an example, not a provisioned service. These settings are backend-only and use this application's `LEGAL_RAG_` prefix. Recreate the backend after configuration changes with `docker compose --env-file backend/.env up -d --build backend`, or restart the local backend process. Changing the dependency list triggers the necessary package-install layer once; later code-only rebuilds reuse it.
+
+With `CAPTURE_CONTENT=false`, monitoring omits prompts, responses, retrieved passages, document identifiers and tool arguments. To track prompt and generated-response content, explicitly set `LEGAL_RAG_LANGFUSE_CAPTURE_CONTENT=true` for an approved project and corpus. That exports legal text to the configured destination. Captured copies are bounded by `LEGAL_RAG_LANGFUSE_MAX_CONTENT_CHARS` (default 12000), with configured credentials and common credential fields/patterns redacted. This does not detect all sensitive content. Monitoring does not change the answer, evidence validation or API response schema.
+
+Generate a synthetic greeting through `/api/ask`, then inspect its workflow and generation observations in your Langfuse project. In metadata mode, input/output should be absent; with full capture enabled, inspect a synthetic prompt and reply before using real documents. Exports are asynchronous, so allow time for ingestion. HTTP shutdown and CLI completion perform bounded best-effort cleanup; forced shutdown or an unavailable destination can lose observations. Monitoring failures do not retry the LLM or turn a successful answer into a failed request. A successful application response does not prove Langfuse delivery; verify the dashboard separately.
+
+For programmatic verification, use the official `langfuse-cli` observations API with a bounded time range and `--trace-id`; request the `model` and `usage` fields to audit model names and tokens. This uses the current Observations API v2 rather than deprecated trace-list endpoints. See [Langfuse tracing best practices](https://langfuse.com/docs/observability/best-practices) and the [official AI skill](https://github.com/langfuse/skills).
+
 ## Local development
 
 Python 3.13 and Node.js 22 are used in CI and Docker. The frontend uses Angular 21.2 and TypeScript 5.9; local Node.js must be at least 22.12.

@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from legal_rag.application.ports import Embedder, Reranker, VectorStore
+from legal_rag.application.ports import Embedder, Monitoring, Reranker, VectorStore
 from legal_rag.domain.clauses import DOCUMENT_ID_RE
 from legal_rag.domain.entities import RetrievedChunk
 from legal_rag.domain.ranking import reciprocal_rank_fusion
@@ -33,11 +33,69 @@ class RetrievalService:
         embedder: Embedder,
         reranker: Reranker,
         settings: RetrievalSettings,
+        monitoring: Monitoring | None = None,
     ):
         self._vector_store = vector_store
         self._embedder = embedder
         self._reranker = reranker
         self._settings = settings
+        self._monitoring = monitoring
+
+    def resolve_scope(
+        self, query: str, where: dict[str, Any] | None
+    ) -> tuple[bool, dict[str, Any] | None]:
+        """Constrain explicit identities, expanding only requested linked families."""
+        documents = {match.group().upper() for match in DOCUMENT_ID_RE.finditer(query)}
+        if len(documents) != 1:
+            return True, where
+        document = next(iter(documents))
+        constraint = (where or {}).get("source_doc", document)
+        if isinstance(constraint, dict):
+            if (
+                set(constraint) != {"$in"}
+                or not isinstance(constraint["$in"], list)
+                or document not in constraint["$in"]
+            ):
+                return False, where
+        elif constraint != document:
+            return False, where
+        positive_family = re.search(
+            r"\b(?:includ(?:e|ing)|together\s+with)\s+(?:(?:all|the)\s+)?amendments?\b",
+            query,
+            re.IGNORECASE,
+        ) and not re.search(
+            r"\b(?:not|never|don['\u2019]t|doesn['\u2019]t)\s+includ(?:e|ing)\s+"
+            r"(?:(?:all|the|any)\s+)?amendments?\b|"
+            r"\b(?:without|excluding|exclude)\s+(?:(?:all|the|any)\s+)?amendments?\b",
+            query,
+            re.IGNORECASE,
+        )
+        if not positive_family:
+            return True, {**(where or {}), "source_doc": document}
+        restrictions = {key: value for key, value in (where or {}).items() if key != "source_doc"}
+        rows = self._vector_store.get_all(where=restrictions or None)
+        family = {document}
+        # Linkage comes only from stored metadata, never identifier similarity.
+        links: list[tuple[str, str]] = []
+        for metadata in rows["metadatas"]:
+            source, amends = metadata.get("source_doc"), metadata.get("amends")
+            if (
+                isinstance(source, str)
+                and DOCUMENT_ID_RE.fullmatch(source)
+                and isinstance(amends, str)
+                and DOCUMENT_ID_RE.fullmatch(amends)
+            ):
+                links.append((source.upper(), amends.upper()))
+        # Include a chain only where an explicit amends edge joins the family.
+        while True:
+            expanded = family | {source for source, base in links if base in family}
+            if expanded == family:
+                break
+            family = expanded
+        if isinstance(constraint, dict):
+            # An existing allowlist is an upper bound, including tool requests.
+            family.intersection_update(constraint["$in"])
+        return True, {**restrictions, "source_doc": {"$in": sorted(family)}}
 
     def retrieve(
         self,
@@ -48,13 +106,26 @@ class RetrievalService:
         where: dict[str, Any] | None = None,
         hybrid: bool | None = None,
     ) -> list[RetrievedChunk]:
-        # A document ID is a constraint even when a caller bypasses QaService.
-        documents = {match.group().upper() for match in DOCUMENT_ID_RE.finditer(query)}
-        if len(documents) == 1:
-            document = next(iter(documents))
-            if where and where.get("source_doc", document) != document:
-                return []
-            where = {**(where or {}), "source_doc": document}
+        if self._monitoring is None:
+            return self._retrieve(query, k=k, n=n, where=where, hybrid=hybrid)
+        return self._monitoring.run(
+            "retrieve-context",
+            lambda: self._retrieve(query, k=k, n=n, where=where, hybrid=hybrid),
+            as_type="retriever",
+        )
+
+    def _retrieve(
+        self,
+        query: str,
+        *,
+        k: int | None = None,
+        n: int | None = None,
+        where: dict[str, Any] | None = None,
+        hybrid: bool | None = None,
+    ) -> list[RetrievedChunk]:
+        allowed, where = self.resolve_scope(query, where)
+        if not allowed:
+            return []
         k = k or self._settings.top_k_candidates
         n = n or self._settings.top_n_answers
         hybrid = self._settings.hybrid_enabled if hybrid is None else hybrid
