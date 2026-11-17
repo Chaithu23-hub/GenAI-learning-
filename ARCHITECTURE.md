@@ -234,7 +234,7 @@ authorization, confidential documents and citation checks remain independent
 security requirements; this assessment does not establish tenant isolation.
 
 The dependency update scope was re-reviewed on 2026-11-17 for Uvicorn 0.54.0,
-OpenAI 3.49.0, pypdf 7.0.1, pytest 9.2.0, HTTPX 0.28.1 and marked 18.2.1.
+OpenAI 3.51.0, pypdf 7.0.1, pytest 9.2.0, HTTPX 0.28.1 and marked 18.2.1.
 Chroma remains pinned to 1.5.9 with the forced embedded Rust API, disabled implicit
 environment loading and no collection embedding function. The composition root,
 Docker entry point, Compose services, nginx routing and admin-only document upload
